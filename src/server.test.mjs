@@ -8,6 +8,9 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import http from 'node:http'
+import path from 'node:path'
+import fs from 'node:fs'
+import os from 'node:os'
 import { startServer } from './server.mjs'
 
 /**
@@ -232,6 +235,168 @@ describe('server', () => {
         const { status, headers } = await request(server, { method: 'OPTIONS', path: '/v1/chat/completions' })
         assert.equal(status, 204)
         assert.equal(headers['access-control-allow-origin'], '*')
+      } finally {
+        server.close()
+      }
+    })
+  })
+
+  describe('custom scenarios (--scenarios-dir)', () => {
+    /** @type {string} */
+    let customDir
+
+    before(() => {
+      customDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sse-custom-scenarios-'))
+      // 自定义场景：普通流式
+      fs.writeFileSync(path.join(customDir, 'custom-chat.md'),
+        '<!-- @desc: 自定义对话场景 -->\n# Custom Chat\n\n这是自定义场景的内容。\n\n<!-- @delay: 50 -->\n\n第二段内容。',
+        'utf-8',
+      )
+      // 自定义错误场景
+      fs.writeFileSync(path.join(customDir, 'custom-error.md'),
+        '<!-- @error: content-filter -->',
+        'utf-8',
+      )
+      // 空场景
+      fs.writeFileSync(path.join(customDir, 'custom-empty.md'),
+        '# Empty\n',
+        'utf-8',
+      )
+    })
+
+    after(() => {
+      fs.rmSync(customDir, { recursive: true, force: true })
+    })
+
+    it('should serve a custom scenario from --scenarios-dir', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events, finished } = await sseRequest(server, {
+          method: 'POST',
+          path: '/v1/chat/completions?scenario=custom-chat',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }], stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(events.length > 2)
+        assert.ok(finished)
+
+        const contentEvents = events
+          .filter(e => e !== '[DONE]')
+          .map(e => JSON.parse(e).choices[0].delta.content)
+          .filter(Boolean)
+        const fullText = contentEvents.join('')
+        assert.ok(fullText.includes('自定义场景'))
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should serve a custom error scenario from --scenarios-dir', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status } = await request(server, {
+          method: 'POST',
+          path: '/v1/chat/completions?scenario=custom-error',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+
+        assert.equal(status, 400) // content-filter → 400
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should serve a custom scenario as default when --scenario points to it', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'custom-empty', scenariosDir: customDir })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events, finished } = await sseRequest(server, {
+          method: 'POST',
+          path: '/v1/chat/completions',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(finished)
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should serve builtin scenarios as fallback when scenario not found in custom dir', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        // "empty" 是内置场景，customDir 中没有，应 fallback 到内置
+        const { status, events, finished } = await sseRequest(server, {
+          method: 'POST',
+          path: '/v1/chat/completions?scenario=empty',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(finished)
+      } finally {
+        server.close()
+      }
+    })
+  })
+
+  describe('custom scenario overriding builtin scenario', () => {
+    /** @type {string} */
+    let customDir
+
+    before(() => {
+      customDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sse-override-'))
+      // 覆盖内置 "empty" 场景
+      fs.writeFileSync(path.join(customDir, 'empty.md'),
+        '<!-- @desc: 覆盖的内置场景 -->\n# Override\n\n这是覆盖版本。',
+        'utf-8',
+      )
+    })
+
+    after(() => {
+      fs.rmSync(customDir, { recursive: true, force: true })
+    })
+
+    it('should prefer custom scenario over builtin with same name', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events, finished } = await sseRequest(server, {
+          method: 'POST',
+          path: '/v1/chat/completions?scenario=empty',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(finished)
+
+        // 内容应该是覆盖版的 "这是覆盖版本"，而不是内置版的空内容
+        const contentEvents = events
+          .filter(e => e !== '[DONE]')
+          .map(e => JSON.parse(e).choices[0].delta.content)
+          .filter(Boolean)
+        const fullText = contentEvents.join('')
+        assert.ok(fullText.includes('覆盖版本'), `Expected override content, got: "${fullText}"`)
       } finally {
         server.close()
       }

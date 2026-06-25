@@ -5,9 +5,11 @@
 - [ ] 支持外部 .aisemockrc.yaml / aisemock.config.ts
 - [ ] 录播模式：--record 转发真实 API 并保存响应，后续离线回放
 - [ ] --list 用 console.table 更美观
-- [ ] parseCliArgs 改成 Node.js builtin `import { parseArgs } from 'node:util';`
-- [ ] 新建 commands 目录，`create-scenario.mjs` 放入其内
+- [x] parseCliArgs 改成 Node.js builtin `import { parseArgs } from 'node:util';`
+- [x] 新建 commands 目录，`create-scenario.mjs` 放入其内
 - [ ] UI 界面测试
-- [ ] 给“自定义场景功能”增加测试
+- [x] 给”自定义场景功能”增加测试
 - [x] replace all the `ai-sse-mock` to `sse-stuntman`
 - [ ] 如果本库要能在自动化测试中使用，应该如何修改？
+- [ ] Add English README
+- [ ] fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
