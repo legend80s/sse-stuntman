@@ -169,6 +169,20 @@ export function parseScenarioFile(filePath) {
   }
 }
 
+const segmenter = new Intl.Segmenter("zh-CN", {
+  granularity: "word",
+})
+
+/**
+ * @param {string} prompt
+ * @returns {string[]}
+ */
+function toTokens(prompt) {
+  const segments = [...segmenter.segment(prompt)]
+  const words = segments.map((seg) => seg.segment)
+
+  return words
+}
 /**
  * 将一段文本按策略切分为多个字符串（每个字符串对应一个 SSE chunk）。
  *
@@ -179,7 +193,7 @@ export function parseScenarioFile(filePath) {
 function splitContent(text, strategy) {
   switch (strategy) {
     case "word": {
-      return text.match(/\S+\s*/g) ?? [text]
+      return toTokens(text)
     }
     case "char": {
       return [...text]
