@@ -9,6 +9,7 @@
 
 - Use two spaces for indentation.
 - No `semicolons` at the end of lines.
+- Always add curly braces `{}` for if / else statements, even if they contain only one line.
 
 <!-- rtk-instructions v2 -->
 ## RTK (Rust Token Killer) - Token-Optimized Commands

@@ -51,7 +51,7 @@ describe('create-scenario', () => {
       fs.rmSync(scenariosDir, { recursive: true, force: true })
       assert.equal(fs.existsSync(scenariosDir), false)
 
-      executeCreateScenario('test-scenario')
+      executeCreateScenario('test-scenario', { openDir: false })
 
       assert.equal(fs.existsSync(scenariosDir), true)
     })
@@ -62,7 +62,7 @@ describe('create-scenario', () => {
 
       assert.equal(fs.existsSync(filePath), false)
 
-      executeCreateScenario('hello-world')
+      executeCreateScenario('hello-world', { openDir: false })
 
       assert.equal(fs.existsSync(filePath), true)
 
@@ -81,14 +81,14 @@ describe('create-scenario', () => {
       // 先写入一个已存在的场景
       fs.writeFileSync(filePath, 'EXISTING CONTENT', 'utf-8')
 
-      executeCreateScenario('no-overwrite')
+      executeCreateScenario('no-overwrite', { openDir: false })
 
       const content = fs.readFileSync(filePath, 'utf-8')
       assert.equal(content, 'EXISTING CONTENT')
     })
 
     it('should handle scenario name with special characters', () => {
-      executeCreateScenario('my_custom-scenario.v2')
+      executeCreateScenario('my_custom-scenario.v2', { openDir: false })
 
       const scenariosDir = getUserScenariosDir()
       const filePath = path.join(scenariosDir, 'my_custom-scenario.v2.md')

@@ -74,6 +74,8 @@ export interface CliOptions {
   scenariosDir?: string | undefined
   /** create-scenario 子命令的场景名 */
   createScenario?: string
+  /** 创建场景后是否打开文件管理器（默认 true） */
+  openScenariosDir?: boolean
 }
 
 /**

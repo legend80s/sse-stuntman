@@ -33,6 +33,9 @@ const HELP_TEXT = `
     -e, --endpoint-path <path>  Custom POST endpoint path       (default: "/v1/chat/completions")
                              (can be specified multiple times for multiple paths)
     --scenarios-dir <path>   Custom scenarios directory
+    --open-scenarios-dir / --no-open-scenarios-dir
+                             Open file manager after creating scenario
+                             (default: on, use --no-open-scenarios-dir to disable)
     -l, --list               List all available scenarios
     -h, --help               Show this help text
 
@@ -77,10 +80,12 @@ export function parseCliArgs(argv) {
       model: { type: "string", short: "m" },
       "endpoint-path": { type: "string", multiple: true, short: "e" },
       "scenarios-dir": { type: "string" },
+      "open-scenarios-dir": { type: "boolean", default: true },
       list: { type: "boolean", default: false, short: "l" },
       help: { type: "boolean", default: false, short: "h" },
     },
     allowPositionals: true,
+    allowNegative: true,
     strict: true,
   })
 
@@ -96,25 +101,45 @@ export function parseCliArgs(argv) {
       )
       process.exit(1)
     }
-    return { ...DEFAULTS, createScenario: name }
+    return {
+      ...DEFAULTS,
+      createScenario: name,
+      openScenariosDir: values["open-scenarios-dir"],
+    }
   }
 
   // 收集 CLI 显式提供的值（未提供时不包含该属性）
   const cliValues = {}
-  if (values.port !== undefined) cliValues.port = Number(values.port)
-  if (values.scenario !== undefined) cliValues.scenario = values.scenario
-  if (values.delay !== undefined) cliValues.delay = Number(values.delay)
-  if (values.model !== undefined) cliValues.model = values.model
-  if (values["endpoint-path"]) {
-    cliValues.endpointPaths = values["endpoint-path"].map(normalizePath).filter(Boolean)
+  if (values.port !== undefined) {
+    cliValues.port = Number(values.port)
   }
-  if (values["scenarios-dir"] !== undefined) cliValues.scenariosDir = values["scenarios-dir"]
+  if (values.scenario !== undefined) {
+    cliValues.scenario = values.scenario
+  }
+  if (values.delay !== undefined) {
+    cliValues.delay = Number(values.delay)
+  }
+  if (values.model !== undefined) {
+    cliValues.model = values.model
+  }
+  if (values["endpoint-path"]) {
+    cliValues.endpointPaths = values["endpoint-path"]
+      .map(normalizePath)
+      .filter(Boolean)
+  }
+  if (values["scenarios-dir"] !== undefined) {
+    cliValues.scenariosDir = values["scenarios-dir"]
+  }
   cliValues.list = values.list ?? false
   cliValues.help = values.help ?? false
 
   // 校验 port
   if (cliValues.port != null) {
-    if (!Number.isInteger(cliValues.port) || cliValues.port < 1 || cliValues.port > 65535) {
+    if (
+      !Number.isInteger(cliValues.port) ||
+      cliValues.port < 1 ||
+      cliValues.port > 65535
+    ) {
       console.error(
         `\x1b[31mError:\x1b[0m --port must be 1-65535, got "${values.port}"`,
       )
@@ -147,26 +172,56 @@ export function mergeOptions(cliValues, configValues) {
   const result = { ...DEFAULTS }
 
   if (configValues) {
-    if (configValues.port != null) result.port = configValues.port
-    if (configValues.scenario != null) result.scenario = configValues.scenario
-    if (configValues.delay != null) result.delay = configValues.delay
-    if (configValues.model != null) result.model = configValues.model
-    if (configValues.endpointPaths != null) result.endpointPaths = configValues.endpointPaths
-    if (configValues.scenariosDir != null) result.scenariosDir = configValues.scenariosDir
+    if (configValues.port != null) {
+      result.port = configValues.port
+    }
+    if (configValues.scenario != null) {
+      result.scenario = configValues.scenario
+    }
+    if (configValues.delay != null) {
+      result.delay = configValues.delay
+    }
+    if (configValues.model != null) {
+      result.model = configValues.model
+    }
+    if (configValues.endpointPaths != null) {
+      result.endpointPaths = configValues.endpointPaths
+    }
+    if (configValues.scenariosDir != null) {
+      result.scenariosDir = configValues.scenariosDir
+    }
   }
 
   // CLI 覆盖
-  if (cliValues.port != null) result.port = cliValues.port
-  if (cliValues.scenario != null) result.scenario = cliValues.scenario
-  if (cliValues.delay != null) result.delay = cliValues.delay
-  if (cliValues.model != null) result.model = cliValues.model
-  if (cliValues.endpointPaths != null) result.endpointPaths = cliValues.endpointPaths
-  if (cliValues.scenariosDir != null) result.scenariosDir = cliValues.scenariosDir
+  if (cliValues.port != null) {
+    result.port = cliValues.port
+  }
+  if (cliValues.scenario != null) {
+    result.scenario = cliValues.scenario
+  }
+  if (cliValues.delay != null) {
+    result.delay = cliValues.delay
+  }
+  if (cliValues.model != null) {
+    result.model = cliValues.model
+  }
+  if (cliValues.endpointPaths != null) {
+    result.endpointPaths = cliValues.endpointPaths
+  }
+  if (cliValues.scenariosDir != null) {
+    result.scenariosDir = cliValues.scenariosDir
+  }
 
   // 布尔值
-  if (cliValues.list != null) result.list = cliValues.list
-  if (cliValues.help != null) result.help = cliValues.help
-  if (cliValues.createScenario != null) result.createScenario = cliValues.createScenario
+  if (cliValues.list != null) {
+    result.list = cliValues.list
+  }
+  if (cliValues.help != null) {
+    result.help = cliValues.help
+  }
+  if (cliValues.createScenario != null) {
+    result.createScenario = cliValues.createScenario
+  }
 
   return result
 }

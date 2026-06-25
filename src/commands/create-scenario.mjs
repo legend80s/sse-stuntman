@@ -65,9 +65,11 @@ console.log("Hello from ${name}");
  * 执行 create-scenario 子命令。
  *
  * @param {string} name - 场景名
+ * @param {{ openDir?: boolean }} [options] - 选项
  */
 
-export function executeCreateScenario(name) {
+export function executeCreateScenario(name, options = {}) {
+	const openDir = options.openDir !== false
 	const scenariosDir = getUserScenariosDir()
 
 	// 创建目录（如不存在）
@@ -88,7 +90,9 @@ export function executeCreateScenario(name) {
 	console.log(`  ${CYAN}继续编辑:${RESET} ${YELLOW}${filePath}${RESET}\n`)
 
 	// 打开文件管理器
-	openFolder(scenariosDir)
+	if (openDir) {
+		openFolder(scenariosDir)
+	}
 }
 
 /**

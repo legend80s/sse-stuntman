@@ -17,3 +17,4 @@
 - [ ] 当 server 已启动，用户新增的场景，如何让 server 知道？增加 `sse-stuntman --watch` 命令？
 - [ ] 每次执行新增场景的自动化测试，都会自动打开 explorer 体验不好，增加参数不打开。
 - [ ] `--help` 是否展示默认值
+- [ ] reuse and simplify `normalizePath` function

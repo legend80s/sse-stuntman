@@ -24,7 +24,7 @@ const cliValues = parseCliArgs(args)
 
 // 子命令：create-scenario
 if (cliValues.createScenario) {
-  executeCreateScenario(cliValues.createScenario)
+  executeCreateScenario(cliValues.createScenario, { openDir: cliValues.openScenariosDir !== false })
   process.exit(0)
 }
 
