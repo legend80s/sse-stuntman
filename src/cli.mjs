@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file CLI 参数解析器。
  *
  * 使用 Node.js built-in `parseArgs`（`node:util`），零外部依赖。
@@ -24,13 +24,13 @@ const HELP_TEXT = `
     $ sse-stuntman create-scenario <name>  Create a new scenario
 
   SERVER OPTIONS
-    --port <number>          Server port                        (default: 11434)
-    --scenario <name>        Scenario name                      (default: "default")
-    --delay <number>         Global delay multiplier            (default: 1)
-    --model <name>           Default model name in SSE events   (default: "gpt-4o")
+    -p, --port <number>      Server port                        (default: 11434)
+    -s, --scenario <name>    Scenario name                      (default: "default")
+    -d, --delay <number>     Global delay multiplier            (default: 1)
+    -m, --model <name>       Default model name in SSE events   (default: "gpt-4o")
     --scenarios-dir <path>   Custom scenarios directory
-    --list                   List all available scenarios
-    --help                   Show this help text
+    -l, --list               List all available scenarios
+    -h, --help               Show this help text
 
   SUBCOMMANDS
     create-scenario <name>   Create a new scenario with template
@@ -53,13 +53,13 @@ export function parseCliArgs(argv) {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
-      port: { type: "string", default: "11434" },
-      scenario: { type: "string", default: "default" },
-      delay: { type: "string", default: "1" },
-      model: { type: "string", default: "gpt-4o" },
+      port: { type: "string", default: "11434", short: "p" },
+      scenario: { type: "string", default: "default", short: "s" },
+      delay: { type: "string", default: "1", short: "d" },
+      model: { type: "string", default: "gpt-4o", short: "m" },
       "scenarios-dir": { type: "string" },
-      list: { type: "boolean", default: false },
-      help: { type: "boolean", default: false },
+      list: { type: "boolean", default: false, short: "l" },
+      help: { type: "boolean", default: false, short: "h" },
     },
     allowPositionals: true,
     strict: true,
