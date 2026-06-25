@@ -75,6 +75,7 @@ export function parseScenarioFile(filePath) {
       description: descMatch?.[1]?.trim() || "",
       error: {
         type: /** @type {import('./types.ts').ErrorType} */ (
+          // @ts-expect-error
           errorMatch[1].trim()
         ),
       },

@@ -1,7 +1,9 @@
 # AI Chat SSE Mock Server
 
 1. Prefer git bash over PowerShell for commands.
-2. Run `pnpm typecheck` after making changes to the code. Fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
+2. Run `pnpm typecheck` after making changes to the code. 
+   1. Only fix errors that are not related to the code.
+   2. Fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
 
 ## Code Style
 

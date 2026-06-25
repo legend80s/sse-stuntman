@@ -1,5 +1,6 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
+  "exclude": ["**/*.test.mjs"],
   "compilerOptions": {
     // File Layout
     // "rootDir": "./src",
@@ -14,6 +15,7 @@
     // "lib": ["esnext"],
     "types": ["node"],
     // and npm install -D @types/node
+    "noEmit": true,
     "allowImportingTsExtensions": true,
 
     // Other Outputs

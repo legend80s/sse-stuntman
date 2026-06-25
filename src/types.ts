@@ -26,11 +26,11 @@ export interface Chunk {
 
 /** 文本切分策略 */
 export type ChunkStrategy =
-  | 'sentence' // 按句子切分（默认），较自然的流式效果
-  | 'word'     // 按单词切分，打字机效果更明显
-  | 'char'     // 按字符切分，最细腻的逐字效果
-  | 'line'     // 按行切分，每行一个 chunk
-  | 'paragraph' // 整个段落一个 chunk
+  | "sentence" // 按句子切分（默认），较自然的流式效果
+  | "word" // 按单词切分，打字机效果更明显
+  | "char" // 按字符切分，最细腻的逐字效果
+  | "line" // 按行切分，每行一个 chunk
+  | "paragraph" // 整个段落一个 chunk
 
 /** 错误触发配置 */
 export interface ErrorTrigger {
@@ -40,12 +40,12 @@ export interface ErrorTrigger {
 
 /** 支持的错误类型 */
 export type ErrorType =
-  | 'rate-limit'      // 429 Too Many Requests
-  | 'content-filter'  // 400 + content_filter finish_reason
-  | 'server-error'    // 500 Internal Server Error
-  | 'timeout'         // 模拟连接超时/中断
-  | 'empty'           // 空响应，仅 [DONE]
-  | 'malformed'       // 输出非法 JSON
+  | "rate-limit" // 429 Too Many Requests
+  | "content-filter" // 400 + content_filter finish_reason
+  | "server-error" // 500 Internal Server Error
+  | "timeout" // 模拟连接超时/中断
+  | "empty" // 空响应，仅 [DONE]
+  | "malformed" // 输出非法 JSON
 
 /** 场景定义 */
 export interface Scenario {
@@ -69,7 +69,7 @@ export interface CliOptions {
   list: boolean
   help: boolean
   /** 自定义场景目录 */
-  scenariosDir?: string
+  scenariosDir?: string | undefined
   /** create-scenario 子命令的场景名 */
   createScenario?: string
 }
@@ -81,10 +81,10 @@ export interface CliOptions {
 export interface SSEChoice {
   index: number
   delta: {
-    role?: 'assistant' | 'user' | 'system'
+    role?: "assistant" | "user" | "system"
     content?: string
   }
-  finish_reason?: 'stop' | 'length' | 'content_filter' | null
+  finish_reason?: "stop" | "length" | "content_filter" | null
 }
 
 /**
@@ -92,7 +92,7 @@ export interface SSEChoice {
  */
 export interface SSEEvent {
   id: string
-  object: 'chat.completion.chunk'
+  object: "chat.completion.chunk"
   created: number
   model: string
   choices: SSEChoice[]

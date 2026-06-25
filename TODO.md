@@ -12,4 +12,5 @@
 - [x] replace all the `ai-sse-mock` to `sse-stuntman`
 - [ ] 如果本库要能在自动化测试中使用，应该如何修改？
 - [ ] Add English README
-- [ ] fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
+- [x] fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
+- [ ] 测试 word by word SSE mock
