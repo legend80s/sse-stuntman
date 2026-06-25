@@ -103,8 +103,16 @@ console.log("Hello from temp");
         chunks: [
           { content: "这是逐句输出的效果 Hello world.\n", delay: 5 },
           {
+            content: "\n",
+            delay: 100,
+          },
+          {
             content: "支持 **markdown** 语法、代码块、表格等。\n",
             delay: 100,
+          },
+          {
+            content: "\n",
+            delay: 150,
           },
           {
             content: "```javascript\n",
@@ -119,7 +127,15 @@ console.log("Hello from temp");
             delay: 150,
           },
           {
+            content: "\n",
+            delay: 120,
+          },
+          {
             content: "> 提示：使用 `@chunk: word` 切换为逐词输出。\n",
+            delay: 120,
+          },
+          {
+            content: "\n",
             delay: 120,
           },
           { content: "这", delay: 120 },

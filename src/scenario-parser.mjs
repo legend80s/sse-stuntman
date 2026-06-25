@@ -159,12 +159,16 @@ export function parseScenarioFile(filePath, options = {}) {
 
   /** 将 textBuffer 按当前策略切分成 chunks */
   function flushBuffer() {
-    const trimmed = textBuffer.trim()
+    const trimmed = textBuffer.replace(/\n{2,}/g, "\n")
     if (!trimmed) {
       textBuffer = ""
       return
     }
     const sub = splitContent(trimmed, currentStrategy)
+    // console.log("\n---------------------------------------")
+    // console.log({ textBuffer, trimmed, currentStrategy })
+    // console.log("sub:", sub)
+    // console.log("---------------------------------------\n")
     for (const s of sub) {
       chunks.push({ content: s, delay: currentDelay })
     }
@@ -176,6 +180,9 @@ const segmenter = new Intl.Segmenter("zh-CN", {
   granularity: "word",
 })
 
+const sentenceSegmenter = new Intl.Segmenter("zh-CN", {
+  granularity: "sentence",
+})
 /**
  * @param {string} prompt
  * @returns {string[]}
@@ -209,15 +216,16 @@ function splitContent(text, strategy) {
     }
     case "sentence":
     default: {
-      const parts = text.match(/[^.!?]*[.!?]+(\s|$)/g)
-      if (!parts || parts.length === 0) {
-        const clauseParts = text.match(/[^,;]*[,;](\s|$)/g)
-        if (!clauseParts || clauseParts.length === 0) {
-          return [text]
-        }
-        return clauseParts.map((s) => s.trim()).filter(Boolean)
-      }
-      return parts.map((s) => s.trim()).filter(Boolean)
+      return [...sentenceSegmenter.segment(text)].map((seg) => seg.segment)
+      // const parts = text.match(/[^.!?]*[.!?]+(\s|$)/g)
+      // if (!parts || parts.length === 0) {
+      //   const clauseParts = text.match(/[^,;]*[,;](\s|$)/g)
+      //   if (!clauseParts || clauseParts.length === 0) {
+      //     return [text]
+      //   }
+      //   return clauseParts.map((s) => s.trim()).filter(Boolean)
+      // }
+      // return parts.map((s) => s.trim()).filter(Boolean)
     }
   }
 }
