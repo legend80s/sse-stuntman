@@ -69,7 +69,7 @@ describe("scenario-parser", () => {
       const file = join(dir, "test.md")
       writeFileSync(
         file,
-        "Hello world.\n\n<!-- @chunk: word -->\n\nword1 word2 word3.",
+        "这是逐句输出的效果 Hello world.\n\n<!-- @chunk: word -->\n\n这是逐词输出的效果word1 word2 word3.",
         "utf-8",
       )
 
@@ -81,10 +81,19 @@ describe("scenario-parser", () => {
       assert.deepStrictEqual(result, {
         name: "test",
         chunks: [
-          { content: "Hello world.", delay: 50 },
-          { content: "word1 ", delay: 50 },
-          { content: "word2 ", delay: 50 },
-          { content: "word3.", delay: 50 },
+          { content: "这是逐句输出的效果 Hello world.", delay: 50 },
+          { content: "这", delay: 50 },
+          { content: "是", delay: 50 },
+          { content: "逐词", delay: 50 },
+          { content: "输出", delay: 50 },
+          { content: "的", delay: 50 },
+          { content: "效果", delay: 50 },
+          { content: "word1", delay: 50 },
+          { content: " ", delay: 50 },
+          { content: "word2", delay: 50 },
+          { content: " ", delay: 50 },
+          { content: "word3", delay: 50 },
+          { content: ".", delay: 50 },
         ],
         description: "",
       })
