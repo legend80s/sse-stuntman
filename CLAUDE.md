@@ -4,6 +4,7 @@
 2. Run `pnpm typecheck` after making changes to the code. 
    1. Only fix errors that are not related to the code.
    2. Fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
+3. Run `pnpm test <only_the_related_file>` after making changes to the code. 
 
 ## Code Style
 
