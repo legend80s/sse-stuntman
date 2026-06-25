@@ -19,9 +19,9 @@
  *   }
  */
 
-import path from 'node:path'
-import fs from 'node:fs'
-import os from 'node:os'
+import path from "node:path"
+import fs from "node:fs"
+import os from "node:os"
 
 /**
  * @import { CliOptions } from './types.ts'
@@ -33,7 +33,7 @@ import os from 'node:os'
  * @returns {string}
  */
 export function getConfigFilePath() {
-  return path.join(os.homedir(), '.sse-stuntman', 'config.mjs')
+  return path.join(os.homedir(), ".sse-stuntman", "config.mjs")
 }
 
 /**
@@ -43,6 +43,7 @@ export function getConfigFilePath() {
  */
 export async function loadUserConfig() {
   const configPath = getConfigFilePath()
+  // console.log("configPath:", configPath)
 
   if (!fs.existsSync(configPath)) {
     return null
@@ -50,9 +51,12 @@ export async function loadUserConfig() {
 
   try {
     const config = await requireConfigFile(configPath)
+    // console.log("config:", config)
     return normalizeConfig(config)
   } catch (/** @type {unknown} */ err) {
-    console.warn(`\x1b[33mWarning:\x1b[0m Failed to load config file: ${configPath}`)
+    console.warn(
+      `\x1b[33mWarning:\x1b[0m Failed to load config file: ${configPath}`,
+    )
     console.warn(`  ${/** @type {Error} */ (err).message}`)
     return null
   }
@@ -65,9 +69,12 @@ export async function loadUserConfig() {
  * @returns {Promise<Record<string, unknown>>}
  */
 async function requireConfigFile(configPath) {
-  const fileUrl = new URL(`file://${configPath.replace(/\\/g, '/')}`)
+  const fileUrl = new URL(`file://${configPath.replace(/\\/g, "/")}`)
+  // console.log("fileUrl:", fileUrl)
   const mod = await import(fileUrl.href)
-  return /** @type {Record<string, unknown>} */ (mod.default ?? mod)
+  const config = /** @type {Record<string, unknown>} */ (mod.default ?? mod)
+
+  return config
 }
 
 /**
@@ -129,12 +136,12 @@ function normalizeConfig(raw) {
  * @returns {string}
  */
 function normalizePath(p) {
-  if (!p || typeof p !== 'string') return ''
+  if (!p || typeof p !== "string") return ""
   let result = p.trim()
-  if (!result.startsWith('/')) {
-    result = '/' + result
+  if (!result.startsWith("/")) {
+    result = "/" + result
   }
-  while (result.endsWith('/') && result !== '/') {
+  while (result.endsWith("/") && result !== "/") {
     result = result.slice(0, -1)
   }
   return result
