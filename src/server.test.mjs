@@ -73,7 +73,7 @@ describe('server', () => {
   describe('/v1/chat/completions (streaming)', () => {
     it('should return SSE with content chunks and [DONE]', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
 
       // wait for server to be ready
       await new Promise(resolve => server.on('listening', resolve))
@@ -103,7 +103,7 @@ describe('server', () => {
 
     it('should respect ?scenario= query parameter', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -124,7 +124,7 @@ describe('server', () => {
 
     it('should return 404 for unknown scenario', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -145,7 +145,7 @@ describe('server', () => {
 
     it('should return 429 for error-rate-limit scenario', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -166,7 +166,7 @@ describe('server', () => {
   describe('/v1/chat/completions (non-streaming)', () => {
     it('should return full JSON when stream=false', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -191,7 +191,7 @@ describe('server', () => {
   describe('/health', () => {
     it('should return ok status', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -209,7 +209,7 @@ describe('server', () => {
   describe('/', async () => {
     it('should return HTML page', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -227,7 +227,7 @@ describe('server', () => {
   describe('custom endpoint path', () => {
     it('should handle POST to custom endpoint path', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -248,7 +248,7 @@ describe('server', () => {
 
     it('should return 404 for default path when custom path is set', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -267,7 +267,7 @@ describe('server', () => {
 
     it('should handle ?scenario= query with custom endpoint path', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -287,7 +287,7 @@ describe('server', () => {
 
     it('should handle error scenario with custom endpoint path', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -306,7 +306,7 @@ describe('server', () => {
 
     it('should handle multiple endpoint paths', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/api/v1/chat', '/api/v2/chat'] })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/api/v1/chat', '/api/v2/chat'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -341,7 +341,7 @@ describe('server', () => {
   describe('CORS', () => {
     it('should return CORS headers on OPTIONS', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default' })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default' })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -384,7 +384,7 @@ describe('server', () => {
 
     it('should serve a custom scenario from --scenarios-dir', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -412,7 +412,7 @@ describe('server', () => {
 
     it('should serve a custom error scenario from --scenarios-dir', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -431,7 +431,7 @@ describe('server', () => {
 
     it('should serve a custom scenario as default when --scenario points to it', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'custom-empty', scenariosDir: customDir })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'custom-empty', scenariosDir: customDir })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -451,7 +451,7 @@ describe('server', () => {
 
     it('should serve builtin scenarios as fallback when scenario not found in custom dir', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -490,7 +490,7 @@ describe('server', () => {
 
     it('should prefer custom scenario over builtin with same name', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'gpt-4o', scenario: 'default', scenariosDir: customDir })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 

@@ -153,7 +153,7 @@ export function startServer(options) {
 
       try {
         await writeOpenAIStream(scenario.chunks, res, {
-          delay: options.delay,
+          delayMultiplier: options.delayMultiplier,
           model: requestModel ?? options.model,
         })
       } catch {
@@ -182,10 +182,10 @@ export function startServer(options) {
     console.log(`  Endpoint(s): POST ${endpointPaths.join(', POST ')}`)
     console.log(`  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`)
     const baseDelay = options.defaultDelay ?? 5
-    console.log(`  Delay:     ${options.delay}x  (multiplier — each @delay in scenario is multiplied by this)`)
+    console.log(`  Delay:     ${options.delayMultiplier}x  (multiplier — each @delay in scenario is multiplied by this)`)
     console.log(`  Default:   ${baseDelay}ms  (used when scenario has no @delay)`)
-    if (options.delay !== 1) {
-      console.log(`             effective: ${options.delay * baseDelay}ms`)
+    if (options.delayMultiplier !== 1) {
+      console.log(`             effective: ${options.delayMultiplier * baseDelay}ms`)
     }
     console.log(`\n  Press Ctrl+C to stop.\n`)
   })

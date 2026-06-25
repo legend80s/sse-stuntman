@@ -24,11 +24,11 @@
  * @param {import('./types.ts').Chunk[]} chunks
  * @param {import('node:http').ServerResponse} res
  * @param {object} options
- * @param {number} [options.delay] - 全局延迟倍率（1 = 正常，0.5 = 半速，2 = 倍速）
+ * @param {number} [options.delayMultiplier] - 全局延迟倍率（1 = 正常，0.5 = 半速，2 = 倍速）
  * @param {string} [options.model] - 模型名，默认 "gpt-4o"
  */
 export async function writeOpenAIStream(chunks, res, options = {}) {
-	const { delay = 1, model = 'gpt-4o' } = options
+	const { delayMultiplier: delay = 1, model = 'gpt-4o' } = options
 
 	const id = `chatcmpl-${generateId()}`
 	const created = Math.floor(Date.now() / 1000)

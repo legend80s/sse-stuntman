@@ -28,10 +28,10 @@ const HELP_TEXT = `
   SERVER OPTIONS
     -p, --port <number>      Server port                        (default: 11434)
     -s, --scenario <name>    Scenario name                      (default: "default")
-    -d, --delay <number>     Global delay multiplier            (default: 1)
+    --delay-multiplier <number> Global delay multiplier          (default: 1)
                              Each chunk's delay (ms) is multiplied by this value.
-                             e.g. @delay: 200 + --delay 2 = 400ms per chunk
-    --default-delay <number> Default delay for chunks (ms)       (default: 5)
+                             e.g. @delay: 200 + --delay-multiplier 2 = 400ms per chunk
+    -d, --default-delay <number> Default delay for chunks (ms)  (default: 5)
                              When scenario has no @delay, this value is used.
                              Can be overridden per-section with @delay in .md.
     -m, --model <name>       Default model name in SSE events   (default: "gpt-4o")
@@ -50,7 +50,7 @@ const HELP_TEXT = `
   EXAMPLES
     $ sse-stuntman
     $ sse-stuntman --port 8080 --scenario markdown-demo
-    $ sse-stuntman --delay 0.5 --model deepseek-chat
+    $ sse-stuntman --delay-multiplier 0.5 --model deepseek-chat
     $ sse-stuntman -e /api/v1/chat -e /api/v2/chat
     $ sse-stuntman --list
     $ sse-stuntman create-scenario my-code-review
@@ -60,7 +60,7 @@ const HELP_TEXT = `
 const DEFAULTS = {
   port: 11434,
   scenario: "default",
-  delay: 1,
+  delayMultiplier: 1,
   defaultDelay: 5,
   model: "gpt-4o",
   endpointPaths: ["/v1/chat/completions"],
@@ -82,8 +82,8 @@ export function parseCliArgs(argv) {
     options: {
       port: { type: "string", short: "p" },
       scenario: { type: "string", short: "s" },
-      delay: { type: "string", short: "d" },
-      "default-delay": { type: "string" },
+      "delay-multiplier": { type: "string" },
+      "default-delay": { type: "string", short: "d" },
       model: { type: "string", short: "m" },
       "endpoint-path": { type: "string", multiple: true, short: "e" },
       "scenarios-dir": { type: "string" },
@@ -123,8 +123,8 @@ export function parseCliArgs(argv) {
   if (values.scenario !== undefined) {
     cliValues.scenario = values.scenario
   }
-  if (values.delay !== undefined) {
-    cliValues.delay = Number(values.delay)
+  if (values["delay-multiplier"] !== undefined) {
+    cliValues.delayMultiplier = Number(values["delay-multiplier"])
   }
   if (values["default-delay"] !== undefined) {
     cliValues.defaultDelay = Number(values["default-delay"])
@@ -157,11 +157,11 @@ export function parseCliArgs(argv) {
     }
   }
 
-  // 校验 delay
-  if (cliValues.delay != null) {
-    if (Number.isNaN(cliValues.delay) || cliValues.delay < 0) {
+  // 校验 delay-multiplier
+  if (cliValues.delayMultiplier != null) {
+    if (Number.isNaN(cliValues.delayMultiplier) || cliValues.delayMultiplier < 0) {
       console.error(
-        `\x1b[31mError:\x1b[0m --delay must be >= 0, got "${values.delay}"`,
+        `[31mError:[0m --delay-multiplier must be >= 0, got "${values["delay-multiplier"]}"`,
       )
       process.exit(1)
     }
@@ -198,8 +198,8 @@ export function mergeOptions(cliValues, configValues) {
     if (configValues.scenario != null) {
       result.scenario = configValues.scenario
     }
-    if (configValues.delay != null) {
-      result.delay = configValues.delay
+    if (configValues.delayMultiplier != null) {
+      result.delayMultiplier = configValues.delayMultiplier
     }
     if (configValues.defaultDelay != null) {
       result.defaultDelay = configValues.defaultDelay
@@ -222,8 +222,8 @@ export function mergeOptions(cliValues, configValues) {
   if (cliValues.scenario != null) {
     result.scenario = cliValues.scenario
   }
-  if (cliValues.delay != null) {
-    result.delay = cliValues.delay
+  if (cliValues.delayMultiplier != null) {
+    result.delayMultiplier = cliValues.delayMultiplier
   }
   if (cliValues.defaultDelay != null) {
     result.defaultDelay = cliValues.defaultDelay

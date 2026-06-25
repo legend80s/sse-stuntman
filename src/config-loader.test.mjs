@@ -33,7 +33,7 @@ describe('config-loader', () => {
 export default {
   port: 8080,
   scenario: 'test-scenario',
-  delay: 0.5,
+  delayMultiplier: 0.5,
   model: 'test-model',
   endpointPaths: ['/api/test/chat', '/api/test/stream'],
   scenariosDir: '/custom/scenarios',
@@ -56,7 +56,7 @@ export default {
         assert.ok(config, 'Should return config object')
         assert.equal(config.port, 8080)
         assert.equal(config.scenario, 'test-scenario')
-        assert.equal(config.delay, 0.5)
+        assert.equal(config.delayMultiplier, 0.5)
         assert.equal(config.model, 'test-model')
         assert.deepEqual(config.endpointPaths, ['/api/test/chat', '/api/test/stream'])
         assert.equal(config.scenariosDir, '/custom/scenarios')

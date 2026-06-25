@@ -64,7 +64,7 @@ export interface CliOptions {
   port: number
   scenario: string
   /** 全局延迟倍率，1 = 正常速度 */
-  delay: number
+  delayMultiplier: number
   /** 场景内未显式指定 @delay 时的默认延迟（ms），默认 5 */
   defaultDelay?: number
   model: string

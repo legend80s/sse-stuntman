@@ -11,7 +11,7 @@
  *   export default {
  *     port: 8080,
  *     scenario: 'my-scenario',
- *     delay: 0.5,
+ *     delayMultiplier: 0.5,
  *     defaultDelay: 10,
  *     model: 'deepseek-chat',
  *     endpointPaths: ['/management-service/api/intelligent-qa/chat'],
@@ -98,10 +98,10 @@ function normalizeConfig(raw) {
     }
   }
 
-  if (raw.delay != null) {
-    const delay = Number(raw.delay)
-    if (!Number.isNaN(delay) && delay >= 0) {
-      config.delay = delay
+  if (raw.delayMultiplier != null) {
+    const delayMultiplier = Number(raw.delayMultiplier)
+    if (!Number.isNaN(delayMultiplier) && delayMultiplier >= 0) {
+      config.delayMultiplier = delayMultiplier
     }
   }
 

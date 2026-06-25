@@ -53,7 +53,7 @@ describe('openai-stream', () => {
   describe('writeOpenAIStream()', () => {
     it('should write role-assistant chunk first', async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'hello' }], res, { delay: 0, model: 'gpt-4o' })
+      await writeOpenAIStream([{ content: 'hello' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
 
       const firstData = res.chunks[0]
       const parsed = JSON.parse(firstData.slice(6)) // strip "data: "
@@ -62,7 +62,7 @@ describe('openai-stream', () => {
 
     it('should write content chunks', async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'hello' }, { content: ' world' }], res, { delay: 0, model: 'gpt-4o' })
+      await writeOpenAIStream([{ content: 'hello' }, { content: ' world' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
 
       // first is role, next two are content
       const contentEvents = res.chunks.filter(c => {
@@ -78,7 +78,7 @@ describe('openai-stream', () => {
 
     it('should emit data: [DONE] at end', async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'test' }], res, { delay: 0, model: 'gpt-4o' })
+      await writeOpenAIStream([{ content: 'test' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
 
       const doneLine = res.chunks.find(c => c.includes('[DONE]'))
       assert.ok(doneLine, 'Should have [DONE]')
@@ -86,7 +86,7 @@ describe('openai-stream', () => {
 
     it('should handle @done chunk by sending immediate [DONE]', async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'before' }, { content: '', done: true }, { content: 'after' }], res, { delay: 0, model: 'gpt-4o' })
+      await writeOpenAIStream([{ content: 'before' }, { content: '', done: true }, { content: 'after' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
 
       // should not include "after"
       const allContent = res.chunks.join('')
@@ -98,7 +98,7 @@ describe('openai-stream', () => {
     it('should honor delay multiplier', async () => {
       const res = mockResponse()
       const start = Date.now()
-      await writeOpenAIStream([{ content: 'first', delay: 100 }, { content: 'second', delay: 100 }], res, { delay: 0.5, model: 'gpt-4o' })
+      await writeOpenAIStream([{ content: 'first', delay: 100 }, { content: 'second', delay: 100 }], res, { delayMultiplier: 0.5, model: 'gpt-4o' })
       const elapsed = Date.now() - start
 
       // 2 * (100 * 0.5) ≈ 100ms, plus role chunk overhead
@@ -107,7 +107,7 @@ describe('openai-stream', () => {
 
     it('should use custom model name', async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'hi' }], res, { delay: 0, model: 'deepseek-chat' })
+      await writeOpenAIStream([{ content: 'hi' }], res, { delayMultiplier: 0, model: 'deepseek-chat' })
 
       const roleEvent = JSON.parse(res.chunks[0].slice(6))
       assert.equal(roleEvent.model, 'deepseek-chat')
