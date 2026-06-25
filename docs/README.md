@@ -24,11 +24,11 @@
 
 ```bash
 # 一键启动
-npx ai-sse-mock
+npx sse-stuntman
 
 # 或本地安装后
-npm install -g ai-sse-mock
-ai-sse-mock --port 11434 --scenario markdown-demo
+npm install -g sse-stuntman
+sse-stuntman --port 11434 --scenario markdown-demo
 ```
 
 ```js

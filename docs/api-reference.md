@@ -1,6 +1,6 @@
 # API 参考 / API Reference
 
-> ai-sse-mock 的 CLI 参数和服务端接口文档。
+> sse-stuntman 的 CLI 参数和服务端接口文档。
 > CLI options and server endpoint reference.
 
 ---
@@ -8,7 +8,7 @@
 ## CLI 参数参考 / CLI Options
 
 ```
-ai-sse-mock [options]
+sse-stuntman [options]
 ```
 
 | 参数 | 类型 | 默认值 | 说明 |
@@ -24,25 +24,25 @@ ai-sse-mock [options]
 
 ```bash
 # 默认启动 (port 11434, scenario: default)
-ai-sse-mock
+sse-stuntman
 
 # 自定义端口和场景
-ai-sse-mock --port 8080 --scenario markdown-demo
+sse-stuntman --port 8080 --scenario markdown-demo
 
 # 半速输出 + 指定模型名
-ai-sse-mock --delay 0.5 --model deepseek-chat
+sse-stuntman --delay 0.5 --model deepseek-chat
 
 # 查看可用场景
-ai-sse-mock --list
+sse-stuntman --list
 
 # 查看帮助
-ai-sse-mock --help
+sse-stuntman --help
 ```
 
 ### 通过 npx 直接使用
 
 ```bash
-npx ai-sse-mock --port 11434
+npx sse-stuntman --port 11434
 ```
 
 ---

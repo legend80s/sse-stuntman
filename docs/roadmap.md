@@ -168,8 +168,8 @@ interface ProviderAdapter {
 #### 录播模式 / Record Mode
 
 ```bash
-ai-sse-mock --record --proxy https://api.openai.com
-ai-sse-mock --record --proxy https://api.openai.com --scenario-name my-saved
+sse-stuntman --record --proxy https://api.openai.com
+sse-stuntman --record --proxy https://api.openai.com --scenario-name my-saved
 ```
 
 流程：
@@ -181,9 +181,9 @@ ai-sse-mock --record --proxy https://api.openai.com --scenario-name my-saved
 #### Proxy 模式 / Proxy Mode
 
 ```bash
-ai-sse-mock --proxy https://api.deepseek.com
-ai-sse-mock --proxy https://api.openai.com --inject-delay 200
-ai-sse-mock --proxy https://api.openai.com --inject-error 0.1
+sse-stuntman --proxy https://api.deepseek.com
+sse-stuntman --proxy https://api.openai.com --inject-delay 200
+sse-stuntman --proxy https://api.openai.com --inject-error 0.1
 ```
 
 - 透传请求+响应，行为与真实 Provider 一致
@@ -201,11 +201,11 @@ ai-sse-mock --proxy https://api.openai.com --inject-error 0.1
 
 #### 其他 / Others
 
-- **OpenAPI 规范导出**：`ai-sse-mock openapi > openapi.json`
+- **OpenAPI 规范导出**：`sse-stuntman openapi > openapi.json`
 - **指标端点**：`GET /metrics` 提供请求数、延迟分布（与 Prometheus 兼容格式）
 - **会话持久化**：`conversation_id` 参数跨请求串联上下文
 - **WebSocket 支持**：部分 Provider 的 WS 流实验性支持
-- **Docker 镜像**：`ghcr.io/xxx/ai-sse-mock` 容器化发布
+- **Docker 镜像**：`ghcr.io/xxx/sse-stuntman` 容器化发布
 
 ---
 

@@ -1,6 +1,6 @@
 # 架构设计 / Architecture
 
-> 本文档描述 ai-sse-mock 的模块划分、数据流和核心类型。
+> 本文档描述 sse-stuntman 的模块划分、数据流和核心类型。
 > Architecture overview: modules, data flow, core types.
 
 ---

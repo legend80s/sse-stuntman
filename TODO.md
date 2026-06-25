@@ -9,5 +9,5 @@
 - [ ] 新建 commands 目录，`create-scenario.mjs` 放入其内
 - [ ] UI 界面测试
 - [ ] 给“自定义场景功能”增加测试
-- [ ] replace all the `ai-sse-mock` to `sse-stuntman`
+- [x] replace all the `ai-sse-mock` to `sse-stuntman`
 - [ ] 如果本库要能在自动化测试中使用，应该如何修改？

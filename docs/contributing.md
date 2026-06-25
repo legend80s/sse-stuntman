@@ -1,6 +1,6 @@
 # 贡献指南 / Contributing Guide
 
-> 欢迎参与 ai-sse-mock 的开发！本文档说明本地开发流程、代码规范和 PR 要求。
+> 欢迎参与 sse-stuntman 的开发！本文档说明本地开发流程、代码规范和 PR 要求。
 > Thank you for contributing! This guide covers local development, code conventions, and the PR workflow.
 
 ---
