@@ -1,0 +1,95 @@
+/**
+ * 单个输出片段。
+ *
+ * 由 scenario-parser 将 .md 解析后的最小数据单元。
+ * 每个 Chunk 对应 SSE 流中的一条 `data: {...}` 事件
+ * （角色声明 chunk 除外，它是自动插入的）。
+ */
+export interface Chunk {
+  /** 输出的文本内容 */
+  content: string
+  /** 输出后等待的毫秒数，默认由场景片段间的 delay 指令决定 */
+  delay?: number
+  /** 切分策略，默认为 "sentence"，仅在需要覆盖时设置 */
+  strategy?: ChunkStrategy
+  /**
+   * 内部标志：若为 true，表示该 chunk 是流终止标记
+   * （对应 `@done` 指令），SSE 将在此后发送 `[DONE]`
+   */
+  done?: boolean
+  /**
+   * 内部标志：若设置，表示触发错误场景。
+   * 该 chunk 前面的内容会被丢弃，服务器直接返回错误
+   */
+  error?: ErrorTrigger
+}
+
+/** 文本切分策略 */
+export type ChunkStrategy =
+  | 'sentence' // 按句子切分（默认），较自然的流式效果
+  | 'word'     // 按单词切分，打字机效果更明显
+  | 'char'     // 按字符切分，最细腻的逐字效果
+  | 'line'     // 按行切分，每行一个 chunk
+  | 'paragraph' // 整个段落一个 chunk
+
+/** 错误触发配置 */
+export interface ErrorTrigger {
+  /** 错误类型，决定 HTTP status code 和响应体 */
+  type: ErrorType
+}
+
+/** 支持的错误类型 */
+export type ErrorType =
+  | 'rate-limit'      // 429 Too Many Requests
+  | 'content-filter'  // 400 + content_filter finish_reason
+  | 'server-error'    // 500 Internal Server Error
+  | 'timeout'         // 模拟连接超时/中断
+  | 'empty'           // 空响应，仅 [DONE]
+  | 'malformed'       // 输出非法 JSON
+
+/** 场景定义 */
+export interface Scenario {
+  name: string
+  description?: string
+  /** 默认模型名，用于 SSE 事件的 model 字段 */
+  model?: string
+  /** 场景的 chunk 列表 */
+  chunks: Chunk[]
+  /** 若为错误场景，此处存放错误信息 */
+  error?: ErrorTrigger
+}
+
+/** CLI 选项 */
+export interface CliOptions {
+  port: number
+  scenario: string
+  /** 全局延迟倍率，1 = 正常速度 */
+  delay: number
+  model: string
+  list: boolean
+  help: boolean
+}
+
+/**
+ * OpenAI Chat Completions SSE 事件的 choices 条目。
+ * 严格遵循 OpenAI API 格式。
+ */
+export interface SSEChoice {
+  index: number
+  delta: {
+    role?: 'assistant' | 'user' | 'system'
+    content?: string
+  }
+  finish_reason?: 'stop' | 'length' | 'content_filter' | null
+}
+
+/**
+ * OpenAI Chat Completions SSE 事件完整结构。
+ */
+export interface SSEEvent {
+  id: string
+  object: 'chat.completion.chunk'
+  created: number
+  model: string
+  choices: SSEChoice[]
+}

@@ -1,16 +1,28 @@
 {
-  "name": "ai-chat-sse-mock",
-  "version": "1.0.0",
-  "description": "",
+  "name": "ai-sse-mock",
+  "version": "0.1.0",
+  "description": "AI SSE interface mock server — simulate streaming responses from mainstream AI providers",
   "type": "module",
   "bin": {
-    "ai-chat-sse-mock": "bin/index.mjs"
+    "ai-sse-mock": "bin/index.mjs"
   },
-  "main": "index.mjs",
+  "files": [
+    "bin/",
+    "src/",
+    "README.md"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node bin/index.mjs",
+    "test": "node --test src/scenario-parser.test.mjs src/openai-stream.test.mjs src/server.test.mjs"
   },
-  "keywords": [],
+  "keywords": [
+    "sse",
+    "mock",
+    "ai",
+    "streaming",
+    "openai",
+    "test"
+  ],
   "author": "",
-  "license": "ISC"
+  "license": "MIT"
 }
