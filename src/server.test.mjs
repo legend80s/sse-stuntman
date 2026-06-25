@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file server 集成测试
  *
  * 使用 Node.js http 模块直接发送请求测试服务器。
@@ -214,7 +214,7 @@ describe('server', () => {
         const { status, body, headers } = await request(server, { method: 'GET', path: '/' })
         assert.equal(status, 200)
         assert.ok(headers['content-type'].includes('text/html'))
-        assert.ok(body.includes('AI SSE Mock Server'))
+        assert.ok(body.includes('SSE Stuntman'))
       } finally {
         server.close()
       }

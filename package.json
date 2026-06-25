@@ -1,10 +1,10 @@
 {
-  "name": "ai-sse-mock",
+  "name": "sse-stuntman",
   "version": "0.1.0",
-  "description": "AI SSE interface mock server — simulate streaming responses from mainstream AI providers",
+  "description": "SSE Stuntman — stunt double for your AI API. Simulate streaming responses, errors, and edge cases.",
   "type": "module",
   "bin": {
-    "ai-sse-mock": "bin/index.mjs"
+    "sse-stuntman": "bin/index.mjs"
   },
   "files": [
     "bin/",
@@ -12,16 +12,19 @@
     "README.md"
   ],
   "scripts": {
+    "typecheck": "tsgo --noEmit",
     "start": "node bin/index.mjs",
     "test": "node --test src/scenario-parser.test.mjs src/openai-stream.test.mjs src/server.test.mjs"
   },
   "keywords": [
     "sse",
+    "stuntman",
     "mock",
     "ai",
     "streaming",
     "openai",
-    "test"
+    "test",
+    "testing"
   ],
   "author": "",
   "license": "MIT"

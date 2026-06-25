@@ -68,6 +68,10 @@ export interface CliOptions {
   model: string
   list: boolean
   help: boolean
+  /** 自定义场景目录 */
+  scenariosDir?: string
+  /** create-scenario 子命令的场景名 */
+  createScenario?: string
 }
 
 /**

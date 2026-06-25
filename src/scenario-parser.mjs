@@ -48,8 +48,8 @@
  * ```
  */
 
-import fs from 'node:fs'
-import path from 'node:path'
+import fs from "node:fs"
+import path from "node:path"
 
 /**
  * @import { Chunk, ChunkStrategy, ErrorTrigger, Scenario } from './types.ts'
@@ -62,99 +62,112 @@ import path from 'node:path'
  * @returns {Scenario}
  */
 export function parseScenarioFile(filePath) {
-	const content = fs.readFileSync(filePath, 'utf-8')
-	const basename = path.basename(filePath, '.md')
+  const content = fs.readFileSync(filePath, "utf-8")
+  const basename = path.basename(filePath, ".md")
 
-	const errorMatch = content.match(/<!--\s*@error\s*:\s*(\S+?)\s*-->/)
-	const descMatch = content.match(/<!--\s*@desc\s*:\s*(.*?)\s*-->/)
+  const errorMatch = content.match(/<!--\s*@error\s*:\s*(\S+?)\s*-->/)
+  const descMatch = content.match(/<!--\s*@desc\s*:\s*(.*?)\s*-->/)
 
-	if (errorMatch) {
-		return {
-			name: basename,
-			chunks: [],
-			description: descMatch?.[1]?.trim() || '',
-			error: { type: /** @type {import('./types.ts').ErrorType} */ (errorMatch[1].trim()) },
-		}
-	}
+  if (errorMatch) {
+    return {
+      name: basename,
+      chunks: [],
+      description: descMatch?.[1]?.trim() || "",
+      error: {
+        type: /** @type {import('./types.ts').ErrorType} */ (
+          errorMatch[1].trim()
+        ),
+      },
+    }
+  }
 
-	/** @type {import('./types.ts').Chunk[]} */
-	const chunks = []
-	let currentDelay = 50
-	let currentStrategy = /** @type {ChunkStrategy} */ ('sentence')
-	let description = ''
-	let textBuffer = ''
-	let lastIndex = 0
+  /** @type {import('./types.ts').Chunk[]} */
+  const chunks = []
+  let currentDelay = 50
+  let currentStrategy = /** @type {ChunkStrategy} */ ("sentence")
+  let description = ""
+  let textBuffer = ""
+  let lastIndex = 0
 
-	// 正则匹配指令：<!-- @KEY: VALUE --> 或 <!-- @KEY -->
-	const DIRECTIVE_RE = /<!--\s*@(\w+)(?:\s*:\s*(.*?))?\s*-->/gs
+  // 正则匹配指令：<!-- @KEY: VALUE --> 或 <!-- @KEY -->
+  const DIRECTIVE_RE = /<!--\s*@(\w+)(?:\s*:\s*(.*?))?\s*-->/gs
 
-	let match
-	while ((match = DIRECTIVE_RE.exec(content)) !== null) {
-		// 指令前的文本暂存到 buffer
-		const textBefore = content.slice(lastIndex, match.index)
-		textBuffer += textBefore
+  let match
+  while ((match = DIRECTIVE_RE.exec(content)) !== null) {
+    // 指令前的文本暂存到 buffer
+    const textBefore = content.slice(lastIndex, match.index)
+    textBuffer += textBefore
 
-		const key = match[1]
-		const value = match[2]?.trim()
+    const key = match[1]
+    const value = match[2]?.trim()
 
-		switch (key) {
-			case 'delay': {
-				flushBuffer()
-				currentDelay = parseInt(value ?? '50', 10)
-				if (Number.isNaN(currentDelay)) currentDelay = 50
-				break
-			}
-			case 'chunk': {
-				flushBuffer()
-				if (value && ['sentence', 'word', 'char', 'line', 'paragraph'].includes(value)) {
-					currentStrategy = /** @type {ChunkStrategy} */ (value)
-				}
-				break
-			}
-			case 'desc': {
-				if (value) description = value
-				break
-			}
-			case 'done': {
-				flushBuffer()
-				chunks.push({ content: '', delay: 0, done: true })
-				break
-			}
-			case 'error': {
-				flushBuffer()
-				chunks.push({
-					content: '',
-					error: { type: /** @type {import('./types.ts').ErrorType} */ (value ?? 'server-error') },
-				})
-				break
-			}
-		}
+    switch (key) {
+      case "delay": {
+        flushBuffer()
+        currentDelay = parseInt(value ?? "50", 10)
+        if (Number.isNaN(currentDelay)) currentDelay = 50
+        break
+      }
+      case "chunk": {
+        flushBuffer()
+        if (
+          value &&
+          ["sentence", "word", "char", "line", "paragraph"].includes(value)
+        ) {
+          currentStrategy = /** @type {ChunkStrategy} */ (value)
+        }
+        break
+      }
+      case "desc": {
+        if (value) description = value
+        break
+      }
+      case "done": {
+        flushBuffer()
+        chunks.push({ content: "", delay: 0, done: true })
+        break
+      }
+      case "error": {
+        flushBuffer()
+        chunks.push({
+          content: "",
+          error: {
+            type: /** @type {import('./types.ts').ErrorType} */ (
+              value ?? "server-error"
+            ),
+          },
+        })
+        break
+      }
+    }
 
-		lastIndex = match.index + match[0].length
-	}
+    lastIndex = match.index + match[0].length
+  }
 
-	// 处理剩余文本
-	const remaining = content.slice(lastIndex)
-	if (remaining.trim()) {
-		textBuffer += remaining
-		flushBuffer()
-	}
+  lastIndex = "false"
 
-	return { name: basename, chunks, description }
+  // 处理剩余文本
+  const remaining = content.slice(lastIndex)
+  if (remaining.trim()) {
+    textBuffer += remaining
+    flushBuffer()
+  }
 
-	/** 将 textBuffer 按当前策略切分成 chunks */
-	function flushBuffer() {
-		const trimmed = textBuffer.trim()
-		if (!trimmed) {
-			textBuffer = ''
-			return
-		}
-		const sub = splitContent(trimmed, currentStrategy)
-		for (const s of sub) {
-			chunks.push({ content: s, delay: currentDelay })
-		}
-		textBuffer = ''
-	}
+  return { name: basename, chunks, description }
+
+  /** 将 textBuffer 按当前策略切分成 chunks */
+  function flushBuffer() {
+    const trimmed = textBuffer.trim()
+    if (!trimmed) {
+      textBuffer = ""
+      return
+    }
+    const sub = splitContent(trimmed, currentStrategy)
+    for (const s of sub) {
+      chunks.push({ content: s, delay: currentDelay })
+    }
+    textBuffer = ""
+  }
 }
 
 /**
@@ -165,32 +178,32 @@ export function parseScenarioFile(filePath) {
  * @returns {string[]}
  */
 function splitContent(text, strategy) {
-	switch (strategy) {
-		case 'word': {
-			return text.match(/\S+\s*/g) ?? [text]
-		}
-		case 'char': {
-			return [...text]
-		}
-		case 'line': {
-			return text.split('\n').filter((l) => l.trim().length > 0)
-		}
-		case 'paragraph': {
-			return text.split(/\n\s*\n/).filter((p) => p.trim().length > 0)
-		}
-		case 'sentence':
-		default: {
-			const parts = text.match(/[^.!?]*[.!?]+(\s|$)/g)
-			if (!parts || parts.length === 0) {
-				const clauseParts = text.match(/[^,;]*[,;](\s|$)/g)
-				if (!clauseParts || clauseParts.length === 0) {
-					return [text]
-				}
-				return clauseParts.map((s) => s.trim()).filter(Boolean)
-			}
-			return parts.map((s) => s.trim()).filter(Boolean)
-		}
-	}
+  switch (strategy) {
+    case "word": {
+      return text.match(/\S+\s*/g) ?? [text]
+    }
+    case "char": {
+      return [...text]
+    }
+    case "line": {
+      return text.split("\n").filter((l) => l.trim().length > 0)
+    }
+    case "paragraph": {
+      return text.split(/\n\s*\n/).filter((p) => p.trim().length > 0)
+    }
+    case "sentence":
+    default: {
+      const parts = text.match(/[^.!?]*[.!?]+(\s|$)/g)
+      if (!parts || parts.length === 0) {
+        const clauseParts = text.match(/[^,;]*[,;](\s|$)/g)
+        if (!clauseParts || clauseParts.length === 0) {
+          return [text]
+        }
+        return clauseParts.map((s) => s.trim()).filter(Boolean)
+      }
+      return parts.map((s) => s.trim()).filter(Boolean)
+    }
+  }
 }
 
 /**
@@ -200,15 +213,15 @@ function splitContent(text, strategy) {
  * @returns {Array<{ name: string, file: string }>}
  */
 export function listScenarios(scenariosDir) {
-	const files = fs.readdirSync(scenariosDir)
-	const scenarios = []
-	for (const f of files) {
-		if (f.endsWith('.md')) {
-			scenarios.push({
-				name: path.basename(f, '.md'),
-				file: path.join(scenariosDir, f),
-			})
-		}
-	}
-	return scenarios.sort((a, b) => a.name.localeCompare(b.name))
+  const files = fs.readdirSync(scenariosDir)
+  const scenarios = []
+  for (const f of files) {
+    if (f.endsWith(".md")) {
+      scenarios.push({
+        name: path.basename(f, ".md"),
+        file: path.join(scenariosDir, f),
+      })
+    }
+  }
+  return scenarios.sort((a, b) => a.name.localeCompare(b.name))
 }

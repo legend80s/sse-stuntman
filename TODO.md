@@ -1,6 +1,13 @@
-写用户手册 readme add test
-使用：npx @legend80s/sse-mock
-或 CLI：sse-mock 
-结合 faker 库，增加种子
-  - 支持外部 .aisemockrc.yaml / aisemock.config.ts
-  - 录播模式：--record 转发真实 API 并保存响应，后续离线回放
+- [x] 写用户手册 readme
+- [x] add test
+- [x] 使用：npx sse-stuntman 或 CLI sse-stuntman
+- [ ] 结合 faker 库，增加种子
+- [ ] 支持外部 .aisemockrc.yaml / aisemock.config.ts
+- [ ] 录播模式：--record 转发真实 API 并保存响应，后续离线回放
+- [ ] --list 用 console.table 更美观
+- [ ] parseCliArgs 改成 Node.js builtin `import { parseArgs } from 'node:util';`
+- [ ] 新建 commands 目录，`create-scenario.mjs` 放入其内
+- [ ] UI 界面测试
+- [ ] 给“自定义场景功能”增加测试
+- [ ] replace all the `ai-sse-mock` to `sse-stuntman`
+- [ ] 如果本库要能在自动化测试中使用，应该如何修改？

@@ -1,27 +1,58 @@
-﻿/**
+/**
  * @file HTTP 服务器。
  *
  * 使用 Node.js 内置 http 模块启动服务器，零外部依赖。
  * 提供 POST /v1/chat/completions 端点模拟 OpenAI 流式输出。
+ *
+ * 场景目录优先级：
+ *   1. --scenarios-dir CLI 参数
+ *   2. ~/.sse-stuntman/scenarios/（用户全局目录）
+ *   3. 内置 src/scenarios/（fallback）
  */
 
 import http from 'node:http'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
 import { parseScenarioFile, listScenarios } from './scenario-parser.mjs'
 import { writeOpenAIStream, writeErrorResponse } from './openai-stream.mjs'
-import { parseCliArgs } from './cli.mjs'
+import { getUserScenariosDir } from './create-scenario.mjs'
 
 /**
  * @import { Scenario, CliOptions } from './types.ts'
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const SCENARIOS_DIR = path.join(__dirname, 'scenarios')
+const BUILTIN_DIR = path.join(__dirname, 'scenarios')
 
-// 场景缓存（每次请求按需加载）
 /** @type {Map<string, Scenario>} */
 const scenarioCache = new Map()
+
+/**
+ * 构建有序的场景目录列表（优先级从高到低）。
+ *
+ * @param {import('./types.ts').CliOptions} options
+ * @returns {string[]}
+ */
+function getScenarioDirs(options) {
+	const dirs = []
+
+	// 1. CLI 显式指定
+	if (options.scenariosDir) {
+		dirs.push(path.resolve(options.scenariosDir))
+	}
+
+	// 2. 用户全局目录 ~/.sse-stuntman/scenarios/
+	const userDir = getUserScenariosDir()
+	if (fs.existsSync(userDir)) {
+		dirs.push(userDir)
+	}
+
+	// 3. 内置目录（始终存在）
+	dirs.push(BUILTIN_DIR)
+
+	return dirs
+}
 
 /**
  * 启动服务器。
@@ -29,14 +60,14 @@ const scenarioCache = new Map()
  * @param {import('./types.ts').CliOptions} options
  */
 export function startServer(options) {
-	// 缓存场景
-	preloadScenarios(options, options.scenario)
+	const scenarioDirs = getScenarioDirs(options)
+
+	// 预加载场景
+	preloadScenarios(scenarioDirs, options)
 
 	const server = http.createServer(async (req, res) => {
-		// CORS 头（对非错误响应也适用）
 		setCorsHeaders(res)
 
-		// OPTIONS 预检
 		if (req.method === 'OPTIONS') {
 			res.writeHead(204)
 			res.end()
@@ -46,51 +77,38 @@ export function startServer(options) {
 		const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
 		const pathname = url.pathname
 
-		// 健康检查
 		if (req.method === 'GET' && pathname === '/health') {
 			res.writeHead(200, { 'Content-Type': 'application/json' })
 			res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }))
 			return
 		}
 
-		// 主页
 		if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
 			res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-			res.end(getIndexHtml(options))
+			res.end(getIndexHtml(options, scenarioDirs))
 			return
 		}
 
-		// OpenAI Chat Completions
 		if (req.method === 'POST' && pathname === '/v1/chat/completions') {
-			// 读取请求体
 			let body = ''
 			try {
 				for await (const chunk of req) {
 					body += chunk
 				}
-			} catch {
-				// 忽略读取错误
-			}
+			} catch { /* ignore */ }
 
-			// 尝试解析请求体中的 model 和 stream 参数
 			let requestModel = null
 			let stream = true
 			if (body) {
 				try {
 					const parsed = JSON.parse(body)
 					requestModel = parsed.model ?? null
-					// stream 可以为 false，但 mock 始终返回流式
 					stream = parsed.stream !== false
-				} catch {
-					// 非 JSON 请求体忽略
-				}
+				} catch { /* ignore */ }
 			}
 
-			// 从请求中选择场景（优先 URL query，其次 body，其次 CLI 参数）
 			const scenarioName = url.searchParams.get('scenario') ?? options.scenario
-
-			// 加载场景
-			const scenario = loadScenario(scenarioName)
+			const scenario = loadScenario(scenarioName, scenarioDirs)
 
 			if (!scenario) {
 				res.writeHead(404, { 'Content-Type': 'application/json' })
@@ -98,7 +116,6 @@ export function startServer(options) {
 				return
 			}
 
-			// 如果 stream=false，返回完整 JSON 而非 SSE
 			if (!stream) {
 				const fullContent = scenario.chunks.map((c) => c.content).join('')
 				res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -120,13 +137,11 @@ export function startServer(options) {
 				return
 			}
 
-			// 错误场景（HTTP 错误）
 			if (scenario.error) {
 				writeErrorResponse(scenario.error, res)
 				return
 			}
 
-			// 设置 SSE 响应头
 			res.writeHead(200, {
 				'Content-Type': 'text/event-stream',
 				'Cache-Control': 'no-cache',
@@ -134,27 +149,21 @@ export function startServer(options) {
 				'X-Accel-Buffering': 'no',
 			})
 
-			// 写入流
 			try {
 				await writeOpenAIStream(scenario.chunks, res, {
 					delay: options.delay,
 					model: requestModel ?? options.model,
 				})
-			} catch (err) {
-				// 客户端断开连接等错误不做处理
-				if (!res.destroyed) {
-					res.end()
-				}
+			} catch {
+				if (!res.destroyed) res.end()
 			}
 			return
 		}
 
-		// 404
 		res.writeHead(404, { 'Content-Type': 'application/json' })
 		res.end(JSON.stringify({ error: { message: 'Not Found' } }))
 	})
 
-	// 优雅关闭
 	const shutdown = () => {
 		server.close(() => {
 			console.log('\nServer shut down.')
@@ -166,7 +175,7 @@ export function startServer(options) {
 
 	const port = options.port
 	server.listen(port, () => {
-		console.log(`\n  🚀 AI SSE Mock Server\n`)
+		console.log(`\n  🏍️  SSE Stuntman — server ready\n`)
 		console.log(`  Server:    http://localhost:${port}`)
 		console.log(`  Endpoint:  POST /v1/chat/completions`)
 		console.log(`  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`)
@@ -178,55 +187,79 @@ export function startServer(options) {
 }
 
 /**
- * 加载一个场景（带缓存）。
+ * 在多个目录中查找场景（优先级：先找到的为准）。
  *
  * @param {string} name
+ * @param {string[]} dirs
  * @returns {Scenario | null}
  */
-function loadScenario(name) {
-	// 检查缓存
+function loadScenario(name, dirs) {
 	const cached = scenarioCache.get(name)
 	if (cached) return cached
 
-	// 尝试从 scenarios 目录加载
-	const filePath = path.join(SCENARIOS_DIR, `${name}.md`)
-	try {
-		const scenario = parseScenarioFile(filePath)
-		scenarioCache.set(name, scenario)
-		return scenario
-	} catch {
-		return null
+	for (const dir of dirs) {
+		const filePath = path.join(dir, `${name}.md`)
+		try {
+			if (fs.existsSync(filePath)) {
+				const scenario = parseScenarioFile(filePath)
+				scenarioCache.set(name, scenario)
+				return scenario
+			}
+		} catch {
+			// 跳过无法解析的场景
+		}
 	}
+
+	return null
 }
 
 /**
- * 预加载场景到缓存。
+ * 预加载所有目录的场景到缓存。
+ * 同名场景：优先级高的目录覆盖优先级低的。
  *
+ * @param {string[]} dirs
  * @param {import('./types.ts').CliOptions} options
- * @param {string} defaultScenario
  */
-function preloadScenarios(options, defaultScenario) {
-	const scenarios = listScenarios(SCENARIOS_DIR)
-	for (const s of scenarios) {
+function preloadScenarios(dirs, options) {
+	// 从低优先级到高优先级加载（高优先级覆盖低优先级）
+	const reversed = [...dirs].reverse()
+	for (const dir of reversed) {
 		try {
-			const scenario = parseScenarioFile(s.file)
-			scenarioCache.set(s.name, scenario)
+			const scenarios = listScenarios(dir)
+			for (const s of scenarios) {
+				try {
+					const scenario = parseScenarioFile(s.file)
+					scenarioCache.set(s.name, scenario)
+				} catch {
+					// 跳过无法解析的场景
+				}
+			}
 		} catch {
-			// 跳过不能解析的场景
+			// 目录不存在则跳过
 		}
 	}
 
 	if (options.list) {
-		console.log('Available scenarios:\n')
-		console.log('  ' + 'Name'.padEnd(25) + ' ' + 'Type'.padEnd(20) + ' Description')
-		console.log('  ' + ''.padEnd(25, '─') + ' ' + ''.padEnd(20, '─') + ' ' + ''.padEnd(30, '─'))
-		for (const s of scenarios) {
-			const cached = scenarioCache.get(s.name)
-			if (cached?.error) {
-				console.log('  ' + s.name.padEnd(25) + ' ' + ('[' + cached.error.type + ']').padEnd(20) + ' ' + (cached.description || 'Simulates HTTP ' + cached.error.type + ' error'))
-			} else {
-				console.log('  ' + s.name.padEnd(25) + ' ' + 'normal'.padEnd(20) + ' ' + (cached?.description || ''))
-			}
+		// 从高优先级到低优先级去重展示
+		const seen = new Set()
+		console.log('\n  Available scenarios:\n')
+		console.log('  ' + 'Name'.padEnd(25) + ' ' + 'Source'.padEnd(22) + ' Description')
+		console.log('  ' + ''.padEnd(25, '─') + ' ' + ''.padEnd(22, '─') + ' ' + ''.padEnd(30, '─'))
+		for (const dir of dirs) {
+			try {
+				const scenarios = listScenarios(dir)
+				for (const s of scenarios) {
+					if (seen.has(s.name)) continue
+					seen.add(s.name)
+					const cached = scenarioCache.get(s.name)
+					const source = dir === BUILTIN_DIR ? 'builtin' : 'custom'
+					if (cached?.error) {
+						console.log('  ' + s.name.padEnd(25) + ' ' + (source + ' [' + cached.error.type + ']').padEnd(22) + ' ' + (cached.description || 'Simulates HTTP ' + cached.error.type + ' error'))
+					} else {
+						console.log('  ' + s.name.padEnd(25) + ' ' + source.padEnd(22) + ' ' + (cached?.description || ''))
+					}
+				}
+			} catch { /* skip */ }
 		}
 		console.log()
 		process.exit(0)
@@ -245,22 +278,31 @@ function setCorsHeaders(res) {
 }
 
 /**
- * 生成主页 HTML（内置状态页，不依赖前端框架）。
+ * 生成主页 HTML。
  *
  * @param {import('./types.ts').CliOptions} options
+ * @param {string[]} dirs
  * @returns {string}
  */
-function getIndexHtml(options) {
-	const scenarios = listScenarios(SCENARIOS_DIR)
-	const scenarioOpts = scenarios
-		.map((s) => `<option value="${s.name}"${s.name === options.scenario ? ' selected' : ''}>${s.name}</option>`)
-		.join('\n')
+function getIndexHtml(options, dirs) {
+	const seen = new Set()
+	const scenarioOpts = []
+	for (const dir of dirs) {
+		try {
+			const scenarios = listScenarios(dir)
+			for (const s of scenarios) {
+				if (seen.has(s.name)) continue
+				seen.add(s.name)
+				scenarioOpts.push(`<option value="${s.name}"${s.name === options.scenario ? ' selected' : ''}>${s.name}</option>`)
+			}
+		} catch { /* skip */ }
+	}
 
 	return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>AI SSE Mock Server</title>
+<title>SSE Stuntman</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; padding: 40px; }
@@ -279,17 +321,17 @@ function getIndexHtml(options) {
 </head>
 <body>
 <div class="container">
-  <h1>AI SSE Mock Server</h1>
-  <p>Simulates AI streaming responses for frontend development.</p>
+  <h1>🏍️  SSE Stuntman</h1>
+  <p>Stunt double for your AI API — simulate streaming responses.</p>
 
   <div class="info">
     Endpoint: <code>POST http://localhost:${options.port}/v1/chat/completions</code><br>
-    Use <code>?scenario=name</code> to switch scenarios via query string.
+    Use <code>?scenario=name</code> to switch scenarios.
   </div>
 
   <div class="card">
     <label for="scenario">Scenario</label>
-    <select id="scenario">${scenarioOpts}</select>
+    <select id="scenario">${scenarioOpts.join('\n')}</select>
 
     <label for="model">Model</label>
     <input id="model" type="text" value="${options.model}" placeholder="gpt-4o">

@@ -1,19 +1,11 @@
 /**
  * @file CLI 参数解析器。
  *
- * 零外部依赖，手写参数解析。支持的选项：
- *
- * ```
- * ai-sse-mock [options]
- *
- * Options:
- *   --port <number>      Server port (default: 11434)
- *   --scenario <name>    Scenario name (default: "default")
- *   --delay <number>     Global delay multiplier, 0.5 = half speed, 2 = double (default: 1)
- *   --model <name>       Default model name in SSE responses (default: "gpt-4o")
- *   --list               List all built-in scenarios and exit
- *   --help               Show help text and exit
- * ```
+ * 支持子命令模式：
+ *   sse-stuntman [options]           # 启动服务器
+ *   sse-stuntman create-scenario <n> # 创建场景
+ *   sse-stuntman --list              # 列出场景
+ *   sse-stuntman --help              # 帮助
  */
 
 /**
@@ -21,37 +13,36 @@
  */
 
 const HELP_TEXT = `
-  AI SSE Mock Server — simulate AI streaming responses
+  SSE Stuntman — stunt double for your AI API
 
   USAGE
-    $ ai-sse-mock [options]
+    $ sse-stuntman [options]              Start mock server
+    $ sse-stuntman create-scenario <name>  Create a new scenario
 
-  OPTIONS
-    --port <number>      Server port                        (default: 11434)
-    --scenario <name>    Scenario name                      (default: "default")
-    --delay <number>     Global delay multiplier            (default: 1)
-    --model <name>       Default model name in SSE events   (default: "gpt-4o")
-    --list               List all built-in scenarios
-    --help               Show this help text
+  SERVER OPTIONS
+    --port <number>          Server port                        (default: 11434)
+    --scenario <name>        Scenario name                      (default: "default")
+    --delay <number>         Global delay multiplier            (default: 1)
+    --model <name>           Default model name in SSE events   (default: "gpt-4o")
+    --scenarios-dir <path>   Custom scenarios directory
+    --list                   List all available scenarios
+    --help                   Show this help text
+
+  SUBCOMMANDS
+    create-scenario <name>   Create a new scenario with template
 
   EXAMPLES
-    $ ai-sse-mock
-    $ ai-sse-mock --port 8080 --scenario markdown-demo
-    $ ai-sse-mock --delay 0.5 --model deepseek-chat
-    $ ai-sse-mock --list
-
-  SCENARIOS
-    delay:set delay in ms between chunks (e.g. <!-- @delay: 200 -->)
-    chunk: change split strategy — sentence|word|char|line|paragraph
-    done:  stop the stream at this point
-    error: whole-file error scenario — rate-limit|content-filter|server-error|timeout|empty
-
-`.trim()
+    $ sse-stuntman
+    $ sse-stuntman --port 8080 --scenario markdown-demo
+    $ sse-stuntman --delay 0.5 --model deepseek-chat
+    $ sse-stuntman --list
+    $ sse-stuntman create-scenario my-code-review
+`
 
 /**
  * 解析 CLI 参数。
  *
- * @param {string[]} argv - 命令行参数（不含 node 和脚本路径）
+ * @param {string[]} argv
  * @returns {import('./types.ts').CliOptions}
  */
 export function parseCliArgs(argv) {
@@ -67,12 +58,24 @@ export function parseCliArgs(argv) {
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]
+
+		// 子命令
+		if (arg === 'create-scenario') {
+			options.createScenario = argv[++i] ?? ''
+			if (!options.createScenario) {
+				console.error('\x1b[31mError:\x1b[0m create-scenario requires a name argument.')
+				console.error('  Example: \x1b[33msse-stuntman create-scenario my-scenario\x1b[0m')
+				process.exit(1)
+			}
+			continue
+		}
+
 		switch (arg) {
 			case '--port': {
 				const val = argv[++i]
 				const parsed = Number(val)
 				if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
-					console.error(`Error: --port must be a valid port number (1-65535), got "${val}"`)
+					console.error(`\x1b[31mError:\x1b[0m --port must be 1-65535, got "${val}"`)
 					process.exit(1)
 				}
 				options.port = parsed
@@ -86,7 +89,7 @@ export function parseCliArgs(argv) {
 				const val = argv[++i]
 				const parsed = Number(val)
 				if (Number.isNaN(parsed) || parsed < 0) {
-					console.error(`Error: --delay must be a non-negative number, got "${val}"`)
+					console.error(`\x1b[31mError:\x1b[0m --delay must be >= 0, got "${val}"`)
 					process.exit(1)
 				}
 				options.delay = parsed
@@ -94,6 +97,10 @@ export function parseCliArgs(argv) {
 			}
 			case '--model': {
 				options.model = argv[++i] ?? 'gpt-4o'
+				break
+			}
+			case '--scenarios-dir': {
+				options.scenariosDir = argv[++i]
 				break
 			}
 			case '--list': {
@@ -107,11 +114,10 @@ export function parseCliArgs(argv) {
 			}
 			default: {
 				if (arg.startsWith('-')) {
-					console.error(`Unknown option: ${arg}`)
-					console.error(`Run "ai-sse-mock --help" for usage.`)
+					console.error(`\x1b[31mUnknown option:\x1b[0m ${arg}`)
+					console.error(`Run "\x1b[33msse-stuntman --help\x1b[0m" for usage.`)
 					process.exit(1)
 				}
-				// 位置参数忽略
 			}
 		}
 	}
