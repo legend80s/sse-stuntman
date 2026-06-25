@@ -54,6 +54,7 @@ CLI 参数 (--port / --scenario / --delay / --model)
 --scenario <name>    场景名                    (默认: "default")
 --delay <number>     全局延迟倍率              (默认: 1)
 --model <name>       SSE 事件的 model 字段     (默认: "gpt-4o")
+--endpoint-path <path>  自定义 POST 端点路径   (默认: "/v1/chat/completions")
 --list               列出所有内置场景并退出
 --help / -h          帮助信息
 ```
@@ -68,7 +69,7 @@ CLI 参数 (--port / --scenario / --delay / --model)
 |------|------|------|
 | `GET` | `/` | HTML 主页（内置测试 UI） |
 | `GET` | `/health` | 健康检查 |
-| `POST` | `/v1/chat/completions` | OpenAI Chat Completions |
+| `POST` | `<endpoint-path>` | OpenAI Chat Completions（默认 `/v1/chat/completions`，可通过 `--endpoint-path` 配置） |
 | `OPTIONS` | `*` | CORS 预检 |
 
 流式请求处理流程：
@@ -81,7 +82,7 @@ CLI 参数 (--port / --scenario / --delay / --model)
 5. 正常场景 → writeOpenAIStream() → SSE 流输出
 ```
 
-场景选择优先级：`POST /v1/chat/completions?scenario=xxx` > 请求体中无字段 > CLI `--scenario`
+场景选择优先级：`POST <endpoint-path>?scenario=xxx` > 请求体 > CLI `--scenario`
 
 ### scenario-parser.mjs — 场景解析器
 

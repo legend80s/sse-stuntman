@@ -17,6 +17,7 @@ sse-stuntman [options]
 | `--scenario` | string | `"default"` | 初始场景名，可被 URL query 覆盖 |
 | `--delay` | number | `1` | 全局延迟倍率。`0.5`=半速，`2`=倍速 |
 | `--model` | string | `"gpt-4o"` | SSE 事件中 `model` 字段的默认值 |
+| `--endpoint-path` / `-e` | string | `"/v1/chat/completions"` | 自定义 POST 端点路径 |
 | `--list` | boolean | — | 列出所有内置场景并退出 |
 | `--help` / `-h` | boolean | — | 显示帮助文本并退出 |
 
@@ -37,6 +38,9 @@ sse-stuntman --list
 
 # 查看帮助
 sse-stuntman --help
+
+# 自定义端点路径
+sse-stuntman --endpoint-path /management-service/api/intelligent-qa/chat
 ```
 
 ### 通过 npx 直接使用
@@ -49,9 +53,9 @@ npx sse-stuntman --port 11434
 
 ## HTTP 接口 / HTTP Endpoints
 
-### POST /v1/chat/completions
+### POST <endpoint-path>（默认 /v1/chat/completions）
 
-模拟 OpenAI Chat Completions 流式接口。
+模拟 OpenAI Chat Completions 流式接口。端点路径可通过 `--endpoint-path` CLI 参数自定义。
 
 #### 请求头
 
@@ -86,7 +90,7 @@ npx sse-stuntman --port 11434
 POST /v1/chat/completions?scenario=markdown-demo
 ```
 
-未指定时使用 `--scenario` CLI 参数的值。
+未指定时使用 `--scenario` CLI 参数的值。可通过 `--endpoint-path` 自定义端点路径。
 
 #### 流式响应 (stream: true)
 

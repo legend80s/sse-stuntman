@@ -35,23 +35,23 @@ const scenarioCache = new Map()
  * @returns {string[]}
  */
 function getScenarioDirs(options) {
-	const dirs = []
+  const dirs = []
 
-	// 1. CLI 显式指定
-	if (options.scenariosDir) {
-		dirs.push(path.resolve(options.scenariosDir))
-	}
+  // 1. CLI 显式指定
+  if (options.scenariosDir) {
+    dirs.push(path.resolve(options.scenariosDir))
+  }
 
-	// 2. 用户全局目录 ~/.sse-stuntman/scenarios/
-	const userDir = getUserScenariosDir()
-	if (fs.existsSync(userDir)) {
-		dirs.push(userDir)
-	}
+  // 2. 用户全局目录 ~/.sse-stuntman/scenarios/
+  const userDir = getUserScenariosDir()
+  if (fs.existsSync(userDir)) {
+    dirs.push(userDir)
+  }
 
-	// 3. 内置目录（始终存在）
-	dirs.push(BUILTIN_DIR)
+  // 3. 内置目录（始终存在）
+  dirs.push(BUILTIN_DIR)
 
-	return dirs
+  return dirs
 }
 
 /**
@@ -60,130 +60,132 @@ function getScenarioDirs(options) {
  * @param {import('./types.ts').CliOptions} options
  */
 export function startServer(options) {
-	const scenarioDirs = getScenarioDirs(options)
+  const scenarioDirs = getScenarioDirs(options)
 
-	// 预加载场景
-	preloadScenarios(scenarioDirs, options)
+  // 预加载场景
+  preloadScenarios(scenarioDirs, options)
 
-	const server = http.createServer(async (req, res) => {
-		setCorsHeaders(res)
+  const endpointPath = options.endpointPath ?? '/v1/chat/completions'
 
-		if (req.method === 'OPTIONS') {
-			res.writeHead(204)
-			res.end()
-			return
-		}
+  const server = http.createServer(async (req, res) => {
+    setCorsHeaders(res)
 
-		const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
-		const pathname = url.pathname
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204)
+      res.end()
+      return
+    }
 
-		if (req.method === 'GET' && pathname === '/health') {
-			res.writeHead(200, { 'Content-Type': 'application/json' })
-			res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }))
-			return
-		}
+    const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
+    const pathname = url.pathname
 
-		if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
-			res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-			res.end(getIndexHtml(options, scenarioDirs))
-			return
-		}
+    if (req.method === 'GET' && pathname === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }))
+      return
+    }
 
-		if (req.method === 'POST' && pathname === '/v1/chat/completions') {
-			let body = ''
-			try {
-				for await (const chunk of req) {
-					body += chunk
-				}
-			} catch { /* ignore */ }
+    if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(getIndexHtml(options, scenarioDirs))
+      return
+    }
 
-			let requestModel = null
-			let stream = true
-			if (body) {
-				try {
-					const parsed = JSON.parse(body)
-					requestModel = parsed.model ?? null
-					stream = parsed.stream !== false
-				} catch { /* ignore */ }
-			}
+    if (req.method === 'POST' && pathname === endpointPath) {
+      let body = ''
+      try {
+        for await (const chunk of req) {
+          body += chunk
+        }
+      } catch { /* ignore */ }
 
-			const scenarioName = url.searchParams.get('scenario') ?? options.scenario
-			const scenario = loadScenario(scenarioName, scenarioDirs)
+      let requestModel = null
+      let stream = true
+      if (body) {
+        try {
+          const parsed = JSON.parse(body)
+          requestModel = parsed.model ?? null
+          stream = parsed.stream !== false
+        } catch { /* ignore */ }
+      }
 
-			if (!scenario) {
-				res.writeHead(404, { 'Content-Type': 'application/json' })
-				res.end(JSON.stringify({ error: { message: `Scenario "${scenarioName}" not found` } }))
-				return
-			}
+      const scenarioName = url.searchParams.get('scenario') ?? options.scenario
+      const scenario = loadScenario(scenarioName, scenarioDirs)
 
-			if (!stream) {
-				const fullContent = scenario.chunks.map((c) => c.content).join('')
-				res.writeHead(200, { 'Content-Type': 'application/json' })
-				res.end(
-					JSON.stringify({
-						id: `chatcmpl-${Date.now()}`,
-						object: 'chat.completion',
-						created: Math.floor(Date.now() / 1000),
-						model: requestModel ?? options.model,
-						choices: [
-							{
-								index: 0,
-								message: { role: 'assistant', content: fullContent },
-								finish_reason: 'stop',
-							},
-						],
-					}),
-				)
-				return
-			}
+      if (!scenario) {
+        res.writeHead(404, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: { message: `Scenario "${scenarioName}" not found` } }))
+        return
+      }
 
-			if (scenario.error) {
-				writeErrorResponse(scenario.error, res)
-				return
-			}
+      if (!stream) {
+        const fullContent = scenario.chunks.map((c) => c.content).join('')
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            id: `chatcmpl-${Date.now()}`,
+            object: 'chat.completion',
+            created: Math.floor(Date.now() / 1000),
+            model: requestModel ?? options.model,
+            choices: [
+              {
+                index: 0,
+                message: { role: 'assistant', content: fullContent },
+                finish_reason: 'stop',
+              },
+            ],
+          }),
+        )
+        return
+      }
 
-			res.writeHead(200, {
-				'Content-Type': 'text/event-stream',
-				'Cache-Control': 'no-cache',
-				Connection: 'keep-alive',
-				'X-Accel-Buffering': 'no',
-			})
+      if (scenario.error) {
+        writeErrorResponse(scenario.error, res)
+        return
+      }
 
-			try {
-				await writeOpenAIStream(scenario.chunks, res, {
-					delay: options.delay,
-					model: requestModel ?? options.model,
-				})
-			} catch {
-				if (!res.destroyed) res.end()
-			}
-			return
-		}
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      })
 
-		res.writeHead(404, { 'Content-Type': 'application/json' })
-		res.end(JSON.stringify({ error: { message: 'Not Found' } }))
-	})
+      try {
+        await writeOpenAIStream(scenario.chunks, res, {
+          delay: options.delay,
+          model: requestModel ?? options.model,
+        })
+      } catch {
+        if (!res.destroyed) res.end()
+      }
+      return
+    }
 
-	const shutdown = () => {
-		server.close(() => {
-			console.log('\nServer shut down.')
-			process.exit(0)
-		})
-	}
-	process.on('SIGINT', shutdown)
-	process.on('SIGTERM', shutdown)
+    res.writeHead(404, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ error: { message: 'Not Found' } }))
+  })
 
-	const port = options.port
-	server.listen(port, () => {
-		console.log(`\n  🏍️  SSE Stuntman — server ready\n`)
-		console.log(`  Server:    http://localhost:${port}`)
-		console.log(`  Endpoint:  POST /v1/chat/completions`)
-		console.log(`  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`)
-		console.log(`  Delay:     ${options.delay}x`)
-		console.log(`\n  Press Ctrl+C to stop.\n`)
-	})
+  const shutdown = () => {
+    server.close(() => {
+      console.log('\nServer shut down.')
+      process.exit(0)
+    })
+  }
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
 
-	return server
+  const port = options.port
+  server.listen(port, () => {
+    console.log(`\n  🏍️  SSE Stuntman — server ready\n`)
+    console.log(`  Server:    http://localhost:${port}`)
+    console.log(`  Endpoint:  POST ${endpointPath}`)
+    console.log(`  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`)
+    console.log(`  Delay:     ${options.delay}x`)
+    console.log(`\n  Press Ctrl+C to stop.\n`)
+  })
+
+  return server
 }
 
 /**
@@ -194,23 +196,23 @@ export function startServer(options) {
  * @returns {Scenario | null}
  */
 function loadScenario(name, dirs) {
-	const cached = scenarioCache.get(name)
-	if (cached) return cached
+  const cached = scenarioCache.get(name)
+  if (cached) return cached
 
-	for (const dir of dirs) {
-		const filePath = path.join(dir, `${name}.md`)
-		try {
-			if (fs.existsSync(filePath)) {
-				const scenario = parseScenarioFile(filePath)
-				scenarioCache.set(name, scenario)
-				return scenario
-			}
-		} catch {
-			// 跳过无法解析的场景
-		}
-	}
+  for (const dir of dirs) {
+    const filePath = path.join(dir, `${name}.md`)
+    try {
+      if (fs.existsSync(filePath)) {
+        const scenario = parseScenarioFile(filePath)
+        scenarioCache.set(name, scenario)
+        return scenario
+      }
+    } catch {
+      // 跳过无法解析的场景
+    }
+  }
 
-	return null
+  return null
 }
 
 /**
@@ -221,49 +223,49 @@ function loadScenario(name, dirs) {
  * @param {import('./types.ts').CliOptions} options
  */
 function preloadScenarios(dirs, options) {
-	// 从低优先级到高优先级加载（高优先级覆盖低优先级）
-	const reversed = [...dirs].reverse()
-	for (const dir of reversed) {
-		try {
-			const scenarios = listScenarios(dir)
-			for (const s of scenarios) {
-				try {
-					const scenario = parseScenarioFile(s.file)
-					scenarioCache.set(s.name, scenario)
-				} catch {
-					// 跳过无法解析的场景
-				}
-			}
-		} catch {
-			// 目录不存在则跳过
-		}
-	}
+  // 从低优先级到高优先级加载（高优先级覆盖低优先级）
+  const reversed = [...dirs].reverse()
+  for (const dir of reversed) {
+    try {
+      const scenarios = listScenarios(dir)
+      for (const s of scenarios) {
+        try {
+          const scenario = parseScenarioFile(s.file)
+          scenarioCache.set(s.name, scenario)
+        } catch {
+          // 跳过无法解析的场景
+        }
+      }
+    } catch {
+      // 目录不存在则跳过
+    }
+  }
 
-	if (options.list) {
-		// 从高优先级到低优先级去重展示
-		const seen = new Set()
-		console.log('\n  Available scenarios:\n')
-		console.log('  ' + 'Name'.padEnd(25) + ' ' + 'Source'.padEnd(22) + ' Description')
-		console.log('  ' + ''.padEnd(25, '─') + ' ' + ''.padEnd(22, '─') + ' ' + ''.padEnd(30, '─'))
-		for (const dir of dirs) {
-			try {
-				const scenarios = listScenarios(dir)
-				for (const s of scenarios) {
-					if (seen.has(s.name)) continue
-					seen.add(s.name)
-					const cached = scenarioCache.get(s.name)
-					const source = dir === BUILTIN_DIR ? 'builtin' : 'custom'
-					if (cached?.error) {
-						console.log('  ' + s.name.padEnd(25) + ' ' + (source + ' [' + cached.error.type + ']').padEnd(22) + ' ' + (cached.description || 'Simulates HTTP ' + cached.error.type + ' error'))
-					} else {
-						console.log('  ' + s.name.padEnd(25) + ' ' + source.padEnd(22) + ' ' + (cached?.description || ''))
-					}
-				}
-			} catch { /* skip */ }
-		}
-		console.log()
-		process.exit(0)
-	}
+  if (options.list) {
+    // 从高优先级到低优先级去重展示
+    const seen = new Set()
+    console.log('\n  Available scenarios:\n')
+    console.log('  ' + 'Name'.padEnd(25) + ' ' + 'Source'.padEnd(22) + ' Description')
+    console.log('  ' + ''.padEnd(25, '─') + ' ' + ''.padEnd(22, '─') + ' ' + ''.padEnd(30, '─'))
+    for (const dir of dirs) {
+      try {
+        const scenarios = listScenarios(dir)
+        for (const s of scenarios) {
+          if (seen.has(s.name)) continue
+          seen.add(s.name)
+          const cached = scenarioCache.get(s.name)
+          const source = dir === BUILTIN_DIR ? 'builtin' : 'custom'
+          if (cached?.error) {
+            console.log('  ' + s.name.padEnd(25) + ' ' + (source + ' [' + cached.error.type + ']').padEnd(22) + ' ' + (cached.description || 'Simulates HTTP ' + cached.error.type + ' error'))
+          } else {
+            console.log('  ' + s.name.padEnd(25) + ' ' + source.padEnd(22) + ' ' + (cached?.description || ''))
+          }
+        }
+      } catch { /* skip */ }
+    }
+    console.log()
+    process.exit(0)
+  }
 }
 
 /**
@@ -272,9 +274,9 @@ function preloadScenarios(dirs, options) {
  * @param {import('node:http').ServerResponse} res
  */
 function setCorsHeaders(res) {
-	res.setHeader('Access-Control-Allow-Origin', '*')
-	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-	res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 }
 
 /**
@@ -285,20 +287,22 @@ function setCorsHeaders(res) {
  * @returns {string}
  */
 function getIndexHtml(options, dirs) {
-	const seen = new Set()
-	const scenarioOpts = []
-	for (const dir of dirs) {
-		try {
-			const scenarios = listScenarios(dir)
-			for (const s of scenarios) {
-				if (seen.has(s.name)) continue
-				seen.add(s.name)
-				scenarioOpts.push(`<option value="${s.name}"${s.name === options.scenario ? ' selected' : ''}>${s.name}</option>`)
-			}
-		} catch { /* skip */ }
-	}
+  const seen = new Set()
+  const scenarioOpts = []
+  for (const dir of dirs) {
+    try {
+      const scenarios = listScenarios(dir)
+      for (const s of scenarios) {
+        if (seen.has(s.name)) continue
+        seen.add(s.name)
+        scenarioOpts.push(`<option value="${s.name}"${s.name === options.scenario ? ' selected' : ''}>${s.name}</option>`)
+      }
+    } catch { /* skip */ }
+  }
 
-	return `<!DOCTYPE html>
+  const ep = options.endpointPath ?? '/v1/chat/completions'
+
+  return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -325,7 +329,7 @@ function getIndexHtml(options, dirs) {
   <p>Stunt double for your AI API — simulate streaming responses.</p>
 
   <div class="info">
-    Endpoint: <code>POST http://localhost:${options.port}/v1/chat/completions</code><br>
+    Endpoint: <code>POST http://localhost:${options.port}${ep}</code><br>
     Use <code>?scenario=name</code> to switch scenarios.
   </div>
 
@@ -353,7 +357,7 @@ async function testStream() {
   output.textContent = 'Connecting...';
 
   try {
-    const res = await fetch('/v1/chat/completions?scenario=' + scenario, {
+    const res = await fetch('${ep}?scenario=' + scenario, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, stream: true, messages: [{ role: 'user', content: 'Hello' }] })

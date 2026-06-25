@@ -77,6 +77,7 @@ sse-stuntman create-scenario <name>
 | `--scenario <name>` | `default` | 初始场景 |
 | `--delay <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
 | `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
+| `--endpoint-path <path>` | `/v1/chat/completions` | 自定义 POST 端点路径（如 `/my/custom/path`） |
 | `--scenarios-dir <path>` | — | 自定义场景目录（覆盖默认路径） |
 | `--list` | — | 列出所有内置 + 自定义场景 |
 | `create-scenario <name>` | — | 创建新场景模板 |
@@ -104,6 +105,9 @@ sse-stuntman --scenario my-code-review
 
 # 半速输出
 sse-stuntman --delay 0.5
+
+# 自定义端点路径（用于无法修改代码的客户端）
+sse-stuntman --endpoint-path /management-service/api/intelligent-qa/chat
 ```
 
 ---

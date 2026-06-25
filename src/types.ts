@@ -66,6 +66,8 @@ export interface CliOptions {
   /** 全局延迟倍率，1 = 正常速度 */
   delay: number
   model: string
+  /** 自定义 POST 端点路径（默认 /v1/chat/completions） */
+  endpointPath?: string
   list: boolean
   help: boolean
   /** 自定义场景目录 */

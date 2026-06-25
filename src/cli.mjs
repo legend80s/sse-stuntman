@@ -28,6 +28,7 @@ const HELP_TEXT = `
     -s, --scenario <name>    Scenario name                      (default: "default")
     -d, --delay <number>     Global delay multiplier            (default: 1)
     -m, --model <name>       Default model name in SSE events   (default: "gpt-4o")
+    -e, --endpoint-path <path> Custom POST endpoint path        (default: "/v1/chat/completions")
     --scenarios-dir <path>   Custom scenarios directory
     -l, --list               List all available scenarios
     -h, --help               Show this help text
@@ -57,6 +58,7 @@ export function parseCliArgs(argv) {
       scenario: { type: "string", default: "default", short: "s" },
       delay: { type: "string", default: "1", short: "d" },
       model: { type: "string", default: "gpt-4o", short: "m" },
+      "endpoint-path": { type: "string", default: "/v1/chat/completions", short: "e" },
       "scenarios-dir": { type: "string" },
       list: { type: "boolean", default: false, short: "l" },
       help: { type: "boolean", default: false, short: "h" },
@@ -85,6 +87,7 @@ export function parseCliArgs(argv) {
       list: false,
       help: false,
       createScenario: name,
+      endpointPath: "/v1/chat/completions",
     }
   }
 
@@ -106,11 +109,21 @@ export function parseCliArgs(argv) {
     process.exit(1)
   }
 
+  // 规范化 endpoint-path：确保前导 /，去除尾部 /
+  let endpointPath = values["endpoint-path"] ?? "/v1/chat/completions"
+  if (!endpointPath.startsWith("/")) {
+    endpointPath = "/" + endpointPath
+  }
+  while (endpointPath.endsWith("/") && endpointPath !== "/") {
+    endpointPath = endpointPath.slice(0, -1)
+  }
+
   return {
     port,
     scenario: values.scenario ?? "default",
     delay,
     model: values.model ?? "gpt-4o",
+    endpointPath,
     list: values.list ?? false,
     help: values.help ?? false,
     scenariosDir: values["scenarios-dir"],

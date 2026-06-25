@@ -224,6 +224,87 @@ describe('server', () => {
     })
   })
 
+  describe('custom endpoint path', () => {
+    it('should handle POST to custom endpoint path', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events, finished } = await sseRequest(server, {
+          method: 'POST',
+          path: '/my-custom/path',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }], stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(events.length > 2)
+        assert.ok(finished)
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should return 404 for default path when custom path is set', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status } = await request(server, {
+          method: 'POST',
+          path: '/v1/chat/completions',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+
+        assert.equal(status, 404)
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should handle ?scenario= query with custom endpoint path', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events } = await sseRequest(server, {
+          method: 'POST',
+          path: '/my-custom/path?scenario=empty',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(events.some(e => e === '[DONE]'))
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should handle error scenario with custom endpoint path', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status } = await request(server, {
+          method: 'POST',
+          path: '/my-custom/path?scenario=error-rate-limit',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+
+        assert.equal(status, 429)
+      } finally {
+        server.close()
+      }
+    })
+  })
+
   describe('CORS', () => {
     it('should return CORS headers on OPTIONS', async () => {
       const port = getPort()

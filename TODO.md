@@ -14,3 +14,4 @@
 - [ ] Add English README
 - [x] fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
 - [ ] 测试 word by word SSE mock
+- [ ] 当 server 已启动，用户新增的场景，如何让 server 知道？增加 `sse-stuntman --watch` 命令？
