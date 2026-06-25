@@ -26,7 +26,7 @@ describe("scenario-parser", () => {
       assert.equal(result.chunks.length, 2)
       // first chunk: "# Hello\n\nThis is a test." — sentence split
       assert.ok(result.chunks[0].content.length > 0)
-      assert.equal(result.chunks[0].delay, 50) // default delay
+      assert.equal(result.chunks[0].delay, 5) // default delay
       // second chunk after @delay:100
       assert.equal(result.chunks[1].content.trim(), "Second paragraph.")
       assert.equal(result.chunks[1].delay, 100)
@@ -81,19 +81,19 @@ describe("scenario-parser", () => {
       assert.deepStrictEqual(result, {
         name: "test",
         chunks: [
-          { content: "这是逐句输出的效果 Hello world.", delay: 50 },
-          { content: "这", delay: 50 },
-          { content: "是", delay: 50 },
-          { content: "逐词", delay: 50 },
-          { content: "输出", delay: 50 },
-          { content: "的", delay: 50 },
-          { content: "效果", delay: 50 },
-          { content: "word1", delay: 50 },
-          { content: " ", delay: 50 },
-          { content: "word2", delay: 50 },
-          { content: " ", delay: 50 },
-          { content: "word3", delay: 50 },
-          { content: ".", delay: 50 },
+          { content: "这是逐句输出的效果 Hello world.", delay: 5 },
+          { content: "这", delay: 5 },
+          { content: "是", delay: 5 },
+          { content: "逐词", delay: 5 },
+          { content: "输出", delay: 5 },
+          { content: "的", delay: 5 },
+          { content: "效果", delay: 5 },
+          { content: "word1", delay: 5 },
+          { content: " ", delay: 5 },
+          { content: "word2", delay: 5 },
+          { content: " ", delay: 5 },
+          { content: "word3", delay: 5 },
+          { content: ".", delay: 5 },
         ],
         description: "",
       })
@@ -139,7 +139,7 @@ describe("scenario-parser", () => {
       for (const chunk of wordChunks) {
         assert.equal(
           chunk.delay,
-          50,
+          5,
           "Word chunks should carry the default delay",
         )
       }

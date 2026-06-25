@@ -65,6 +65,8 @@ export interface CliOptions {
   scenario: string
   /** 全局延迟倍率，1 = 正常速度 */
   delay: number
+  /** 场景内未显式指定 @delay 时的默认延迟（ms），默认 5 */
+  defaultDelay?: number
   model: string
   /** 自定义 POST 端点路径列表（默认 ['/v1/chat/completions']） */
   endpointPaths?: string[]

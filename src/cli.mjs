@@ -29,6 +29,11 @@ const HELP_TEXT = `
     -p, --port <number>      Server port                        (default: 11434)
     -s, --scenario <name>    Scenario name                      (default: "default")
     -d, --delay <number>     Global delay multiplier            (default: 1)
+                             Each chunk's delay (ms) is multiplied by this value.
+                             e.g. @delay: 200 + --delay 2 = 400ms per chunk
+    --default-delay <number> Default delay for chunks (ms)       (default: 5)
+                             When scenario has no @delay, this value is used.
+                             Can be overridden per-section with @delay in .md.
     -m, --model <name>       Default model name in SSE events   (default: "gpt-4o")
     -e, --endpoint-path <path>  Custom POST endpoint path       (default: "/v1/chat/completions")
                              (can be specified multiple times for multiple paths)
@@ -56,6 +61,7 @@ const DEFAULTS = {
   port: 11434,
   scenario: "default",
   delay: 1,
+  defaultDelay: 5,
   model: "gpt-4o",
   endpointPaths: ["/v1/chat/completions"],
   list: false,
@@ -77,6 +83,7 @@ export function parseCliArgs(argv) {
       port: { type: "string", short: "p" },
       scenario: { type: "string", short: "s" },
       delay: { type: "string", short: "d" },
+      "default-delay": { type: "string" },
       model: { type: "string", short: "m" },
       "endpoint-path": { type: "string", multiple: true, short: "e" },
       "scenarios-dir": { type: "string" },
@@ -119,6 +126,9 @@ export function parseCliArgs(argv) {
   if (values.delay !== undefined) {
     cliValues.delay = Number(values.delay)
   }
+  if (values["default-delay"] !== undefined) {
+    cliValues.defaultDelay = Number(values["default-delay"])
+  }
   if (values.model !== undefined) {
     cliValues.model = values.model
   }
@@ -157,6 +167,16 @@ export function parseCliArgs(argv) {
     }
   }
 
+  // 校验 default-delay
+  if (cliValues.defaultDelay != null) {
+    if (Number.isNaN(cliValues.defaultDelay) || cliValues.defaultDelay < 0) {
+      console.error(
+        `\x1b[31mError:\x1b[0m --default-delay must be >= 0, got "${values["default-delay"]}"`,
+      )
+      process.exit(1)
+    }
+  }
+
   return cliValues
 }
 
@@ -181,6 +201,9 @@ export function mergeOptions(cliValues, configValues) {
     if (configValues.delay != null) {
       result.delay = configValues.delay
     }
+    if (configValues.defaultDelay != null) {
+      result.defaultDelay = configValues.defaultDelay
+    }
     if (configValues.model != null) {
       result.model = configValues.model
     }
@@ -201,6 +224,9 @@ export function mergeOptions(cliValues, configValues) {
   }
   if (cliValues.delay != null) {
     result.delay = cliValues.delay
+  }
+  if (cliValues.defaultDelay != null) {
+    result.defaultDelay = cliValues.defaultDelay
   }
   if (cliValues.model != null) {
     result.model = cliValues.model

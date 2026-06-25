@@ -110,7 +110,7 @@ export function startServer(options) {
       }
 
       const scenarioName = url.searchParams.get('scenario') ?? options.scenario
-      const scenario = loadScenario(scenarioName, scenarioDirs)
+      const scenario = loadScenario(scenarioName, scenarioDirs, options.defaultDelay)
 
       if (!scenario) {
         res.writeHead(404, { 'Content-Type': 'application/json' })
@@ -181,7 +181,12 @@ export function startServer(options) {
     console.log(`  Server:    http://localhost:${port}`)
     console.log(`  Endpoint(s): POST ${endpointPaths.join(', POST ')}`)
     console.log(`  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`)
-    console.log(`  Delay:     ${options.delay}x`)
+    const baseDelay = options.defaultDelay ?? 5
+    console.log(`  Delay:     ${options.delay}x  (multiplier — each @delay in scenario is multiplied by this)`)
+    console.log(`  Default:   ${baseDelay}ms  (used when scenario has no @delay)`)
+    if (options.delay !== 1) {
+      console.log(`             effective: ${options.delay * baseDelay}ms`)
+    }
     console.log(`\n  Press Ctrl+C to stop.\n`)
   })
 
@@ -193,9 +198,10 @@ export function startServer(options) {
  *
  * @param {string} name
  * @param {string[]} dirs
+ * @param {number} [defaultDelay]
  * @returns {Scenario | null}
  */
-function loadScenario(name, dirs) {
+function loadScenario(name, dirs, defaultDelay) {
   const cached = scenarioCache.get(name)
   if (cached) return cached
 
@@ -203,7 +209,7 @@ function loadScenario(name, dirs) {
     const filePath = path.join(dir, `${name}.md`)
     try {
       if (fs.existsSync(filePath)) {
-        const scenario = parseScenarioFile(filePath)
+        const scenario = parseScenarioFile(filePath, defaultDelay != null ? { defaultDelay } : undefined)
         scenarioCache.set(name, scenario)
         return scenario
       }
@@ -230,7 +236,7 @@ function preloadScenarios(dirs, options) {
       const scenarios = listScenarios(dir)
       for (const s of scenarios) {
         try {
-          const scenario = parseScenarioFile(s.file)
+          const scenario = parseScenarioFile(s.file, options.defaultDelay != null ? { defaultDelay: options.defaultDelay } : undefined)
           scenarioCache.set(s.name, scenario)
         } catch {
           // 跳过无法解析的场景

@@ -12,6 +12,7 @@
  *     port: 8080,
  *     scenario: 'my-scenario',
  *     delay: 0.5,
+ *     defaultDelay: 10,
  *     model: 'deepseek-chat',
  *     endpointPaths: ['/management-service/api/intelligent-qa/chat'],
  *     scenariosDir: '/path/to/scenarios',
@@ -88,6 +89,13 @@ function normalizeConfig(raw) {
 
   if (raw.scenario != null) {
     config.scenario = String(raw.scenario)
+  }
+
+  if (raw.defaultDelay != null) {
+    const defaultDelay = Number(raw.defaultDelay)
+    if (!Number.isNaN(defaultDelay) && defaultDelay >= 0) {
+      config.defaultDelay = defaultDelay
+    }
   }
 
   if (raw.delay != null) {

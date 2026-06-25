@@ -59,9 +59,12 @@ import path from "node:path"
  * 解析单个 .md 场景文件。
  *
  * @param {string} filePath - .md 文件的绝对路径
+ * @param {object} [options]
+ * @param {number} [options.defaultDelay=5] - 场景内未显式指定 @delay 时的默认延迟（ms）
  * @returns {Scenario}
  */
-export function parseScenarioFile(filePath) {
+export function parseScenarioFile(filePath, options = {}) {
+  const { defaultDelay = 5 } = options
   const content = fs.readFileSync(filePath, "utf-8")
   const basename = path.basename(filePath, ".md")
 
@@ -84,7 +87,7 @@ export function parseScenarioFile(filePath) {
 
   /** @type {import('./types.ts').Chunk[]} */
   const chunks = []
-  let currentDelay = 50
+  let currentDelay = defaultDelay
   let currentStrategy = /** @type {ChunkStrategy} */ ("sentence")
   let description = ""
   let textBuffer = ""
