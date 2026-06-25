@@ -1,12 +1,16 @@
 /**
  * @file CLI 参数解析器。
  *
+ * 使用 Node.js built-in `parseArgs`（`node:util`），零外部依赖。
+ *
  * 支持子命令模式：
  *   sse-stuntman [options]           # 启动服务器
  *   sse-stuntman create-scenario <n> # 创建场景
  *   sse-stuntman --list              # 列出场景
  *   sse-stuntman --help              # 帮助
  */
+
+import { parseArgs } from "node:util"
 
 /**
  * @import { CliOptions } from './types.ts'
@@ -46,88 +50,76 @@ const HELP_TEXT = `
  * @returns {import('./types.ts').CliOptions}
  */
 export function parseCliArgs(argv) {
-	/** @type {import('./types.ts').CliOptions} */
-	const options = {
-		port: 11434,
-		scenario: 'default',
-		delay: 1,
-		model: 'gpt-4o',
-		list: false,
-		help: false,
-	}
+  const { values, positionals } = parseArgs({
+    args: argv,
+    options: {
+      port: { type: "string", default: "11434" },
+      scenario: { type: "string", default: "default" },
+      delay: { type: "string", default: "1" },
+      model: { type: "string", default: "gpt-4o" },
+      "scenarios-dir": { type: "string" },
+      list: { type: "boolean", default: false },
+      help: { type: "boolean", default: false },
+    },
+    allowPositionals: true,
+    strict: true,
+  })
 
-	for (let i = 0; i < argv.length; i++) {
-		const arg = argv[i]
+  // 子命令 create-scenario
+  if (positionals.length > 0 && positionals[0] === "create-scenario") {
+    const name = positionals[1]
+    if (!name) {
+      console.error(
+        "\x1b[31mError:\x1b[0m create-scenario requires a name argument.",
+      )
+      console.error(
+        "  Example: \x1b[33msse-stuntman create-scenario my-scenario\x1b[0m",
+      )
+      process.exit(1)
+    }
+    return {
+      port: 11434,
+      scenario: "default",
+      delay: 1,
+      model: "gpt-4o",
+      list: false,
+      help: false,
+      createScenario: name,
+    }
+  }
 
-		// 子命令
-		if (arg === 'create-scenario') {
-			options.createScenario = argv[++i] ?? ''
-			if (!options.createScenario) {
-				console.error('\x1b[31mError:\x1b[0m create-scenario requires a name argument.')
-				console.error('  Example: \x1b[33msse-stuntman create-scenario my-scenario\x1b[0m')
-				process.exit(1)
-			}
-			continue
-		}
+  // 校验 port
+  const port = Number(values.port)
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    console.error(
+      `\x1b[31mError:\x1b[0m --port must be 1-65535, got "${values.port}"`,
+    )
+    process.exit(1)
+  }
 
-		switch (arg) {
-			case '--port': {
-				const val = argv[++i]
-				const parsed = Number(val)
-				if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
-					console.error(`\x1b[31mError:\x1b[0m --port must be 1-65535, got "${val}"`)
-					process.exit(1)
-				}
-				options.port = parsed
-				break
-			}
-			case '--scenario': {
-				options.scenario = argv[++i] ?? 'default'
-				break
-			}
-			case '--delay': {
-				const val = argv[++i]
-				const parsed = Number(val)
-				if (Number.isNaN(parsed) || parsed < 0) {
-					console.error(`\x1b[31mError:\x1b[0m --delay must be >= 0, got "${val}"`)
-					process.exit(1)
-				}
-				options.delay = parsed
-				break
-			}
-			case '--model': {
-				options.model = argv[++i] ?? 'gpt-4o'
-				break
-			}
-			case '--scenarios-dir': {
-				options.scenariosDir = argv[++i]
-				break
-			}
-			case '--list': {
-				options.list = true
-				break
-			}
-			case '--help':
-			case '-h': {
-				options.help = true
-				break
-			}
-			default: {
-				if (arg.startsWith('-')) {
-					console.error(`\x1b[31mUnknown option:\x1b[0m ${arg}`)
-					console.error(`Run "\x1b[33msse-stuntman --help\x1b[0m" for usage.`)
-					process.exit(1)
-				}
-			}
-		}
-	}
+  // 校验 delay
+  const delay = Number(values.delay)
+  if (Number.isNaN(delay) || delay < 0) {
+    console.error(
+      `\x1b[31mError:\x1b[0m --delay must be >= 0, got "${values.delay}"`,
+    )
+    process.exit(1)
+  }
 
-	return options
+  return {
+    port,
+    scenario: values.scenario ?? "default",
+    delay,
+    model: values.model ?? "gpt-4o",
+    list: values.list ?? false,
+    help: values.help ?? false,
+    scenariosDir: values["scenarios-dir"],
+  }
 }
 
 /**
  * 打印帮助文本。
  */
 export function printHelp() {
-	console.log(HELP_TEXT)
+  console.log(HELP_TEXT)
 }

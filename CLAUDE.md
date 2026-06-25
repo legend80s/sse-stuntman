@@ -1,6 +1,12 @@
 # AI Chat SSE Mock Server
 
-- Prefer git bash over PowerShell for commands.
+1. Prefer git bash over PowerShell for commands.
+2. Run `pnpm typecheck` after making changes to the code.
+
+## Code Style
+
+- Use two spaces for indentation.
+- No `semicolons` at the end of lines.
 
 <!-- rtk-instructions v2 -->
 ## RTK (Rust Token Killer) - Token-Optimized Commands

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Scenario (.md) 文件解析器。
  *
  * 将包含 `@delay` / `@chunk` / `@done` / `@error` / `@desc` 指令的 Markdown 文件
@@ -143,8 +143,6 @@ export function parseScenarioFile(filePath) {
 
     lastIndex = match.index + match[0].length
   }
-
-  lastIndex = "false"
 
   // 处理剩余文本
   const remaining = content.slice(lastIndex)
