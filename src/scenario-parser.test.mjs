@@ -64,12 +64,32 @@ describe("scenario-parser", () => {
       assert.equal(doneChunk.done, true)
     })
 
-    it("should handle @chunk strategy changes", () => {
+    it.only("should handle @chunk strategy changes", () => {
       const dir = mkdtempSync(join(tmpdir(), "test-"))
       const file = join(dir, "test.md")
       writeFileSync(
         file,
-        "这是逐句输出的效果 Hello world.\n\n<!-- @chunk: word -->\n\n这是逐词输出的效果word1 word2 word3.",
+        `这是逐句输出的效果 Hello world.
+
+<!-- @delay: 100 -->
+
+支持 **markdown** 语法、代码块、表格等。
+
+
+<!-- @delay: 150 -->
+
+\`\`\`javascript
+console.log("Hello from temp");
+\`\`\`
+
+
+<!-- @delay: 120 -->
+
+> 提示：使用 \`@chunk: word\` 切换为逐词输出。
+
+<!-- @chunk: word -->
+
+这是逐词输出的效果word1 word2 word3.`,
         "utf-8",
       )
 
@@ -81,19 +101,39 @@ describe("scenario-parser", () => {
       assert.deepStrictEqual(result, {
         name: "test",
         chunks: [
-          { content: "这是逐句输出的效果 Hello world.", delay: 5 },
-          { content: "这", delay: 5 },
-          { content: "是", delay: 5 },
-          { content: "逐词", delay: 5 },
-          { content: "输出", delay: 5 },
-          { content: "的", delay: 5 },
-          { content: "效果", delay: 5 },
-          { content: "word1", delay: 5 },
-          { content: " ", delay: 5 },
-          { content: "word2", delay: 5 },
-          { content: " ", delay: 5 },
-          { content: "word3", delay: 5 },
-          { content: ".", delay: 5 },
+          { content: "这是逐句输出的效果 Hello world.\n", delay: 5 },
+          {
+            content: "支持 **markdown** 语法、代码块、表格等。\n",
+            delay: 100,
+          },
+          {
+            content: "```javascript\n",
+            delay: 150,
+          },
+          {
+            content: 'console.log("Hello from temp");\n',
+            delay: 150,
+          },
+          {
+            content: "```\n",
+            delay: 150,
+          },
+          {
+            content: "> 提示：使用 `@chunk: word` 切换为逐词输出。\n",
+            delay: 120,
+          },
+          { content: "这", delay: 120 },
+          { content: "是", delay: 120 },
+          { content: "逐词", delay: 120 },
+          { content: "输出", delay: 120 },
+          { content: "的", delay: 120 },
+          { content: "效果", delay: 120 },
+          { content: "word1", delay: 120 },
+          { content: " ", delay: 120 },
+          { content: "word2", delay: 120 },
+          { content: " ", delay: 120 },
+          { content: "word3", delay: 120 },
+          { content: ".", delay: 120 },
         ],
         description: "",
       })

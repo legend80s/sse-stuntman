@@ -10,20 +10,20 @@
  *   3. 内置 src/scenarios/（fallback）
  */
 
-import http from 'node:http'
-import { fileURLToPath } from 'node:url'
-import path from 'node:path'
-import fs from 'node:fs'
-import { parseScenarioFile, listScenarios } from './scenario-parser.mjs'
-import { writeOpenAIStream, writeErrorResponse } from './openai-stream.mjs'
-import { getUserScenariosDir } from './commands/create-scenario.mjs'
+import fs from "node:fs"
+import http from "node:http"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import { getUserScenariosDir } from "./commands/create-scenario.mjs"
+import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
+import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
 
 /**
  * @import { Scenario, CliOptions } from './types.ts'
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const BUILTIN_DIR = path.join(__dirname, 'scenarios')
+const BUILTIN_DIR = path.join(__dirname, "scenarios")
 
 /** @type {Map<string, Scenario>} */
 const scenarioCache = new Map()
@@ -65,39 +65,44 @@ export function startServer(options) {
   // 预加载场景
   preloadScenarios(scenarioDirs, options)
 
-  const endpointPaths = options.endpointPaths ?? ['/v1/chat/completions']
+  const endpointPaths = options.endpointPaths ?? ["/v1/chat/completions"]
 
   const server = http.createServer(async (req, res) => {
     setCorsHeaders(res)
 
-    if (req.method === 'OPTIONS') {
+    if (req.method === "OPTIONS") {
       res.writeHead(204)
       res.end()
       return
     }
 
-    const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
+    const url = new URL(req.url ?? "/", `http://${req.headers.host}`)
     const pathname = url.pathname
 
-    if (req.method === 'GET' && pathname === '/health') {
-      res.writeHead(200, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }))
+    if (req.method === "GET" && pathname === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" })
+      res.end(JSON.stringify({ status: "ok", uptime: process.uptime() }))
       return
     }
 
-    if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+    if (
+      req.method === "GET" &&
+      (pathname === "/" || pathname === "/index.html")
+    ) {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
       res.end(getIndexHtml(options, scenarioDirs))
       return
     }
 
-    if (req.method === 'POST' && endpointPaths.includes(pathname)) {
-      let body = ''
+    if (req.method === "POST" && endpointPaths.includes(pathname)) {
+      let body = ""
       try {
         for await (const chunk of req) {
           body += chunk
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
 
       let requestModel = null
       let stream = true
@@ -106,32 +111,42 @@ export function startServer(options) {
           const parsed = JSON.parse(body)
           requestModel = parsed.model ?? null
           stream = parsed.stream !== false
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
 
-      const scenarioName = url.searchParams.get('scenario') ?? options.scenario
-      const scenario = loadScenario(scenarioName, scenarioDirs, options.defaultDelay)
+      const scenarioName = url.searchParams.get("scenario") ?? options.scenario
+      const scenario = loadScenario(
+        scenarioName,
+        scenarioDirs,
+        options.defaultDelay,
+      )
 
       if (!scenario) {
-        res.writeHead(404, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: { message: `Scenario "${scenarioName}" not found` } }))
+        res.writeHead(404, { "Content-Type": "application/json" })
+        res.end(
+          JSON.stringify({
+            error: { message: `Scenario "${scenarioName}" not found` },
+          }),
+        )
         return
       }
 
       if (!stream) {
-        const fullContent = scenario.chunks.map((c) => c.content).join('')
-        res.writeHead(200, { 'Content-Type': 'application/json' })
+        const fullContent = scenario.chunks.map((c) => c.content).join("")
+        res.writeHead(200, { "Content-Type": "application/json" })
         res.end(
           JSON.stringify({
             id: `chatcmpl-${Date.now()}`,
-            object: 'chat.completion',
+            object: "chat.completion",
             created: Math.floor(Date.now() / 1000),
             model: requestModel ?? options.model,
             choices: [
               {
                 index: 0,
-                message: { role: 'assistant', content: fullContent },
-                finish_reason: 'stop',
+                message: { role: "assistant", content: fullContent },
+                finish_reason: "stop",
               },
             ],
           }),
@@ -145,10 +160,10 @@ export function startServer(options) {
       }
 
       res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no',
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
       })
 
       try {
@@ -157,35 +172,45 @@ export function startServer(options) {
           model: requestModel ?? options.model,
         })
       } catch {
-        if (!res.destroyed) res.end()
+        if (!res.destroyed) {
+          res.end()
+        }
       }
       return
     }
 
-    res.writeHead(404, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: { message: 'Not Found' } }))
+    res.writeHead(404, { "Content-Type": "application/json" })
+    res.end(JSON.stringify({ error: { message: "Not Found" } }))
   })
 
   const shutdown = () => {
     server.close(() => {
-      console.log('\nServer shut down.')
+      console.log("\nServer shut down.")
       process.exit(0)
     })
   }
-  process.on('SIGINT', shutdown)
-  process.on('SIGTERM', shutdown)
+  process.on("SIGINT", shutdown)
+  process.on("SIGTERM", shutdown)
 
   const port = options.port
   server.listen(port, () => {
     console.log(`\n  🏍️  SSE Stuntman — server ready\n`)
     console.log(`  Server:    http://localhost:${port}`)
-    console.log(`  Endpoint(s): POST ${endpointPaths.join(', POST ')}`)
-    console.log(`  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`)
+    console.log(`  Endpoint(s): POST ${endpointPaths.join(", POST ")}`)
+    console.log(
+      `  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`,
+    )
     const baseDelay = options.defaultDelay ?? 5
-    console.log(`  Delay:     ${options.delayMultiplier}x  (multiplier — each @delay in scenario is multiplied by this)`)
-    console.log(`  Default:   ${baseDelay}ms  (used when scenario has no @delay)`)
+    console.log(
+      `  Delay:     ${options.delayMultiplier}x  (multiplier — each @delay in scenario is multiplied by this)`,
+    )
+    console.log(
+      `  Default:   ${baseDelay}ms  (used when scenario has no @delay)`,
+    )
     if (options.delayMultiplier !== 1) {
-      console.log(`             effective: ${options.delayMultiplier * baseDelay}ms`)
+      console.log(
+        `             effective: ${options.delayMultiplier * baseDelay}ms`,
+      )
     }
     console.log(`\n  Press Ctrl+C to stop.\n`)
   })
@@ -203,13 +228,18 @@ export function startServer(options) {
  */
 function loadScenario(name, dirs, defaultDelay) {
   const cached = scenarioCache.get(name)
-  if (cached) return cached
+  if (cached) {
+    return cached
+  }
 
   for (const dir of dirs) {
     const filePath = path.join(dir, `${name}.md`)
     try {
       if (fs.existsSync(filePath)) {
-        const scenario = parseScenarioFile(filePath, defaultDelay != null ? { defaultDelay } : undefined)
+        const scenario = parseScenarioFile(
+          filePath,
+          defaultDelay != null ? { defaultDelay } : undefined,
+        )
         scenarioCache.set(name, scenario)
         return scenario
       }
@@ -236,7 +266,12 @@ function preloadScenarios(dirs, options) {
       const scenarios = listScenarios(dir)
       for (const s of scenarios) {
         try {
-          const scenario = parseScenarioFile(s.file, options.defaultDelay != null ? { defaultDelay: options.defaultDelay } : undefined)
+          const scenario = parseScenarioFile(
+            s.file,
+            options.defaultDelay != null
+              ? { defaultDelay: options.defaultDelay }
+              : undefined,
+          )
           scenarioCache.set(s.name, scenario)
         } catch {
           // 跳过无法解析的场景
@@ -250,24 +285,52 @@ function preloadScenarios(dirs, options) {
   if (options.list) {
     // 从高优先级到低优先级去重展示
     const seen = new Set()
-    console.log('\n  Available scenarios:\n')
-    console.log('  ' + 'Name'.padEnd(25) + ' ' + 'Source'.padEnd(22) + ' Description')
-    console.log('  ' + ''.padEnd(25, '─') + ' ' + ''.padEnd(22, '─') + ' ' + ''.padEnd(30, '─'))
+    console.log("\n  Available scenarios:\n")
+    console.log(
+      "  " + "Name".padEnd(25) + " " + "Source".padEnd(22) + " Description",
+    )
+    console.log(
+      "  " +
+        "".padEnd(25, "─") +
+        " " +
+        "".padEnd(22, "─") +
+        " " +
+        "".padEnd(30, "─"),
+    )
     for (const dir of dirs) {
       try {
         const scenarios = listScenarios(dir)
         for (const s of scenarios) {
-          if (seen.has(s.name)) continue
+          if (seen.has(s.name)) {
+            continue
+          }
           seen.add(s.name)
           const cached = scenarioCache.get(s.name)
-          const source = dir === BUILTIN_DIR ? 'builtin' : 'custom'
+          const source = dir === BUILTIN_DIR ? "builtin" : "custom"
           if (cached?.error) {
-            console.log('  ' + s.name.padEnd(25) + ' ' + (source + ' [' + cached.error.type + ']').padEnd(22) + ' ' + (cached.description || 'Simulates HTTP ' + cached.error.type + ' error'))
+            console.log(
+              "  " +
+                s.name.padEnd(25) +
+                " " +
+                (source + " [" + cached.error.type + "]").padEnd(22) +
+                " " +
+                (cached.description ||
+                  "Simulates HTTP " + cached.error.type + " error"),
+            )
           } else {
-            console.log('  ' + s.name.padEnd(25) + ' ' + source.padEnd(22) + ' ' + (cached?.description || ''))
+            console.log(
+              "  " +
+                s.name.padEnd(25) +
+                " " +
+                source.padEnd(22) +
+                " " +
+                (cached?.description || ""),
+            )
           }
         }
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
     console.log()
     process.exit(0)
@@ -280,9 +343,9 @@ function preloadScenarios(dirs, options) {
  * @param {import('node:http').ServerResponse} res
  */
 function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
 }
 
 /**
@@ -299,14 +362,20 @@ function getIndexHtml(options, dirs) {
     try {
       const scenarios = listScenarios(dir)
       for (const s of scenarios) {
-        if (seen.has(s.name)) continue
+        if (seen.has(s.name)) {
+          continue
+        }
         seen.add(s.name)
-        scenarioOpts.push(`<option value="${s.name}"${s.name === options.scenario ? ' selected' : ''}>${s.name}</option>`)
+        scenarioOpts.push(
+          `<option value="${s.name}"${s.name === options.scenario ? " selected" : ""}>${s.name}</option>`,
+        )
       }
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
   }
 
-  const eps = options.endpointPaths ?? ['/v1/chat/completions']
+  const eps = options.endpointPaths ?? ["/v1/chat/completions"]
   const ep = eps[0]
 
   return `<!DOCTYPE html>
@@ -342,7 +411,7 @@ function getIndexHtml(options, dirs) {
 
   <div class="card">
     <label for="scenario">Scenario</label>
-    <select id="scenario">${scenarioOpts.join('\n')}</select>
+    <select id="scenario">${scenarioOpts.join("\n")}</select>
 
     <label for="model">Model</label>
     <input id="model" type="text" value="${options.model}" placeholder="gpt-4o">
