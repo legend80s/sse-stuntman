@@ -77,7 +77,7 @@ sse-stuntman create-scenario <name>
 | `--scenario <name>` | `default` | 初始场景 |
 | `--delay <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
 | `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
-| `--endpoint-path <path>` | `/v1/chat/completions` | 自定义 POST 端点路径（如 `/my/custom/path`） |
+| `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | 自定义 POST 端点路径，可多次指定支持多路径（如 `-e /chat -e /api/chat`） |
 | `--scenarios-dir <path>` | — | 自定义场景目录（覆盖默认路径） |
 | `--list` | — | 列出所有内置 + 自定义场景 |
 | `create-scenario <name>` | — | 创建新场景模板 |
@@ -108,6 +108,9 @@ sse-stuntman --delay 0.5
 
 # 自定义端点路径（用于无法修改代码的客户端）
 sse-stuntman --endpoint-path /management-service/api/intelligent-qa/chat
+
+# 多个端点路径（同时 mock 多个 URL）
+sse-stuntman -e /api/v1/chat -e /api/v2/chat -e /chat
 ```
 
 ---
@@ -172,6 +175,25 @@ echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
 ```
 
 同名场景，高优先级覆盖低优先级。
+
+---
+
+## 配置文件 / Config File
+
+通过 `~/.sse-stuntman/config.mjs` 持久化配置，免去每次启动传参。
+
+```js
+export default {
+  port: 8080,
+  scenario: 'my-scenario',
+  delay: 0.5,
+  model: 'deepseek-chat',
+  endpointPaths: ['/management-service/api/intelligent-qa/chat', '/api/v2/chat'],
+  scenariosDir: '/path/to/scenarios',
+}
+```
+
+**优先级：** CLI 参数 > 配置文件 > 内置默认值
 
 ---
 

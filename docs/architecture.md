@@ -8,30 +8,36 @@
 ## 总体架构 / Overview
 
 ```
-CLI 参数 (--port / --scenario / --delay / --model)
-    │
-    ▼
-┌─────────────┐    ┌──────────────────┐    ┌────────────────┐
-│  cli.mjs    │───▶│   server.mjs     │───▶│ openai-stream  │
-│  (argparse) │    │  (HTTP server)   │    │   .mjs         │
-└─────────────┘    │                  │    │  (SSE writer)  │
-                   │  POST /v1/chat/  │    └────────────────┘
-                   │  completions     │
-                   │  GET /           │
-                   │  GET /health     │
-                   └──────┬───────────┘
-                          │
-                          ▼
-              ┌──────────────────────┐
-              │  scenario-parser.mjs │
-              │  (.md → Chunk[])     │
-              └──────────────────────┘
-                          │
-                          ▼
-              ┌──────────────────────┐
-              │  scenarios/*.md      │
-              │  (场景文件)          │
-              └──────────────────────┘
+~/.sse-stuntman/config.mjs       CLI 参数 (--port / --scenario / --delay / --model / -e)
+          │                                │
+          ▼                                ▼
+  ┌──────────────┐                ┌─────────────┐
+  │ config-loader│                │   cli.mjs   │
+  │    .mjs      │                │  (argparse) │
+  └──────────────┘                └──────┬──────┘
+          │                              │
+          └──────────┬───────────────────┘
+                     ▼
+          ┌──────────────────────┐    ┌────────────────┐
+          │    server.mjs       │───▶│ openai-stream  │
+          │   (HTTP server)     │    │   .mjs         │
+          │                     │    │  (SSE writer)  │
+          │  POST <endpoint>    │    └────────────────┘
+          │  GET /              │
+          │  GET /health        │
+          └──────┬──────────────┘
+                 │
+                 ▼
+     ┌──────────────────────┐
+     │  scenario-parser.mjs │
+     │  (.md → Chunk[])     │
+     └──────────────────────┘
+                 │
+                 ▼
+     ┌──────────────────────┐
+     │  scenarios/*.md      │
+     │  (场景文件)          │
+     └──────────────────────┘
 ```
 
 ### 设计原则 / Design Principles
@@ -54,12 +60,20 @@ CLI 参数 (--port / --scenario / --delay / --model)
 --scenario <name>    场景名                    (默认: "default")
 --delay <number>     全局延迟倍率              (默认: 1)
 --model <name>       SSE 事件的 model 字段     (默认: "gpt-4o")
---endpoint-path <path>  自定义 POST 端点路径   (默认: "/v1/chat/completions")
+-e, --endpoint-path <path>  自定义 POST 端点路径 (默认: "/v1/chat/completions", 可多次指定)
 --list               列出所有内置场景并退出
 --help / -h          帮助信息
 ```
 
 > 参考：[CLI 参数参考](api-reference.md#cli-参数参考)
+
+### config-loader.mjs — 用户配置加载器
+
+从 `~/.sse-stuntman/config.mjs` 加载用户配置，支持 `port`、`scenario`、`delay`、`model`、`endpointPaths`、`scenariosDir`。
+
+配置文件是可选的 `.mjs` 模块，使用 `export default` 导出配置对象。
+
+**优先级**：CLI 参数 > 配置文件 > 内置默认值
 
 ### server.mjs — HTTP 服务器
 
@@ -69,7 +83,7 @@ CLI 参数 (--port / --scenario / --delay / --model)
 |------|------|------|
 | `GET` | `/` | HTML 主页（内置测试 UI） |
 | `GET` | `/health` | 健康检查 |
-| `POST` | `<endpoint-path>` | OpenAI Chat Completions（默认 `/v1/chat/completions`，可通过 `--endpoint-path` 配置） |
+| `POST` | `<endpoint-path>` | OpenAI Chat Completions（默认 `/v1/chat/completions`，可通过 `-e` 配置，支持多路径） |
 | `OPTIONS` | `*` | CORS 预检 |
 
 流式请求处理流程：
@@ -188,7 +202,7 @@ interface SSEEvent {
 ```
 前端请求
   │
-  ▼ HTTP POST /v1/chat/completions
+  ▼ HTTP POST <endpoint-path>
   │
 server.mjs 解析请求
   │  ├─ 读 body → JSON.parse → { model, stream }

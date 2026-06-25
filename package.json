@@ -14,7 +14,7 @@
   "scripts": {
     "typecheck": "tsgo --noEmit",
     "start": "node bin/index.mjs",
-    "test": "node --test src/scenario-parser.test.mjs src/openai-stream.test.mjs src/server.test.mjs src/commands/create-scenario.test.mjs"
+    "test": "node --test"
   },
   "keywords": [
     "sse",

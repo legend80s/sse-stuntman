@@ -65,7 +65,7 @@ export function startServer(options) {
   // 预加载场景
   preloadScenarios(scenarioDirs, options)
 
-  const endpointPath = options.endpointPath ?? '/v1/chat/completions'
+  const endpointPaths = options.endpointPaths ?? ['/v1/chat/completions']
 
   const server = http.createServer(async (req, res) => {
     setCorsHeaders(res)
@@ -91,7 +91,7 @@ export function startServer(options) {
       return
     }
 
-    if (req.method === 'POST' && pathname === endpointPath) {
+    if (req.method === 'POST' && endpointPaths.includes(pathname)) {
       let body = ''
       try {
         for await (const chunk of req) {
@@ -179,7 +179,7 @@ export function startServer(options) {
   server.listen(port, () => {
     console.log(`\n  🏍️  SSE Stuntman — server ready\n`)
     console.log(`  Server:    http://localhost:${port}`)
-    console.log(`  Endpoint:  POST ${endpointPath}`)
+    console.log(`  Endpoint(s): POST ${endpointPaths.join(', POST ')}`)
     console.log(`  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`)
     console.log(`  Delay:     ${options.delay}x`)
     console.log(`\n  Press Ctrl+C to stop.\n`)
@@ -300,7 +300,8 @@ function getIndexHtml(options, dirs) {
     } catch { /* skip */ }
   }
 
-  const ep = options.endpointPath ?? '/v1/chat/completions'
+  const eps = options.endpointPaths ?? ['/v1/chat/completions']
+  const ep = eps[0]
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">

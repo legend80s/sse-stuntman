@@ -227,7 +227,7 @@ describe('server', () => {
   describe('custom endpoint path', () => {
     it('should handle POST to custom endpoint path', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -248,7 +248,7 @@ describe('server', () => {
 
     it('should return 404 for default path when custom path is set', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -267,7 +267,7 @@ describe('server', () => {
 
     it('should handle ?scenario= query with custom endpoint path', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -287,7 +287,7 @@ describe('server', () => {
 
     it('should handle error scenario with custom endpoint path', async () => {
       const port = getPort()
-      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPath: '/my-custom/path' })
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/my-custom/path'] })
       await new Promise(resolve => server.on('listening', resolve))
       await new Promise(r => setTimeout(r, 50))
 
@@ -299,6 +299,39 @@ describe('server', () => {
         }, JSON.stringify({ model: 'gpt-4o', stream: true }))
 
         assert.equal(status, 429)
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should handle multiple endpoint paths', async () => {
+      const port = getPort()
+      const server = startServer({ port, delay: 0, model: 'gpt-4o', scenario: 'default', endpointPaths: ['/api/v1/chat', '/api/v2/chat'] })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        // Both paths should return SSE
+        const r1 = await sseRequest(server, {
+          method: 'POST', path: '/api/v1/chat',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+        assert.equal(r1.status, 200)
+        assert.ok(r1.finished)
+
+        const r2 = await sseRequest(server, {
+          method: 'POST', path: '/api/v2/chat',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+        assert.equal(r2.status, 200)
+        assert.ok(r2.finished)
+
+        // Default path should return 404
+        const r3 = await request(server, {
+          method: 'POST', path: '/v1/chat/completions',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'gpt-4o', stream: true }))
+        assert.equal(r3.status, 404)
       } finally {
         server.close()
       }

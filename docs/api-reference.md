@@ -17,9 +17,26 @@ sse-stuntman [options]
 | `--scenario` | string | `"default"` | 初始场景名，可被 URL query 覆盖 |
 | `--delay` | number | `1` | 全局延迟倍率。`0.5`=半速，`2`=倍速 |
 | `--model` | string | `"gpt-4o"` | SSE 事件中 `model` 字段的默认值 |
-| `--endpoint-path` / `-e` | string | `"/v1/chat/completions"` | 自定义 POST 端点路径 |
+| `--endpoint-path` / `-e` | string | `"/v1/chat/completions"` | 自定义 POST 端点路径（可多次指定，如 `-e /a -e /b`） |
 | `--list` | boolean | — | 列出所有内置场景并退出 |
 | `--help` / `-h` | boolean | — | 显示帮助文本并退出 |
+
+### 配置文件 / Config File
+
+通过 `~/.sse-stuntman/config.mjs` 持久化配置：
+
+```js
+export default {
+  port: 8080,
+  scenario: 'my-scenario',
+  delay: 0.5,
+  model: 'deepseek-chat',
+  endpointPaths: ['/chat/api', '/api/v2/chat'],  // 支持多路径
+  scenariosDir: '/path/to/scenarios',
+}
+```
+
+**优先级**：CLI 参数 > 配置文件 > 内置默认值
 
 ### 使用示例 / Examples
 
@@ -41,6 +58,9 @@ sse-stuntman --help
 
 # 自定义端点路径
 sse-stuntman --endpoint-path /management-service/api/intelligent-qa/chat
+
+# 多个端点路径（同时 mock 多个 URL）
+sse-stuntman -e /api/v1/chat -e /api/v2/chat
 ```
 
 ### 通过 npx 直接使用

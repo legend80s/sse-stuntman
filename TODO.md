@@ -15,3 +15,5 @@
 - [x] fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
 - [ ] 测试 word by word SSE mock
 - [ ] 当 server 已启动，用户新增的场景，如何让 server 知道？增加 `sse-stuntman --watch` 命令？
+- [ ] 每次执行新增场景的自动化测试，都会自动打开 explorer 体验不好，增加参数不打开。
+- [ ] `--help` 是否展示默认值
