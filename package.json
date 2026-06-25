@@ -4,7 +4,7 @@
   "description": "SSE Stuntman — stunt double for your AI API. Simulate streaming responses, errors, and edge cases.",
   "type": "module",
   "bin": {
-    "sse-stuntman": "bin/index.mjs"
+    "sse-stuntman": "src/bin/index.mjs"
   },
   "files": [
     "bin/",

@@ -16,7 +16,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { parseScenarioFile, listScenarios } from './scenario-parser.mjs'
 import { writeOpenAIStream, writeErrorResponse } from './openai-stream.mjs'
-import { getUserScenariosDir } from './create-scenario.mjs'
+import { getUserScenariosDir } from './commands/create-scenario.mjs'
 
 /**
  * @import { Scenario, CliOptions } from './types.ts'
