@@ -64,7 +64,7 @@ describe("scenario-parser", () => {
       assert.equal(doneChunk.done, true)
     })
 
-    it.only("should handle @chunk strategy changes", () => {
+    it("should handle @chunk strategy changes", () => {
       const dir = mkdtempSync(join(tmpdir(), "test-"))
       const file = join(dir, "test.md")
       writeFileSync(

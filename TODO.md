@@ -18,3 +18,5 @@
 - [ ] 每次执行新增场景的自动化测试，都会自动打开 explorer 体验不好，增加参数不打开。
 - [ ] `--help` 是否展示默认值
 - [ ] reuse and simplify `normalizePath` function
+- [ ] src/server.test.mjs:519 Anthropic 独立测试文件
+- [ ] message_start input_tokens: inputTokens should be always ZERO.

@@ -1,10 +1,10 @@
 export const anthropicMsger = {
   /**
    *
-   * @param {{ model: string; messageId: string }} param0
+   * @param {{ model: string; messageId: string; inputTokens?: number }} param0
    * @returns
    */
-  message_start({ model, messageId }) {
+  message_start({ model, messageId, inputTokens = 0 }) {
     return this.genMsg("message_start", {
       message: {
         id: messageId,
@@ -15,7 +15,7 @@ export const anthropicMsger = {
         stop_reason: null,
         stop_sequence: null,
         usage: {
-          input_tokens: 0,
+          input_tokens: inputTokens,
           output_tokens: 0,
         },
       },

@@ -15,7 +15,13 @@ import http from "node:http"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { getUserScenariosDir } from "./commands/create-scenario.mjs"
+import {
+  writeAnthropicErrorStream,
+  writeAnthropicNonStreamingResponse,
+  writeAnthropicStream,
+} from "./anthropic-stream.mjs"
 import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
+import { calculateTokens } from "./utils/token.mjs"
 import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
 import { color } from "./utils/color.mjs"
 
@@ -66,7 +72,11 @@ export function startServer(options) {
   // 预加载场景
   preloadScenarios(scenarioDirs, options)
 
-  const endpointPaths = options.endpointPaths ?? ["/v1/chat/completions"]
+  const endpointPaths =
+    options.endpointPaths ??
+    (options.provider === "anthropic"
+      ? ["/v1/messages"]
+      : ["/v1/chat/completions"])
 
   const server = http.createServer(async (req, res) => {
     setCorsHeaders(res)
@@ -107,11 +117,16 @@ export function startServer(options) {
 
       let requestModel = null
       let stream = true
+      let inputTokens = 0
       if (body) {
         try {
           const parsed = JSON.parse(body)
           requestModel = parsed.model ?? null
           stream = parsed.stream !== false
+          // 计算 input_tokens（用于 Anthropic 格式）
+          const messages = parsed.messages ?? []
+          const promptText = messages.map((/** @type {{ content: string }} */ m) => m.content ?? "").join("")
+          inputTokens = calculateTokens(promptText)
         } catch {
           /* ignore */
         }
@@ -140,27 +155,44 @@ export function startServer(options) {
 
       if (!stream) {
         const fullContent = scenario.chunks.map((c) => c.content).join("")
-        res.writeHead(200, { "Content-Type": "application/json" })
-        res.end(
-          JSON.stringify({
-            id: `chatcmpl-${Date.now()}`,
-            object: "chat.completion",
-            created: Math.floor(Date.now() / 1000),
+        if (options.provider === "anthropic") {
+          writeAnthropicNonStreamingResponse(fullContent, res, {
             model: requestModel ?? options.model,
-            choices: [
-              {
-                index: 0,
-                message: { role: "assistant", content: fullContent },
-                finish_reason: "stop",
-              },
-            ],
-          }),
-        )
+            inputTokens,
+          })
+        } else {
+          res.writeHead(200, { "Content-Type": "application/json" })
+          res.end(
+            JSON.stringify({
+              id: `chatcmpl-${Date.now()}`,
+              object: "chat.completion",
+              created: Math.floor(Date.now() / 1000),
+              model: requestModel ?? options.model,
+              choices: [
+                {
+                  index: 0,
+                  message: { role: "assistant", content: fullContent },
+                  finish_reason: "stop",
+                },
+              ],
+            }),
+          )
+        }
         return
       }
 
       if (scenario.error) {
-        writeErrorResponse(scenario.error, res)
+        if (options.provider === "anthropic") {
+          res.writeHead(200, {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+            "X-Accel-Buffering": "no",
+          })
+          writeAnthropicErrorStream(scenario.error, res)
+        } else {
+          writeErrorResponse(scenario.error, res)
+        }
         return
       }
 
@@ -172,10 +204,18 @@ export function startServer(options) {
       })
 
       try {
-        await writeOpenAIStream(scenario.chunks, res, {
-          delayMultiplier: options.delayMultiplier,
-          model: requestModel ?? options.model,
-        })
+        if (options.provider === "anthropic") {
+          await writeAnthropicStream(scenario.chunks, res, {
+            delayMultiplier: options.delayMultiplier,
+            model: requestModel ?? options.model,
+            inputTokens,
+          })
+        } else {
+          await writeOpenAIStream(scenario.chunks, res, {
+            delayMultiplier: options.delayMultiplier,
+            model: requestModel ?? options.model,
+          })
+        }
       } catch {
         if (!res.destroyed) {
           res.end()
@@ -201,6 +241,7 @@ export function startServer(options) {
   server.listen(port, () => {
     console.log(`\n  🏍️  SSE Stuntman — server ready\n`)
     console.log(`  Server:    http://localhost:${port}`)
+    console.log(`  Provider:  ${options.provider}`)
     console.log(`  Endpoint(s): POST ${endpointPaths.join(", POST ")}`)
     console.log(
       `  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`,
@@ -380,7 +421,11 @@ function getIndexHtml(options, dirs) {
     }
   }
 
-  const eps = options.endpointPaths ?? ["/v1/chat/completions"]
+  const eps =
+    options.endpointPaths ??
+    (options.provider === "anthropic"
+      ? ["/v1/messages"]
+      : ["/v1/chat/completions"])
   const ep = eps[0]
 
   return `<!DOCTYPE html>

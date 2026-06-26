@@ -34,9 +34,12 @@ const HELP_TEXT = `
     -d, --default-delay <number> Default delay for chunks (ms)  (default: 5)
                              When scenario has no @delay, this value is used.
                              Can be overridden per-section with @delay in .md.
+    --provider <name>       Output format provider              (default: "openai")
+                             "openai" (Chat Completions SSE) or "anthropic" (Messages SSE)
     -m, --model <name>       Default model name in SSE events   (default: "gpt-4o")
     -e, --endpoint-path <path>  Custom POST endpoint path       (default: "/v1/chat/completions")
                              (can be specified multiple times for multiple paths)
+                             Automatically defaults to "/v1/messages" when --provider anthropic
     --scenarios-dir <path>   Custom scenarios directory
     --open-scenarios-dir / --no-open-scenarios-dir
                              Open file manager after creating scenario
@@ -62,6 +65,7 @@ const DEFAULTS = {
   scenario: "default",
   delayMultiplier: 1,
   defaultDelay: 5,
+  provider: /** @type {import('./types.ts').Provider} */ ("openai"),
   model: "gpt-4o",
   endpointPaths: ["/v1/chat/completions"],
   list: false,
@@ -84,6 +88,7 @@ export function parseCliArgs(argv) {
       scenario: { type: "string", short: "s" },
       "delay-multiplier": { type: "string" },
       "default-delay": { type: "string", short: "d" },
+      provider: { type: "string" },
       model: { type: "string", short: "m" },
       "endpoint-path": { type: "string", multiple: true, short: "e" },
       "scenarios-dir": { type: "string" },
@@ -131,6 +136,9 @@ export function parseCliArgs(argv) {
   }
   if (values.model !== undefined) {
     cliValues.model = values.model
+  }
+  if (values.provider !== undefined) {
+    cliValues.provider = normalizeProvider(values.provider)
   }
   if (values["endpoint-path"]) {
     cliValues.endpointPaths = values["endpoint-path"]
@@ -181,6 +189,23 @@ export function parseCliArgs(argv) {
 }
 
 /**
+ * 规范化并校验 provider 值。
+ *
+ * @param {string} s
+ * @returns {import('./types.ts').Provider}
+ */
+function normalizeProvider(s) {
+  const v = s.toLowerCase()
+  if (v !== "openai" && v !== "anthropic") {
+    console.error(
+      `\x1b[31mError:\x1b[0m --provider must be "openai" or "anthropic", got "${s}"`,
+    )
+    process.exit(1)
+  }
+  return v
+}
+
+/**
  * 合并 CLI 参数与配置文件（CLI 优先）。
  *
  * @param {Partial<import('./types.ts').CliOptions>} cliValues
@@ -207,6 +232,9 @@ export function mergeOptions(cliValues, configValues) {
     if (configValues.model != null) {
       result.model = configValues.model
     }
+    if (configValues.provider != null) {
+      result.provider = normalizeProvider(configValues.provider)
+    }
     if (configValues.endpointPaths != null) {
       result.endpointPaths = configValues.endpointPaths
     }
@@ -231,11 +259,23 @@ export function mergeOptions(cliValues, configValues) {
   if (cliValues.model != null) {
     result.model = cliValues.model
   }
+  if (cliValues.provider != null) {
+    result.provider = cliValues.provider
+  }
   if (cliValues.endpointPaths != null) {
     result.endpointPaths = cliValues.endpointPaths
   }
   if (cliValues.scenariosDir != null) {
     result.scenariosDir = cliValues.scenariosDir
+  }
+
+  // 当 provider 为 anthropic 且未显式指定 endpointPaths 时，默认路径切换到 /v1/messages
+  if (
+    result.provider === "anthropic" &&
+    !cliValues.endpointPaths &&
+    !configValues?.endpointPaths
+  ) {
+    result.endpointPaths = ["/v1/messages"]
   }
 
   // 布尔值

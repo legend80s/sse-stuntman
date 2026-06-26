@@ -516,4 +516,183 @@ describe('server', () => {
       }
     })
   })
+
+  describe('Anthropic provider (--provider anthropic)', () => {
+    /**
+     * 解析 Anthropic SSE 响应中的命名事件。
+     * Anthropic SSE 格式为：
+     *   event: xxx
+     *   data: {...}
+     *   空行
+     */
+    function parseAnthropicEvents(/** @type {string} */ raw) {
+      const events = []
+      const lines = raw.split('\n')
+      let currentEvent = null
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim()
+        } else if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim()
+          if (currentEvent) {
+            events.push({ event: currentEvent, data: JSON.parse(data) })
+            currentEvent = null
+          }
+        }
+      }
+      return events
+    }
+
+    /**
+     * 向 Anthropic 端点发送 SSE 请求并解析命名事件。
+     */
+    function anthropicSSERequest(server, options, body) {
+      return new Promise((resolve, reject) => {
+        const req = http.request(
+          { hostname: '127.0.0.1', ...options, ...(server.address?.() ?? {}) },
+          (res) => {
+            let buffer = ''
+            let finished = false
+            res.on('data', (chunk) => {
+              buffer += chunk.toString()
+              // 检查是否收到 message_stop 作为结束标志
+              if (buffer.includes('event: message_stop')) {
+                finished = true
+              }
+            })
+            res.on('end', () => {
+              const events = parseAnthropicEvents(buffer)
+              resolve({ status: res.statusCode, headers: res.headers, events, finished, raw: buffer })
+            })
+            res.on('error', reject)
+          },
+        )
+        req.on('error', reject)
+        if (body) req.write(body)
+        req.end()
+      })
+    }
+
+    it('should default endpoint to /v1/messages and use Anthropic SSE format', async () => {
+      const port = getPort()
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'claude-sonnet-4-20250514', scenario: 'default', provider: 'anthropic' })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events, finished } = await anthropicSSERequest(server, {
+          method: 'POST',
+          path: '/v1/messages',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'claude-sonnet-4-20250514', messages: [{ role: 'user', content: '你好' }], stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(finished, 'Should receive message_stop')
+
+        // 验证事件序列
+        const eventNames = events.map(e => e.event)
+        assert.ok(eventNames.includes('message_start'), 'Should have message_start')
+        assert.ok(eventNames.includes('content_block_start'), 'Should have content_block_start')
+        assert.ok(eventNames.includes('content_block_delta'), 'Should have content_block_delta')
+        assert.ok(eventNames.includes('content_block_stop'), 'Should have content_block_stop')
+        assert.ok(eventNames.includes('message_delta'), 'Should have message_delta')
+        assert.ok(eventNames.includes('message_stop'), 'Should have message_stop')
+
+        // 验证 message_start 内容
+        const msgStart = events.find(e => e.event === 'message_start')
+        assert.equal(msgStart.data.message.model, 'claude-sonnet-4-20250514')
+        assert.equal(msgStart.data.message.role, 'assistant')
+        assert.ok(msgStart.data.message.usage.input_tokens > 0)
+
+        // 验证有内容输出
+        const deltas = events.filter(e => e.event === 'content_block_delta')
+        assert.ok(deltas.length > 0, 'Should have content deltas')
+
+        // 验证 message_delta 有 usage
+        const msgDelta = events.find(e => e.event === 'message_delta')
+        assert.equal(msgDelta.data.delta.stop_reason, 'end_turn')
+        assert.ok(msgDelta.data.usage.output_tokens > 0)
+
+        // 验证最后一个事件是 message_stop
+        assert.equal(events[events.length - 1].event, 'message_stop')
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should handle error scenario via error event with 200 status', async () => {
+      const port = getPort()
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'claude-sonnet-4-20250514', scenario: 'default', provider: 'anthropic' })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events } = await anthropicSSERequest(server, {
+          method: 'POST',
+          path: '/v1/messages?scenario=error-rate-limit',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'claude-sonnet-4-20250514', messages: [{ role: 'user', content: 'hi' }], stream: true }))
+
+        assert.equal(status, 200)
+        const errorEvent = events.find(e => e.event === 'error')
+        assert.ok(errorEvent, 'Should have error event')
+        assert.equal(errorEvent.data.error.type, 'rate_limit_error')
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should handle non-streaming request with Anthropic format', async () => {
+      const port = getPort()
+      const server = startServer({ port, delayMultiplier: 0, defaultDelay: 5, model: 'claude-sonnet-4-20250514', scenario: 'default', provider: 'anthropic' })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, body } = await request(server, {
+          method: 'POST',
+          path: '/v1/messages',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'claude-sonnet-4-20250514', messages: [{ role: 'user', content: '你好' }], stream: false }))
+
+        assert.equal(status, 200)
+        const parsed = JSON.parse(body)
+        assert.equal(parsed.type, 'message')
+        assert.equal(parsed.role, 'assistant')
+        assert.equal(parsed.content[0].type, 'text')
+        assert.ok(parsed.content[0].text.length > 0)
+        assert.equal(parsed.stop_reason, 'end_turn')
+        assert.ok(parsed.usage.input_tokens > 0)
+        assert.ok(parsed.usage.output_tokens > 0)
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should still handle /v1/chat/completions with custom --endpoint-path', async () => {
+      const port = getPort()
+      const server = startServer({
+        port, delayMultiplier: 0, defaultDelay: 5, model: 'claude-sonnet-4-20250514',
+        scenario: 'default', provider: 'anthropic',
+        endpointPaths: ['/v1/chat/completions'],
+      })
+      await new Promise(resolve => server.on('listening', resolve))
+      await new Promise(r => setTimeout(r, 50))
+
+      try {
+        const { status, events, finished } = await anthropicSSERequest(server, {
+          method: 'POST',
+          path: '/v1/chat/completions',
+          headers: { 'Content-Type': 'application/json' },
+        }, JSON.stringify({ model: 'claude-sonnet-4-20250514', stream: true }))
+
+        assert.equal(status, 200)
+        assert.ok(finished)
+        const eventNames = events.map(e => e.event)
+        assert.ok(eventNames.includes('message_start'))
+      } finally {
+        server.close()
+      }
+    })
+  })
 })

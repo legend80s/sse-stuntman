@@ -38,6 +38,9 @@ export interface ErrorTrigger {
   type: ErrorType
 }
 
+/** AI Provider */
+export type Provider = "openai" | "anthropic"
+
 /** 支持的错误类型 */
 export type ErrorType =
   | "rate-limit" // 429 Too Many Requests
@@ -68,6 +71,8 @@ export interface CliOptions {
   /** 场景内未显式指定 @delay 时的默认延迟（ms），默认 5 */
   defaultDelay?: number
   model: string
+  /** AI Provider：openai 或 anthropic（默认 "openai"） */
+  provider: Provider
   /** 自定义 POST 端点路径列表（默认 ['/v1/chat/completions']） */
   endpointPaths?: string[]
   list: boolean
