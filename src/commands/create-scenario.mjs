@@ -5,17 +5,11 @@
  * 生成模板 .md，自动打开目录，彩色输出。
  */
 
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import os from 'node:os'
-import { spawn } from 'node:child_process'
-
-const GREEN = '\x1b[32m'
-const CYAN = '\x1b[36m'
-const YELLOW = '\x1b[33m'
-const RED = '\x1b[31m'
-const RESET = '\x1b[0m'
+import { spawn } from "node:child_process"
+import fs from "node:fs"
+import os from "node:os"
+import path from "node:path"
+import { color } from "../utils/color.mjs"
 
 /**
  * 获取用户场景目录（~/.sse-stuntman/scenarios/）。
@@ -23,8 +17,8 @@ const RESET = '\x1b[0m'
  * @returns {string}
  */
 export function getUserScenariosDir() {
-	const home = os.homedir()
-	return path.join(home, '.sse-stuntman', 'scenarios')
+  const home = os.homedir()
+  return path.join(home, ".sse-stuntman", "scenarios")
 }
 
 /**
@@ -34,7 +28,7 @@ export function getUserScenariosDir() {
  * @returns {string}
  */
 function generateTemplate(name) {
-	return `<!-- @desc: 这是一个自定义场景 "${name}" -->
+  return `<!-- @desc: 这是一个自定义场景 "${name}" -->
 # ${name}
 
 在这里编写你的场景内容。
@@ -69,30 +63,30 @@ console.log("Hello from ${name}");
  */
 
 export function executeCreateScenario(name, options = {}) {
-	const openDir = options.openDir !== false
-	const scenariosDir = getUserScenariosDir()
+  const openDir = options.openDir !== false
+  const scenariosDir = getUserScenariosDir()
 
-	// 创建目录（如不存在）
-	fs.mkdirSync(scenariosDir, { recursive: true })
+  // 创建目录（如不存在）
+  fs.mkdirSync(scenariosDir, { recursive: true })
 
-	const filePath = path.join(scenariosDir, `${name}.md`)
+  const filePath = path.join(scenariosDir, `${name}.md`)
 
-	// 检查文件是否已存在
-	if (fs.existsSync(filePath)) {
-		console.log(`\n  ${YELLOW}⚠ 场景已存在:${RESET} ${filePath}\n`)
-	} else {
-		// 写入模板
-		const content = generateTemplate(name)
-		fs.writeFileSync(filePath, content, 'utf-8')
-		console.log(`\n  ${GREEN}✅  场景已创建！${RESET}\n`)
-	}
+  // 检查文件是否已存在
+  if (fs.existsSync(filePath)) {
+    console.log(`\n  ${color.yellow("⚠ 场景已存在")}: ${filePath}\n`)
+  } else {
+    // 写入模板
+    const content = generateTemplate(name)
+    fs.writeFileSync(filePath, content, "utf-8")
+    console.log(`\n  ${color.green("✅  场景已创建！")}\n`)
+  }
 
-	console.log(`  ${CYAN}继续编辑:${RESET} ${YELLOW}${filePath}${RESET}\n`)
+  console.log(`  ${color.cyan("继续编辑:")} ${color.yellow(filePath)}\n`)
 
-	// 打开文件管理器
-	if (openDir) {
-		openFolder(scenariosDir)
-	}
+  // 打开文件管理器
+  if (openDir) {
+    openFolder(scenariosDir)
+  }
 }
 
 /**
@@ -101,33 +95,33 @@ export function executeCreateScenario(name, options = {}) {
  * @param {string} dir
  */
 function openFolder(dir) {
-	/** @type {string} */
-	let cmd
-	/** @type {string[]} */
-	let args
+  /** @type {string} */
+  let cmd
+  /** @type {string[]} */
+  let args
 
-	switch (process.platform) {
-		case 'darwin': {
-			cmd = 'open'
-			args = [dir]
-			break
-		}
-		case 'win32': {
-			cmd = 'explorer'
-			args = [dir.replace(/\//g, '\\')]
-			break
-		}
-		default: {
-			// Linux
-			cmd = 'xdg-open'
-			args = [dir]
-			break
-		}
-	}
+  switch (process.platform) {
+    case "darwin": {
+      cmd = "open"
+      args = [dir]
+      break
+    }
+    case "win32": {
+      cmd = "explorer"
+      args = [dir.replace(/\//g, "\\")]
+      break
+    }
+    default: {
+      // Linux
+      cmd = "xdg-open"
+      args = [dir]
+      break
+    }
+  }
 
-	try {
-		spawn(cmd, args, { stdio: 'ignore', detached: true }).unref()
-	} catch {
-		// 忽略打开失败
-	}
+  try {
+    spawn(cmd, args, { stdio: "ignore", detached: true }).unref()
+  } catch {
+    // 忽略打开失败
+  }
 }

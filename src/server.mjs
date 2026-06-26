@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url"
 import { getUserScenariosDir } from "./commands/create-scenario.mjs"
 import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
 import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
+import { color } from "./utils/color.mjs"
 
 /**
  * @import { Scenario, CliOptions } from './types.ts'
@@ -124,10 +125,14 @@ export function startServer(options) {
       )
 
       if (!scenario) {
+        const message = `Scenario "${scenarioName}" not found`
+
+        console.error(color.red("ERR:"), message)
+
         res.writeHead(404, { "Content-Type": "application/json" })
         res.end(
           JSON.stringify({
-            error: { message: `Scenario "${scenarioName}" not found` },
+            error: { message },
           }),
         )
         return

@@ -37,7 +37,6 @@ npx sse-stuntman
 - 🖥 **内置 Web UI** — 浏览器打开首页即可测试流式输出
 - 📂 **自定义场景** — 在 `~/.sse-stuntman/scenarios/` 放 `.md` 文件自动生效
 
----
 
 ## 快速开始 / Quick Start
 
@@ -62,7 +61,21 @@ npm install --save-dev sse-stuntman
 # "mock": "sse-stuntman --port 11434"
 ```
 
----
+### 使用
+
+假设有一个 `POST http://localhost:9095/management-service/api/intelligent-qa/chat` SSE 请求，期待返回 OpenAI 标准格式的 Markdown 流式输出，前端想测试该接口：
+
+```bash
+npx sse-stuntman --port 9095 --endpoint-path 'management-service/api/intelligent-qa/chat'
+```
+
+这样就开启了一个 SSE 请求模拟服务，你可以直接在你的代码中发起请求。可先试试 curl 看看是否输出了你预期的格式:
+
+```bash
+curl -N -X POST http://localhost:9095/management-service/api/intelligent-qa/chat \
+  -H "Content-Type: application/json" \
+  -d '{ "model": "gpt-5.5", "stream": true, "messages": [] }'
+```
 
 ## CLI 命令 / CLI Usage
 
