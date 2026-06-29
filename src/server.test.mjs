@@ -956,7 +956,7 @@ describe("server", () => {
       }
     })
 
-    it.only("should support non-streaming (stream=false) with echo scenario", async () => {
+    it("should support non-streaming (stream=false) with echo scenario", async () => {
       const port = getPort()
       const server = startServer({
         port,

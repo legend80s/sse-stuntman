@@ -163,7 +163,9 @@ export function parseScenarioFile(filePath, options = {}) {
   /** 将 textBuffer 按指定策略切分成 chunks */
   function flushBuffer() {
     const trimmed = textBuffer.replace(/\n{2,}/g, "\n")
-    if (!trimmed) {
+    // 跳过纯空白 buffer —— 它们来自指令间的换行符，没有语义意义
+    // e.g. echo.md 中 `<!-- @delay: 30 -->` 与 `<!-- @input -->` 之间的 \n
+    if (trimmed.trim() === "") {
       textBuffer = ""
       return
     }
