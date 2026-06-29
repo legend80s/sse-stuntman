@@ -100,7 +100,7 @@ console.log("Hello from temp");
       // console.log("result:", result)
 
       // first chunk: sentence-split "Hello world."
-      // remaining text after @chunk:word is split by word strategy -> multiple chunks
+      // default word strategy -> 逐词切分
       assert.deepStrictEqual(result, {
         name: "test",
         chunks: [
