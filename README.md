@@ -296,10 +296,10 @@ const stream = await client.chat.completions.create({ model: 'gpt-4o', messages:
 
 ### 纯回显：echo 场景
 
-内置的 `echo` 场景只有一行指令：
+内置的 `echo` 场景只有 `@input` 指令，延迟完全由 `--default-delay` / `-d` 控制：
 
 ```markdown
-<!-- @delay: 30 -->
+<!-- @desc: Echo user messages as streaming markdown response -->
 <!-- @input -->
 ```
 

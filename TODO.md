@@ -20,3 +20,15 @@
 - [ ] reuse and simplify `normalizePath` function
 - [ ] src/server.test.mjs:519 Anthropic 独立测试文件
 - [ ] message_start input_tokens: inputTokens should be always ZERO.
+- [ ] can we refactor use the "Open for extension and close for modification" Principle in S.O.L.I.D. so when new provider added the core never touched and only new files or little changes will be made to existing code. Thus separate the invariants from the variants.
+- [ ] Add a scenario that echo the input so the the user can customize the SSE markdown as what he want.
+- [ ] 切分策略用场景 md 里面的指令而非用 cli option 有什么好处吗？
+- [ ] 通过 cli 参数指定输出的语言，默认用系统语言
+- [ ] cli 参数 scenario 可以支持文件路径，自动读取指定文件当做 scenario
+- [ ] add test for new directive `@input`: the `@input` can be added in any place and any times in builtin or user created scenario markdown, when the parser see this directive it will insert and replace the user promt. Thus the static scenario seems more real.
+
+```bash
+curl -X POST http://localhost:11434/v1/chat/completions?scenario=echo \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"# Hello\n\nYour **markdown** here"}]}'
+```
