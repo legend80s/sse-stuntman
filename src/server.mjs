@@ -16,7 +16,11 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { getUserScenariosDir } from "./commands/create-scenario.mjs"
 import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
-import { listScenarios, parseScenarioFile, splitContent } from "./scenario-parser.mjs"
+import {
+  listScenarios,
+  parseScenarioFile,
+  splitContent,
+} from "./scenario-parser.mjs"
 import { color } from "./utils/color.mjs"
 import {
   writeAnthropicErrorStream,
@@ -270,27 +274,51 @@ export function startServer(options) {
 
   const port = options.port
   server.listen(port, () => {
-    console.log(`\n  🏍️  SSE Stuntman — server ready\n`)
-    console.log(`  Server:    http://localhost:${port}`)
-    console.log(`  Provider:  ${options.provider}`)
-    console.log(`  Endpoint(s): POST ${endpointPaths.join(", POST ")}`)
-    console.log(
-      `  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`,
-    )
-    console.log(`  Chunk:     ${options.chunkStrategy ?? "word"}`)
     const baseDelay = options.defaultDelay ?? 5
-    console.log(
-      `  Delay:     ${options.delayMultiplier}x  (multiplier — each @delay in scenario is multiplied by this)`,
-    )
-    console.log(
-      `  Default:   ${baseDelay}ms  (used when scenario has no @delay)`,
-    )
+    let effectiveDelay = ""
     if (options.delayMultiplier !== 1) {
-      console.log(
-        `             effective: ${options.delayMultiplier * baseDelay}ms`,
-      )
+      effectiveDelay = `Effective: ${options.delayMultiplier * baseDelay}ms`
     }
-    console.log(`\n  Press Ctrl+C to stop.\n`)
+
+    const title = "🏍️  SSE Stuntman — server ready"
+    const info = {
+      Server: `http://localhost:${port}`,
+      Provider: options.provider,
+      "Endpoint(s)": `POST ${endpointPaths.join(", POST ")}`,
+      Scenario: `${options.scenario}  (use ?scenario=name to switch)`,
+      Chunk: options.chunkStrategy,
+      Delay: `${baseDelay}ms  (used when scenario has no @delay)`,
+      "Delay Multiplier": `${options.delayMultiplier}x  (each @delay in scenario is multiplied by this)`,
+      "": effectiveDelay,
+    }
+
+    const maxKeyLength =
+      Math.max(...Object.keys(info).map((key) => key.length)) + 2
+
+    console.log(`\n  ${title}\n`)
+    for (const [key, value] of Object.entries(info)) {
+      const key1 = key ? `${key}:` : ""
+      value &&
+        console.log(
+          `  ${(`${key1}`).padEnd(maxKeyLength)} ${color.green(value)}`,
+        )
+    }
+    console.log(`\nPress Ctrl+C to stop.\n`)
+
+    //     console.log(`\n  ${title}`)
+
+    //     console.log(`
+    //   Server:    http://localhost:${port}
+    //   Provider:  ${options.provider}
+    //   Endpoint(s): POST ${endpointPaths.join(", POST ")}
+    //   Scenario:  ${options.scenario}  (use ?scenario=name to switch)
+    //   Chunk:     ${options.chunkStrategy ?? "word"}
+    //   Delay:             ${baseDelay}ms  (used when scenario has no @delay)
+    //   Delay Multiplier:  ${options.delayMultiplier}x  (each @delay in scenario is multiplied by this)
+    //   ${effectiveDelay}
+
+    //   Press Ctrl+C to stop.
+    // `)
   })
 
   return server
@@ -314,10 +342,10 @@ function loadScenario(name, dirs, defaultDelay = 5, chunkStrategy = "word") {
     const filePath = path.join(dir, `${name}.md`)
     try {
       if (fs.existsSync(filePath)) {
-        const scenario = parseScenarioFile(
-          filePath,
-          { defaultDelay: defaultDelay ?? 5, chunkStrategy },
-        )
+        const scenario = parseScenarioFile(filePath, {
+          defaultDelay: defaultDelay ?? 5,
+          chunkStrategy,
+        })
         scenarioCache.set(name, scenario)
         return scenario
       }
@@ -344,13 +372,10 @@ function preloadScenarios(dirs, options) {
       const scenarios = listScenarios(dir)
       for (const s of scenarios) {
         try {
-          const scenario = parseScenarioFile(
-            s.file,
-            {
-              defaultDelay: options.defaultDelay ?? 5,
-              chunkStrategy: options.chunkStrategy ?? "word",
-            },
-          )
+          const scenario = parseScenarioFile(s.file, {
+            defaultDelay: options.defaultDelay ?? 5,
+            chunkStrategy: options.chunkStrategy ?? "word",
+          })
           scenarioCache.set(s.name, scenario)
         } catch {
           // 跳过无法解析的场景

@@ -72,6 +72,7 @@ const DEFAULTS = {
   endpointPaths: ["/v1/chat/completions"],
   list: false,
   help: false,
+  chunkStrategy: /** @type {import('./types.ts').ChunkStrategy} */ ("word"),
 }
 
 /**
@@ -88,10 +89,17 @@ export function parseCliArgs(argv) {
     options: {
       port: { type: "string", short: "p" },
       scenario: { type: "string", short: "s" },
-      "delay-multiplier": { type: "string" },
-      "default-delay": { type: "string", short: "d" },
+      "delay-multiplier": {
+        type: "string",
+        default: String(DEFAULTS.delayMultiplier),
+      },
+      "default-delay": {
+        type: "string",
+        short: "d",
+        default: String(DEFAULTS.defaultDelay),
+      },
       provider: { type: "string" },
-      "chunk-strategy": { type: "string" },
+      "chunk-strategy": { type: "string", default: DEFAULTS.chunkStrategy },
       model: { type: "string", short: "m" },
       "endpoint-path": { type: "string", multiple: true, short: "e" },
       "scenarios-dir": { type: "string" },
@@ -173,7 +181,10 @@ export function parseCliArgs(argv) {
 
   // 校验 delay-multiplier
   if (cliValues.delayMultiplier != null) {
-    if (Number.isNaN(cliValues.delayMultiplier) || cliValues.delayMultiplier < 0) {
+    if (
+      Number.isNaN(cliValues.delayMultiplier) ||
+      cliValues.delayMultiplier < 0
+    ) {
       console.error(
         `[31mError:[0m --delay-multiplier must be >= 0, got "${values["delay-multiplier"]}"`,
       )

@@ -74,12 +74,12 @@ export interface CliOptions {
   /** 全局延迟倍率，1 = 正常速度 */
   delayMultiplier: number
   /** 场景内未显式指定 @delay 时的默认延迟（ms），默认 5 */
-  defaultDelay?: number
+  defaultDelay: number
   model: string
   /** AI Provider：openai 或 anthropic（默认 "openai"） */
   provider: Provider
   /** 文本切分策略，默认 "word" */
-  chunkStrategy?: ChunkStrategy
+  chunkStrategy: ChunkStrategy
   /** 自定义 POST 端点路径列表（默认 ['/v1/chat/completions']） */
   endpointPaths?: string[]
   list: boolean

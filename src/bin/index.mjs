@@ -14,9 +14,9 @@
  *   其他            → startServer()
  */
 
-import { parseCliArgs, mergeOptions, printHelp } from "../cli.mjs"
-import { loadUserConfig } from "../config-loader.mjs"
+import { mergeOptions, parseCliArgs, printHelp } from "../cli.mjs"
 import { executeCreateScenario } from "../commands/create-scenario.mjs"
+import { loadUserConfig } from "../config-loader.mjs"
 import { startServer } from "../server.mjs"
 
 const args = process.argv.slice(2)
@@ -24,7 +24,9 @@ const cliValues = parseCliArgs(args)
 
 // 子命令：create-scenario
 if (cliValues.createScenario) {
-  executeCreateScenario(cliValues.createScenario, { openDir: cliValues.openScenariosDir !== false })
+  executeCreateScenario(cliValues.createScenario, {
+    openDir: cliValues.openScenariosDir !== false,
+  })
   process.exit(0)
 }
 
