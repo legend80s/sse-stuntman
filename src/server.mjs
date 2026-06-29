@@ -139,6 +139,7 @@ export function startServer(options) {
         scenarioName,
         scenarioDirs,
         options.defaultDelay,
+        options.chunkStrategy,
       )
 
       if (!scenario) {
@@ -248,6 +249,7 @@ export function startServer(options) {
     console.log(
       `  Scenario:  ${options.scenario}  (use ?scenario=name to switch)`,
     )
+    console.log(`  Chunk:     ${options.chunkStrategy ?? "word"}`)
     const baseDelay = options.defaultDelay ?? 5
     console.log(
       `  Delay:     ${options.delayMultiplier}x  (multiplier — each @delay in scenario is multiplied by this)`,
@@ -274,7 +276,7 @@ export function startServer(options) {
  * @param {number} [defaultDelay]
  * @returns {Scenario | null}
  */
-function loadScenario(name, dirs, defaultDelay) {
+function loadScenario(name, dirs, defaultDelay = 5, chunkStrategy = "word") {
   const cached = scenarioCache.get(name)
   if (cached) {
     return cached
@@ -286,7 +288,7 @@ function loadScenario(name, dirs, defaultDelay) {
       if (fs.existsSync(filePath)) {
         const scenario = parseScenarioFile(
           filePath,
-          defaultDelay != null ? { defaultDelay } : undefined,
+          { defaultDelay: defaultDelay ?? 5, chunkStrategy },
         )
         scenarioCache.set(name, scenario)
         return scenario
@@ -316,9 +318,10 @@ function preloadScenarios(dirs, options) {
         try {
           const scenario = parseScenarioFile(
             s.file,
-            options.defaultDelay != null
-              ? { defaultDelay: options.defaultDelay }
-              : undefined,
+            {
+              defaultDelay: options.defaultDelay ?? 5,
+              chunkStrategy: options.chunkStrategy ?? "word",
+            },
           )
           scenarioCache.set(s.name, scenario)
         } catch {

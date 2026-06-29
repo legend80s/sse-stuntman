@@ -45,9 +45,7 @@ console.log("Hello from ${name}");
 
 <!-- @delay: 120 -->
 
-> 提示：使用 \`@chunk: word\` 切换为逐词输出。
-
-<!-- @chunk: word -->
+> 提示：使用 --chunk-strategy word 切换为逐词输出。
 
 这是逐词输出的效果。
 

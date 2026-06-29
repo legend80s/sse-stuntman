@@ -1,7 +1,7 @@
 ﻿/**
  * @file Scenario (.md) 文件解析器。
  *
- * 将包含 `@delay` / `@chunk` / `@done` / `@error` / `@desc` 指令的 Markdown 文件
+ * 将包含 `@delay` / `@done` / `@error` / `@desc` 指令的 Markdown 文件
  * 解析为 Chunk 数组供 openai-stream.mjs 消费。
  *
  * ## 指令参考
@@ -9,17 +9,18 @@
  * | 指令 | 示例 | 作用 |
  * |------|------|------|
  * | `@delay:N` | `<!-- @delay: 200 -->` | 后续 chunk 的间隔延迟（ms） |
- * | `@chunk:TYPE` | `<!-- @chunk: word -->` | 后续文本的切分策略 |
  * | `@desc:TEXT` | `<!-- @desc: 标准对话场景 -->` | 场景描述，用于 --list 输出 |
  * | `@done` | `<!-- @done -->` | 在此处终止流 |
  * | `@error:TYPE` | `<!-- @error: rate-limit -->` | 整个场景为错误场景 |
  *
  * ## 切分策略
  *
+ * 通过 `--chunk-strategy` CLI 参数指定（默认 `word`）：
+ *
  * | 策略 | 说明 |
  * |------|------|
- * | `sentence` (默认) | 按句子切分，最自然的流式效果 |
- * | `word` | 按单词切分，打字机效果 |
+ * | `word` (默认) | 按单词切分，打字机效果 |
+ * | `sentence` | 按句子切分 |
  * | `char` | 逐字符输出 |
  * | `line` | 按行切分 |
  * | `paragraph` | 整个段落一个 chunk |
@@ -40,7 +41,6 @@
  * - 编写代码
  *
  * <!-- @delay: 200 -->
- * <!-- @chunk: word -->
  *
  * 这是逐词输出。
  *
@@ -60,11 +60,15 @@ import path from "node:path"
  *
  * @param {string} filePath - .md 文件的绝对路径
  * @param {object} [options]
- * @param {number} [options.defaultDelay=5] - 场景内未显式指定 @delay 时的默认延迟（ms）
+ * @param {number} [options.defaultDelay=5]
+ * @param {string} [options.chunkStrategy]
  * @returns {Scenario}
  */
 export function parseScenarioFile(filePath, options = {}) {
-  const { defaultDelay = 5 } = options
+  const { defaultDelay = 5, chunkStrategy = "word" } =
+    /** @type {{ defaultDelay?: number, chunkStrategy?: import('./types.ts').ChunkStrategy }} */ (
+      options
+    )
   const content = fs.readFileSync(filePath, "utf-8")
   const basename = path.basename(filePath, ".md")
 
@@ -88,7 +92,6 @@ export function parseScenarioFile(filePath, options = {}) {
   /** @type {import('./types.ts').Chunk[]} */
   const chunks = []
   let currentDelay = defaultDelay
-  let currentStrategy = /** @type {ChunkStrategy} */ ("sentence")
   let description = ""
   let textBuffer = ""
   let lastIndex = 0
@@ -110,16 +113,6 @@ export function parseScenarioFile(filePath, options = {}) {
         flushBuffer()
         currentDelay = parseInt(value ?? "50", 10)
         if (Number.isNaN(currentDelay)) currentDelay = 50
-        break
-      }
-      case "chunk": {
-        flushBuffer()
-        if (
-          value &&
-          ["sentence", "word", "char", "line", "paragraph"].includes(value)
-        ) {
-          currentStrategy = /** @type {ChunkStrategy} */ (value)
-        }
         break
       }
       case "desc": {
@@ -157,14 +150,14 @@ export function parseScenarioFile(filePath, options = {}) {
 
   return { name: basename, chunks, description }
 
-  /** 将 textBuffer 按当前策略切分成 chunks */
+  /** 将 textBuffer 按指定策略切分成 chunks */
   function flushBuffer() {
     const trimmed = textBuffer.replace(/\n{2,}/g, "\n")
     if (!trimmed) {
       textBuffer = ""
       return
     }
-    const sub = splitContent(trimmed, currentStrategy)
+    const sub = splitContent(trimmed, chunkStrategy)
     // console.log("\n---------------------------------------")
     // console.log({ textBuffer, trimmed, currentStrategy })
     // console.log("sub:", sub)

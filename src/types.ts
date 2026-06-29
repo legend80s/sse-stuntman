@@ -10,7 +10,7 @@ export interface Chunk {
   content: string
   /** 输出后等待的毫秒数，默认由场景片段间的 delay 指令决定 */
   delay?: number
-  /** 切分策略，默认为 "sentence"，仅在需要覆盖时设置 */
+  /** 切分策略，默认为 "word"，仅在需要覆盖时设置 */
   strategy?: ChunkStrategy
   /**
    * 内部标志：若为 true，表示该 chunk 是流终止标记
@@ -26,8 +26,8 @@ export interface Chunk {
 
 /** 文本切分策略 */
 export type ChunkStrategy =
-  | "sentence" // 按句子切分（默认），较自然的流式效果
   | "word" // 按单词切分，打字机效果更明显
+  | "sentence" // 按句子切分
   | "char" // 按字符切分，最细腻的逐字效果
   | "line" // 按行切分，每行一个 chunk
   | "paragraph" // 整个段落一个 chunk
@@ -73,6 +73,8 @@ export interface CliOptions {
   model: string
   /** AI Provider：openai 或 anthropic（默认 "openai"） */
   provider: Provider
+  /** 文本切分策略，默认 "word" */
+  chunkStrategy?: ChunkStrategy
   /** 自定义 POST 端点路径列表（默认 ['/v1/chat/completions']） */
   endpointPaths?: string[]
   list: boolean

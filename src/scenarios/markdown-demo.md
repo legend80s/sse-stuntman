@@ -2,7 +2,6 @@
 # 📝 Markdown 完整演示
 
 <!-- @delay: 80 -->
-<!-- @chunk: sentence -->
 
 这是一份完整的 GFM (GitHub Flavored Markdown) 演示场景，展示了 AI SSE Mock 对富文本输出的支持。
 
@@ -137,4 +136,4 @@ sequenceDiagram
 
 ---
 
-以上是 **AI SSE Mock** 对 GFM 的完整支持演示。你可以通过 `@chunk: word` 切换到逐词输出模式体验更细腻的流式效果。
+以上是 **AI SSE Mock** 对 GFM 的完整支持演示。你可以通过 `--chunk-strategy word` 切换到逐词输出模式体验更细腻的流式效果。

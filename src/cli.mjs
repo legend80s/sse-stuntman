@@ -36,6 +36,8 @@ const HELP_TEXT = `
                              Can be overridden per-section with @delay in .md.
     --provider <name>       Output format provider              (default: "openai")
                              "openai" (Chat Completions SSE) or "anthropic" (Messages SSE)
+    --chunk-strategy <name>  Text split strategy                (default: "word")
+                             "word" (default), "sentence", "char", "line", or "paragraph"
     -m, --model <name>       Default model name in SSE events   (default: "gpt-4o")
     -e, --endpoint-path <path>  Custom POST endpoint path       (default: "/v1/chat/completions")
                              (can be specified multiple times for multiple paths)
@@ -89,6 +91,7 @@ export function parseCliArgs(argv) {
       "delay-multiplier": { type: "string" },
       "default-delay": { type: "string", short: "d" },
       provider: { type: "string" },
+      "chunk-strategy": { type: "string" },
       model: { type: "string", short: "m" },
       "endpoint-path": { type: "string", multiple: true, short: "e" },
       "scenarios-dir": { type: "string" },
@@ -139,6 +142,9 @@ export function parseCliArgs(argv) {
   }
   if (values.provider !== undefined) {
     cliValues.provider = normalizeProvider(values.provider)
+  }
+  if (values["chunk-strategy"] !== undefined) {
+    cliValues.chunkStrategy = normalizeChunkStrategy(values["chunk-strategy"])
   }
   if (values["endpoint-path"]) {
     cliValues.endpointPaths = values["endpoint-path"]
@@ -206,6 +212,24 @@ function normalizeProvider(s) {
 }
 
 /**
+ * 规范化并校验 chunk-strategy 值。
+ *
+ * @param {string} s
+ * @returns {import('./types.ts').ChunkStrategy}
+ */
+function normalizeChunkStrategy(s) {
+  const v = s.toLowerCase()
+  const valid = ["sentence", "word", "char", "line", "paragraph"]
+  if (!valid.includes(v)) {
+    console.error(
+      `\x1b[31mError:\x1b[0m --chunk-strategy must be one of: ${valid.join(", ")}, got "${s}"`,
+    )
+    process.exit(1)
+  }
+  return /** @type {import('./types.ts').ChunkStrategy} */ (v)
+}
+
+/**
  * 合并 CLI 参数与配置文件（CLI 优先）。
  *
  * @param {Partial<import('./types.ts').CliOptions>} cliValues
@@ -235,6 +259,9 @@ export function mergeOptions(cliValues, configValues) {
     if (configValues.provider != null) {
       result.provider = normalizeProvider(configValues.provider)
     }
+    if (configValues.chunkStrategy != null) {
+      result.chunkStrategy = normalizeChunkStrategy(configValues.chunkStrategy)
+    }
     if (configValues.endpointPaths != null) {
       result.endpointPaths = configValues.endpointPaths
     }
@@ -261,6 +288,9 @@ export function mergeOptions(cliValues, configValues) {
   }
   if (cliValues.provider != null) {
     result.provider = cliValues.provider
+  }
+  if (cliValues.chunkStrategy != null) {
+    result.chunkStrategy = cliValues.chunkStrategy
   }
   if (cliValues.endpointPaths != null) {
     result.endpointPaths = cliValues.endpointPaths

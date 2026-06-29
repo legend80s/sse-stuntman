@@ -70,7 +70,7 @@ describe('create-scenario', () => {
       assert.ok(content.includes('# hello-world'))
       assert.ok(content.includes('@desc'))
       assert.ok(content.includes('@delay'))
-      assert.ok(content.includes('@chunk: word'))
+      assert.ok(content.includes('--chunk-strategy'))
       assert.ok(content.includes('@done'))
     })
 

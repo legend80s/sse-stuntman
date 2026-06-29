@@ -20,7 +20,7 @@ describe("scenario-parser", () => {
         "utf-8",
       )
 
-      const result = parseScenarioFile(file)
+      const result = parseScenarioFile(file, { chunkStrategy: "sentence" })
 
       // console.log("result:", result)
 
@@ -60,7 +60,7 @@ describe("scenario-parser", () => {
         "utf-8",
       )
 
-      const result = parseScenarioFile(file)
+      const result = parseScenarioFile(file, { chunkStrategy: "sentence" })
 
       // Parser doesn't truncate after @done — just adds a done chunk.
       // Downstream (openai-stream) stops on done.
@@ -70,7 +70,7 @@ describe("scenario-parser", () => {
       assert.equal(doneChunk.done, true)
     })
 
-    it("should handle @chunk strategy changes", () => {
+    it("should output word by word by default", () => {
       const dir = mkdtempSync(join(tmpdir(), "test-"))
       const file = join(dir, "test.md")
       writeFileSync(
@@ -91,9 +91,6 @@ console.log("Hello from temp");
 
 <!-- @delay: 120 -->
 
-> 提示：使用 \`@chunk: word\` 切换为逐词输出。
-
-<!-- @chunk: word -->
 
 这是逐词输出的效果word1 word2 word3.`,
         "utf-8",
@@ -107,43 +104,59 @@ console.log("Hello from temp");
       assert.deepStrictEqual(result, {
         name: "test",
         chunks: [
-          { content: "这是逐句输出的效果 Hello world.\n", delay: 5 },
-          {
-            content: "\n",
-            delay: 100,
-          },
-          {
-            content: "支持 **markdown** 语法、代码块、表格等。\n",
-            delay: 100,
-          },
-          {
-            content: "\n",
-            delay: 150,
-          },
-          {
-            content: "```javascript\n",
-            delay: 150,
-          },
-          {
-            content: 'console.log("Hello from temp");\n',
-            delay: 150,
-          },
-          {
-            content: "```\n",
-            delay: 150,
-          },
-          {
-            content: "\n",
-            delay: 120,
-          },
-          {
-            content: "> 提示：使用 `@chunk: word` 切换为逐词输出。\n",
-            delay: 120,
-          },
-          {
-            content: "\n",
-            delay: 120,
-          },
+          { content: "这", delay: 5 },
+          { content: "是", delay: 5 },
+          { content: "逐句", delay: 5 },
+          { content: "输出", delay: 5 },
+          { content: "的", delay: 5 },
+          { content: "效果", delay: 5 },
+          { content: " ", delay: 5 },
+          { content: "Hello", delay: 5 },
+          { content: " ", delay: 5 },
+          { content: "world", delay: 5 },
+          { content: ".", delay: 5 },
+          { content: "\n", delay: 5 },
+          { content: "\n", delay: 100 },
+          { content: "支持", delay: 100 },
+          { content: " ", delay: 100 },
+          { content: "*", delay: 100 },
+          { content: "*", delay: 100 },
+          { content: "markdown", delay: 100 },
+          { content: "*", delay: 100 },
+          { content: "*", delay: 100 },
+          { content: " ", delay: 100 },
+          { content: "语法", delay: 100 },
+          { content: "、", delay: 100 },
+          { content: "代码", delay: 100 },
+          { content: "块", delay: 100 },
+          { content: "、", delay: 100 },
+          { content: "表格", delay: 100 },
+          { content: "等", delay: 100 },
+          { content: "。", delay: 100 },
+          { content: "\n", delay: 100 },
+          { content: "\n", delay: 150 },
+          { content: "`", delay: 150 },
+          { content: "`", delay: 150 },
+          { content: "`", delay: 150 },
+          { content: "javascript", delay: 150 },
+          { content: "\n", delay: 150 },
+          { content: "console.log", delay: 150 },
+          { content: "(", delay: 150 },
+          { content: '"', delay: 150 },
+          { content: "Hello", delay: 150 },
+          { content: " ", delay: 150 },
+          { content: "from", delay: 150 },
+          { content: " ", delay: 150 },
+          { content: "temp", delay: 150 },
+          { content: '"', delay: 150 },
+          { content: ")", delay: 150 },
+          { content: ";", delay: 150 },
+          { content: "\n", delay: 150 },
+          { content: "`", delay: 150 },
+          { content: "`", delay: 150 },
+          { content: "`", delay: 150 },
+          { content: "\n", delay: 150 },
+          { content: "\n", delay: 120 },
           { content: "这", delay: 120 },
           { content: "是", delay: 120 },
           { content: "逐词", delay: 120 },
@@ -161,16 +174,16 @@ console.log("Hello from temp");
       })
     })
 
-    it("should split text word by word with @chunk: word", () => {
+    it("should split text word by word with chunk strategy", () => {
       const dir = mkdtempSync(join(tmpdir(), "test-"))
       const file = join(dir, "test.md")
       writeFileSync(
         file,
-        "<!-- @chunk: word -->\n\nHello world, this is a test.\n\nSecond sentence here.",
+        "Hello world, this is a test.\n\nSecond sentence here.",
         "utf-8",
       )
 
-      const result = parseScenarioFile(file)
+      const result = parseScenarioFile(file, { chunkStrategy: "word" })
 
       // Each chunk should be a single word (including trailing whitespace)
       const wordChunks = result.chunks.filter(
@@ -212,11 +225,11 @@ console.log("Hello from temp");
       const file = join(dir, "test.md")
       writeFileSync(
         file,
-        "Start.\n\n<!-- @delay: 200 -->\n\nMiddle.\n\n<!-- @chunk: word -->\n\nword1.",
+        "Start.\n\n<!-- @delay: 200 -->\n\nMiddle.\n\nword1.",
         "utf-8",
       )
 
-      const result = parseScenarioFile(file)
+      const result = parseScenarioFile(file, { chunkStrategy: "sentence" })
 
       assert.ok(result.chunks.length >= 2)
       assert.equal(result.chunks[1].delay, 200)
