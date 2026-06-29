@@ -27,10 +27,11 @@ import {
   writeAnthropicNonStreamingResponse,
   writeAnthropicStream,
 } from "./utils/providers/anthropic/stream.mjs"
+import { extractUserPrompt, logEnd, logStart } from "./utils/request-logger.mjs"
 import { calculateTokens } from "./utils/token.mjs"
 
 /**
- * @import { Scenario, CliOptions } from './types.ts'
+ * @import { Scenario, UserMessage } from './types.ts'
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -122,7 +123,7 @@ export function startServer(options) {
       let requestModel = null
       let stream = true
       let inputTokens = 0
-      /** @type {Array<{ role: string, content: string }>} */
+      /** @type {Array<UserMessage>} */
       let parsedMessages = []
       if (body) {
         try {
@@ -132,7 +133,8 @@ export function startServer(options) {
           parsedMessages = parsed.messages ?? []
           // 计算 input_tokens（用于 Anthropic 格式）
           const promptText = parsedMessages
-            .map((/** @type {{ content: string }} */ m) => m.content ?? "")
+            .map(extractUserPrompt)
+            .filter(Boolean)
             .join("")
           inputTokens = calculateTokens(promptText)
         } catch {
@@ -141,6 +143,23 @@ export function startServer(options) {
       }
 
       const scenarioName = url.searchParams.get("scenario") ?? options.scenario
+
+      const { startTime, traceId } = logStart({
+        method: req.method,
+        pathname,
+        scenario: scenarioName,
+        parsedMessages,
+        requestModel,
+      })
+
+      res.on("close", () => {
+        logEnd({
+          traceId,
+          startTime,
+          statusCode: res.statusCode,
+        })
+      })
+
       let scenario = loadScenario(
         scenarioName,
         scenarioDirs,
@@ -168,7 +187,7 @@ export function startServer(options) {
         const lastUserMsg = [...parsedMessages]
           .reverse()
           .find((m) => m.role === "user")
-        const userContent = lastUserMsg?.content ?? ""
+        const userContent = extractUserPrompt(lastUserMsg)
         const chunkStrategy = options.chunkStrategy ?? "word"
 
         const expanded = []
@@ -491,6 +510,7 @@ function setCorsHeaders(res) {
  * @param {string[]} dirs
  * @returns {string}
  */
+
 function getIndexHtml(options, dirs) {
   const seen = new Set()
   const scenarioOpts = []

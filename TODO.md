@@ -25,7 +25,8 @@
 - [ ] 切分策略用场景 md 里面的指令而非用 cli option 有什么好处吗？
 - [ ] 通过 cli 参数指定输出的语言，默认用系统语言
 - [ ] cli 参数 scenario 可以支持文件路径，自动读取指定文件当做 scenario
-- [ ] add test for new directive `@input`: the `@input` can be added in any place and any times in builtin or user created scenario markdown, when the parser see this directive it will insert and replace the user promt. Thus the static scenario seems more real.
+- [x] add test for new directive `@input`: the `@input` can be added in any place and any times in builtin or user created scenario markdown, when the parser see this directive it will insert and replace the user promt. Thus the static scenario seems more real.
+- [x] 增加客户端请求日志
 
 ```bash
 curl -X POST http://localhost:11434/v1/chat/completions?scenario=echo \

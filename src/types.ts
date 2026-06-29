@@ -115,3 +115,22 @@ export interface SSEEvent {
   model: string
   choices: SSEChoice[]
 }
+
+export type UserMessage = {
+  role: string
+  content: string | { type: string; text: string }[]
+}
+
+export type LogStartParams = {
+  method: string
+  pathname: string
+  scenario: string
+  parsedMessages: UserMessage[]
+  requestModel: string
+}
+
+export type LogEndParams = {
+  statusCode: number
+  traceId: string
+  startTime: number
+}

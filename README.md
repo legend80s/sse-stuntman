@@ -87,7 +87,7 @@ sse-stuntman create-scenario <name>
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `--port <number>` | `11434` | 服务端口（与 Ollama 一致，可零成本切换） |
-| `--scenario <name>` | `default` | 初始场景 |
+| `--scenario <name>` | `default` | 场景名或 `.md` 文件路径（支持绝对/相对路径） |
 | `--delay-multiplier <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
 | `--default-delay <number>` / `-d` | `5` | 场景内无 `@delay` 时的默认 chunk 间隔（毫秒） |
 | `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
@@ -118,6 +118,10 @@ sse-stuntman create-scenario my-code-review
 
 # 使用自定义场景
 sse-stuntman --scenario my-code-review
+
+# 直接使用 .md 文件作为场景（无需放入场景目录）
+sse-stuntman --scenario /path/to/your-scenario.md
+sse-stuntman --scenario ./relative/test.md
 
 # 半速输出
 sse-stuntman --delay-multiplier 0.5
