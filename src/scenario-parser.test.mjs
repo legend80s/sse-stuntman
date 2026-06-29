@@ -22,14 +22,18 @@ describe("scenario-parser", () => {
 
       const result = parseScenarioFile(file)
 
-      assert.equal(result.name, "test")
-      assert.equal(result.chunks.length, 2)
-      // first chunk: "# Hello\n\nThis is a test." — sentence split
-      assert.ok(result.chunks[0].content.length > 0)
-      assert.equal(result.chunks[0].delay, 5) // default delay
-      // second chunk after @delay:100
-      assert.equal(result.chunks[1].content.trim(), "Second paragraph.")
-      assert.equal(result.chunks[1].delay, 100)
+      // console.log("result:", result)
+
+      assert.deepStrictEqual(result, {
+        name: "test",
+        chunks: [
+          { content: "# Hello\n", delay: 5 },
+          { content: "This is a test.\n", delay: 5 },
+          { content: "\n", delay: 100 },
+          { content: "Second paragraph.", delay: 100 },
+        ],
+        description: "",
+      })
     })
 
     it("should detect @error directive for error scenarios", () => {
@@ -39,10 +43,12 @@ describe("scenario-parser", () => {
 
       const result = parseScenarioFile(file)
 
-      assert.equal(result.name, "test")
-      assert.equal(result.chunks.length, 0)
-      assert.ok(result.error)
-      assert.equal(result.error.type, "rate-limit")
+      assert.deepStrictEqual(result, {
+        name: "test",
+        chunks: [],
+        description: "",
+        error: { type: "rate-limit" },
+      })
     })
 
     it("should handle @done directive", () => {
@@ -60,7 +66,7 @@ describe("scenario-parser", () => {
       // Downstream (openai-stream) stops on done.
       const doneChunk = result.chunks.find((c) => c.done)
       assert.ok(doneChunk, "Should have a done chunk")
-      assert.equal(result.chunks[0].content, "First part.")
+      assert.equal(result.chunks[0].content, "First part.\n")
       assert.equal(doneChunk.done, true)
     })
 

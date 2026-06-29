@@ -15,15 +15,15 @@ import http from "node:http"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { getUserScenariosDir } from "./commands/create-scenario.mjs"
+import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
+import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
+import { color } from "./utils/color.mjs"
 import {
   writeAnthropicErrorStream,
   writeAnthropicNonStreamingResponse,
   writeAnthropicStream,
-} from "./anthropic-stream.mjs"
-import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
+} from "./utils/providers/anthropic/stream.mjs"
 import { calculateTokens } from "./utils/token.mjs"
-import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
-import { color } from "./utils/color.mjs"
 
 /**
  * @import { Scenario, CliOptions } from './types.ts'
@@ -125,7 +125,9 @@ export function startServer(options) {
           stream = parsed.stream !== false
           // 计算 input_tokens（用于 Anthropic 格式）
           const messages = parsed.messages ?? []
-          const promptText = messages.map((/** @type {{ content: string }} */ m) => m.content ?? "").join("")
+          const promptText = messages
+            .map((/** @type {{ content: string }} */ m) => m.content ?? "")
+            .join("")
           inputTokens = calculateTokens(promptText)
         } catch {
           /* ignore */
