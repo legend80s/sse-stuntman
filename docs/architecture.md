@@ -109,15 +109,15 @@
 扫描 HTML 注释指令 (DIRECTIVE_RE)
     │
     ├── @delay:N    → 更新 currentDelay
-    ├── @chunk:TYPE → 更新 currentStrategy
+    ├── 由 CLI 参数 --chunk-strategy 决定策略
     ├── @done       → 插入 done chunk
     └── @error:TYPE → 整体标记为错误场景
     │
     ▼
-指令间的文本根据 currentStrategy 切分
+指令间的文本根据 chunkStrategy 切分
     │
-    ├── sentence (默认) — 按句子切分
-    ├── word           — 按单词切分
+    ├── word (默认)    — 按单词切分
+    ├── sentence       — 按句子切分
     ├── char           — 逐字符
     ├── line           — 按行
     └── paragraph      — 按段落

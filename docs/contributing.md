@@ -122,7 +122,7 @@ export function parseScenarioFile(filePath) { ... }
 
 1. 在 `src/scenarios/` 下创建 `.md` 文件
 2. 文件名为场景名（如 `code-review.md`）
-3. 使用 `@delay`、`@chunk`、`@done` 指令控制流式行为（见[场景编写指南](scenario-guide.md)）
+3. 使用 `@delay`、`@done` 指令和 `--chunk-strategy` 参数控制流式行为（见[场景编写指南](scenario-guide.md)）
 4. 如果是错误场景，文件仅包含 `<!-- @error: TYPE -->`
 5. 重启服务器自动发现新场景（`--list` 验证）
 

@@ -25,7 +25,7 @@
 - [x] HTTP 服务器（零外部依赖，CORS 全开）
 - [x] OpenAI SSE 流式格式（role → content → stop → [DONE]）
 - [x] 非流式支持（`stream: false` → 完整 JSON）
-- [x] Markdown 场景解析器（`@delay` / `@chunk` / `@done` / `@error` 指令）
+- [x] Markdown 场景解析器（`@delay` / `@done` / `@error` 指令 + `--chunk-strategy` 参数）
 - [x] 5 种切分策略（sentence / word / char / line / paragraph）
 - [x] 5 种错误场景（429 / 400 / 500 / timeout / empty）
 - [x] CLI 参数（`--port` / `--scenario` / `--delay` / `--model` / `--list`）

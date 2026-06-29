@@ -91,6 +91,8 @@ sse-stuntman create-scenario <name>
 | `--delay <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
 | `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
 | `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | 自定义 POST 端点路径，可多次指定支持多路径（如 `-e /chat -e /api/chat`） |
+| `--provider <name>` | `openai` | 输出格式：`openai`（Chat Completions SSE）或 `anthropic`（Messages SSE） |
+| `--chunk-strategy <name>` | `word` | 文本切分策略：`word` / `sentence` / `char` / `line` / `paragraph` |
 | `--scenarios-dir <path>` | — | 自定义场景目录（覆盖默认路径） |
 | `--list` | — | 列出所有内置 + 自定义场景 |
 | `create-scenario <name>` | — | 创建新场景模板 |
@@ -162,9 +164,8 @@ echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
 | `src/auth.ts` | 缺少验证 | 🔴 高 |
 
 <!-- @delay: 150 -->
-<!-- @chunk: word -->
 
-这是逐词输出的内容。
+这是逐词输出的内容（通过 `--chunk-strategy word` 启用）。
 
 <!-- @done -->
 ```
@@ -174,7 +175,6 @@ echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
 | 指令 | 示例 | 作用 |
 |------|------|------|
 | `@delay:N` | `<!-- @delay: 200 -->` | chunk 间隔（毫秒） |
-| `@chunk:TYPE` | `<!-- @chunk: word -->` | 切分策略：`sentence`(默认)/`word`/`char`/`line`/`paragraph` |
 | `@desc:TEXT` | `<!-- @desc: 描述 -->` | 场景描述（`--list` 显示） |
 | `@done` | `<!-- @done -->` | 在此处终止流 |
 | `@error:TYPE` | `<!-- @error: rate-limit -->` | 整文件标记为错误场景 |

@@ -18,9 +18,7 @@
 
 包含 **markdown** 格式的内容。
 
-<!-- @chunk: word -->
-
-逐词输出的文字。
+逐词输出的文字（通过 `--chunk-strategy word` 启用）。
 
 <!-- @done -->
 ```
@@ -30,7 +28,7 @@
 | 指令 | 示例 | 作用 |
 |------|------|------|
 | `@delay:N` | `<!-- @delay: 200 -->` | 设置此后每个 chunk 的间隔延迟（毫秒），默认 50ms |
-| `@chunk:TYPE` | `<!-- @chunk: word -->` | 切换文本切分策略 |
+| `--chunk-strategy` | CLI 参数 | 文本切分策略：`word`(默认)/`sentence`/`char`/`line`/`paragraph` |
 | `@done` | `<!-- @done -->` | 在此处终止流，后续内容不输出 |
 | `@error:TYPE` | `<!-- @error: rate-limit -->` | 标记整个文件为错误场景（通常放第一行） |
 
@@ -40,20 +38,20 @@
 
 ## 切分策略 / Chunk Strategy
 
-切分策略决定一段文本被拆成几个 SSE chunk 发送。策略由 `@chunk` 指令切换。
+切分策略决定一段文本被拆成几个 SSE chunk 发送。策略由 `--chunk-strategy` CLI 参数指定。
 
 | 策略 | 说明 | 示例输入 | 输出 chunk 数 |
 |------|------|---------|--------------|
-| `sentence` (默认) | 按句号、感叹号、问号切分 | `你好！我是AI。` | 2 |
-| `word` | 按单词/词切分，打字机效果 | `Hello World` | 2 |
+| `word` (默认) | 按单词/词切分，打字机效果 | `Hello World` | 2 |
+| `sentence` | 按句号、感叹号、问号切分 | `你好！我是AI。` | 2 |
 | `char` | 逐字符输出，最细腻 | `Hi` | 2 |
 | `line` | 按行切分 | `A\nB\nC` | 3 |
 | `paragraph` | 按空行分隔的段落 | `P1\n\nP2` | 2 |
 
 ### 选择建议
 
-- **默认 sentence** 最自然，适合绝大多数场景
-- **word** 模拟真实 AI 逐词生成的感觉
+- **默认 word** 模拟真实 AI 逐词生成的感觉
+- **sentence** 按句子切分，适合摘要性场景
 - **char** 测试前端最细粒度的渲染能力
 - **line** 适合代码输出场景
 - **paragraph** 适合长段落、需要整段显示的场景
@@ -101,8 +99,6 @@
 | `src/api.ts` | 未处理超时 | 🟡 中 |
 
 <!-- @delay: 200 -->
-<!-- @chunk: word -->
-
 ```diff
 - const token = req.header('Authorization');
 + const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -126,7 +122,7 @@
 ## 最佳实践 / Best Practices
 
 1. **延迟设置**：默认 50ms 适合大多数场景。表格、代码块前后加 150-200ms 延迟更真实
-2. **策略切换**：大段代码用 `word` 或 `char` 更自然，摘要性文字用 `sentence`
+2. **策略选择**：`--chunk-strategy word` 默认，大段代码用 `char`，摘要性文字用 `sentence`
 3. **中断测试**：用 `@done` 模拟回复到一半中断
 4. **错误覆盖**：正确定义 `@error` 场景测试前端错误处理
 5. **文件名**：简短、语义化，用连字符分隔（如 `code-review.md`）
