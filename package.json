@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "SSE Stuntman — stunt double for your AI API. Simulate streaming responses, errors, and edge cases.",
   "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "start": "node bin/index.mjs",
+    "test": "node --test"
+  },
   "bin": {
     "sse-stuntman": "src/bin/index.mjs"
   },
@@ -11,11 +16,6 @@
     "src/",
     "README.md"
   ],
-  "scripts": {
-    "typecheck": "tsgo --noEmit",
-    "start": "node bin/index.mjs",
-    "test": "node --test"
-  },
   "keywords": [
     "sse",
     "stuntman",
