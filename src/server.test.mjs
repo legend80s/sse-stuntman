@@ -8,7 +8,7 @@
 import { describe, it, before, after } from "node:test"
 import assert from "node:assert/strict"
 import http from "node:http"
-import path from "node:path"
+import path, { parse } from "node:path"
 import fs from "node:fs"
 import os from "node:os"
 import { startServer } from "./server.mjs"
@@ -988,7 +988,10 @@ describe("server", () => {
         assert.equal(status, 200)
         const parsed = JSON.parse(body)
         // console.log("parsed:", parsed)
-        assert.deepStrictEqual(parsed, {
+        const { created, id, ...noTime } = parsed
+        assert.match(String(created), /^\d{10}$/)
+        assert.ok(id.startsWith(`chatcmpl-${created}`))
+        assert.deepStrictEqual(noTime, {
           choices: [
             {
               finish_reason: "stop",
@@ -999,21 +1002,10 @@ describe("server", () => {
               },
             },
           ],
-          created: 1782703742,
-          id: "chatcmpl-1782703742895",
+
           model: "gpt-4o",
           object: "chat.completion",
         })
-
-        assert.equal(parsed.object, "chat.completion")
-        // 由于 @delay 与 @input 之间的换行符会被解析为文本 chunk，
-        // 最终内容会有前导空白，使用 includes 验证用户原文被包含即可
-        const content = parsed.choices[0].message.content
-        assert.ok(
-          content.includes(userContent),
-          `Expected "${userContent}" in "${content}"`,
-        )
-        assert.equal(parsed.choices[0].finish_reason, "stop")
       } finally {
         server.close()
       }
