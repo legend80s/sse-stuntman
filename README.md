@@ -36,7 +36,7 @@ npx sse-stuntman
 - 🌐 **CORS 全开** — 浏览器直接跨域调用
 - 🖥 **内置 Web UI** — 浏览器打开首页即可测试流式输出
 - 📂 **自定义场景** — 在 `~/.sse-stuntman/scenarios/` 放 `.md` 文件自动生效
-
+- 🎤 **自定义输入** — 把请求消息内容注入场景流，用 `@input` 指令让静态场景"活"起来
 
 ## 快速开始 / Quick Start
 
@@ -88,7 +88,8 @@ sse-stuntman create-scenario <name>
 |------|--------|------|
 | `--port <number>` | `11434` | 服务端口（与 Ollama 一致，可零成本切换） |
 | `--scenario <name>` | `default` | 初始场景 |
-| `--delay <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
+| `--delay-multiplier <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
+| `--default-delay <number>` / `-d` | `5` | 场景内无 `@delay` 时的默认 chunk 间隔（毫秒） |
 | `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
 | `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | 自定义 POST 端点路径，可多次指定支持多路径（如 `-e /chat -e /api/chat`） |
 | `--provider <name>` | `openai` | 输出格式：`openai`（Chat Completions SSE）或 `anthropic`（Messages SSE） |
@@ -119,7 +120,7 @@ sse-stuntman create-scenario my-code-review
 sse-stuntman --scenario my-code-review
 
 # 半速输出
-sse-stuntman --delay 0.5
+sse-stuntman --delay-multiplier 0.5
 
 # 自定义端点路径（用于无法修改代码的客户端）
 sse-stuntman --endpoint-path /management-service/api/intelligent-qa/chat
@@ -178,6 +179,7 @@ echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
 | `@desc:TEXT` | `<!-- @desc: 描述 -->` | 场景描述（`--list` 显示） |
 | `@done` | `<!-- @done -->` | 在此处终止流 |
 | `@error:TYPE` | `<!-- @error: rate-limit -->` | 整文件标记为错误场景 |
+| `@input` | `<!-- @input -->` | 占位符，请求时替换为最后一条用户消息内容 |
 
 ### 场景加载顺序
 
@@ -270,6 +272,7 @@ const stream = await client.chat.completions.create({ model: 'gpt-4o', messages:
 |------|------|
 | `default` | 标准对话，markdown 列表/代码块/表格 |
 | `markdown-demo` | 完整 GFM 演示 — diff/Mermaid/数学公式 |
+| `echo` | 将请求中最后一条用户消息内容作为 SSE 流式输出返回 |
 | `empty` | 直接返回 `[DONE]` |
 | `error-interrupted` | 回复到一半中断 |
 | `error-malformed` | 输出包含非法 JSON |
@@ -280,13 +283,64 @@ const stream = await client.chat.completions.create({ model: 'gpt-4o', messages:
 
 ---
 
+## `@input` 指令：让静态场景"活"起来
+
+`@input` 是一个**位置占位符指令**，可以在任意 `.md` 场景文件的任意位置插入 `<!-- @input -->`。请求处理时，它会被替换为请求体中最后一条 `role: "user"` 消息的内容。
+
+### 为什么需要 `@input`？
+
+内置场景的输出内容都是固定的。前端测试时，希望看到**自己的输入内容**被流式返回，而非预设的示例文本。`@input` 的出现解决两个问题：
+
+1. **自定义测试** — 把自己的 markdown 内容发给后端，看它如何被渲染成 SSE 流
+2. **混合场景** — 在预设场景的上下文中间插入用户输入，让对话更真实
+
+### 纯回显：echo 场景
+
+内置的 `echo` 场景只有一行指令：
+
+```markdown
+<!-- @delay: 30 -->
+<!-- @input -->
+```
+
+请求时自动将最后一条用户消息逐词流式返回：
+
+```bash
+curl -N -X POST "http://localhost:11434/v1/chat/completions?scenario=echo" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "# Hello\n\nYour **markdown** here"}]
+  }'
+# → 逐词流式输出 "# Hello\n\nYour **markdown** here"
+```
+
+### 混合示例：静态 + 动态
+
+自定义场景文件 `interview.md`：
+
+```markdown
+欢迎！我来回答你的问题。
+
+<!-- @delay: 200 -->
+
+<!-- @input -->
+
+<!-- @delay: 150 -->
+
+以上是我的回答，有疑问请继续。
+```
+
+请求时 `@input` 展开为用户消息内容，得到 `"欢迎！...<用户消息>...以上是我的回答"` 的完整流。
+
+---
+
 ## 开发命令 / Dev Commands
 
 ```bash
 # 启动服务
 npm start
 
-# 运行测试（27 个用例）
+# 运行测试（74 个用例）
 npm test
 
 # 查看场景列表
