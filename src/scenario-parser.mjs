@@ -12,6 +12,7 @@
  * | `@desc:TEXT` | `<!-- @desc: 标准对话场景 -->` | 场景描述，用于 --list 输出 |
  * | `@done` | `<!-- @done -->` | 在此处终止流 |
  * | `@error:TYPE` | `<!-- @error: rate-limit -->` | 整个场景为错误场景 |
+ * | `@input` | `<!-- @input -->` | 占位符，请求处理时替换为最后一条用户消息内容 |
  *
  * ## 切分策略
  *
@@ -115,6 +116,15 @@ export function parseScenarioFile(filePath, options = {}) {
         if (Number.isNaN(currentDelay)) currentDelay = 50
         break
       }
+      case "input": {
+        flushBuffer()
+        chunks.push({
+          content: "",
+          input: true,
+          delay: currentDelay,
+        })
+        break
+      }
       case "desc": {
         if (value) description = value
         break
@@ -193,7 +203,7 @@ function toTokens(prompt) {
  * @param {ChunkStrategy} strategy
  * @returns {string[]}
  */
-function splitContent(text, strategy) {
+export function splitContent(text, strategy) {
   switch (strategy) {
     case "word": {
       return toTokens(text)

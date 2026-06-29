@@ -245,6 +245,84 @@ console.log("Hello from temp");
     })
   })
 
+  describe("@input directive", () => {
+    it("should create an input placeholder chunk", () => {
+      const dir = mkdtempSync(join(tmpdir(), "test-"))
+      const file = join(dir, "echo.md")
+      writeFileSync(file, "<!-- @delay: 30 -->\n<!-- @input -->", "utf-8")
+
+      const result = parseScenarioFile(file)
+
+      const inputChunks = result.chunks.filter((c) => c.input)
+      assert.equal(inputChunks.length, 1)
+      assert.equal(inputChunks[0].content, "")
+      assert.equal(inputChunks[0].delay, 30)
+    })
+
+    it("should handle @input with static content", () => {
+      const dir = mkdtempSync(join(tmpdir(), "test-"))
+      const file = join(dir, "hybrid.md")
+      writeFileSync(
+        file,
+        "Static start.\n\n<!-- @input -->\n\nStatic end.",
+        "utf-8",
+      )
+
+      const result = parseScenarioFile(file, { chunkStrategy: "sentence" })
+
+      // 静态文本 chunks + 1 个 input placeholder
+      const inputChunks = result.chunks.filter((c) => c.input)
+      assert.equal(inputChunks.length, 1)
+      assert.equal(inputChunks[0].input, true)
+      assert.equal(inputChunks[0].content, "")
+
+      // input 之前应有静态文本
+      const firstInputIndex = result.chunks.indexOf(inputChunks[0])
+      assert.ok(firstInputIndex > 0, "input should not be the first chunk")
+      const beforeInput = result.chunks
+        .slice(0, firstInputIndex)
+        .map((c) => c.content)
+        .join("")
+      assert.ok(beforeInput.includes("Static start"))
+
+      // input 之后也应有静态文本
+      const afterInput = result.chunks
+        .slice(firstInputIndex + 1)
+        .map((c) => c.content)
+        .join("")
+      assert.ok(afterInput.includes("Static end"))
+    })
+
+    it("should handle multiple @input directives", () => {
+      const dir = mkdtempSync(join(tmpdir(), "test-"))
+      const file = join(dir, "multi-input.md")
+      writeFileSync(
+        file,
+        "First.\n\n<!-- @input -->\n\nMiddle.\n\n<!-- @input -->\n\nLast.",
+        "utf-8",
+      )
+
+      const result = parseScenarioFile(file, { chunkStrategy: "sentence" })
+
+      const inputChunks = result.chunks.filter((c) => c.input)
+      assert.equal(inputChunks.length, 2)
+      assert.equal(inputChunks[0].input, true)
+      assert.equal(inputChunks[1].input, true)
+    })
+
+    it("should preserve delay before @input", () => {
+      const dir = mkdtempSync(join(tmpdir(), "test-"))
+      const file = join(dir, "delay-input.md")
+      writeFileSync(file, "<!-- @delay: 200 -->\n<!-- @input -->", "utf-8")
+
+      const result = parseScenarioFile(file)
+
+      const inputChunks = result.chunks.filter((c) => c.input)
+      assert.equal(inputChunks.length, 1)
+      assert.equal(inputChunks[0].delay, 200)
+    })
+  })
+
   describe("listScenarios()", () => {
     it("should list .md files in a directory", () => {
       const dir = mkdtempSync(join(tmpdir(), "scenarios-"))

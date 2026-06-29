@@ -22,6 +22,11 @@ export interface Chunk {
    * 该 chunk 前面的内容会被丢弃，服务器直接返回错误
    */
   error?: ErrorTrigger
+  /**
+   * 若为 true，该 chunk 是 @input 占位符。
+   * 在请求处理时会被替换为用户最后一条消息的内容。
+   */
+  input?: boolean
 }
 
 /** 文本切分策略 */

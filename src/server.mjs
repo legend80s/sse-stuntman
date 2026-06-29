@@ -16,7 +16,7 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { getUserScenariosDir } from "./commands/create-scenario.mjs"
 import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
-import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
+import { listScenarios, parseScenarioFile, splitContent } from "./scenario-parser.mjs"
 import { color } from "./utils/color.mjs"
 import {
   writeAnthropicErrorStream,
@@ -118,14 +118,16 @@ export function startServer(options) {
       let requestModel = null
       let stream = true
       let inputTokens = 0
+      /** @type {Array<{ role: string, content: string }>} */
+      let parsedMessages = []
       if (body) {
         try {
           const parsed = JSON.parse(body)
           requestModel = parsed.model ?? null
           stream = parsed.stream !== false
+          parsedMessages = parsed.messages ?? []
           // 计算 input_tokens（用于 Anthropic 格式）
-          const messages = parsed.messages ?? []
-          const promptText = messages
+          const promptText = parsedMessages
             .map((/** @type {{ content: string }} */ m) => m.content ?? "")
             .join("")
           inputTokens = calculateTokens(promptText)
@@ -135,7 +137,7 @@ export function startServer(options) {
       }
 
       const scenarioName = url.searchParams.get("scenario") ?? options.scenario
-      const scenario = loadScenario(
+      let scenario = loadScenario(
         scenarioName,
         scenarioDirs,
         options.defaultDelay,
@@ -154,6 +156,32 @@ export function startServer(options) {
           }),
         )
         return
+      }
+
+      // 展开 @input 占位符：将最后一条用户消息内容插入到 input chunk 位置
+      const hasInputChunks = scenario.chunks.some((c) => c.input)
+      if (hasInputChunks) {
+        const lastUserMsg = [...parsedMessages]
+          .reverse()
+          .find((m) => m.role === "user")
+        const userContent = lastUserMsg?.content ?? ""
+        const chunkStrategy = options.chunkStrategy ?? "word"
+
+        const expanded = []
+        for (const chunk of scenario.chunks) {
+          if (chunk.input) {
+            if (userContent) {
+              const parts = splitContent(userContent, chunkStrategy)
+              for (const part of parts) {
+                expanded.push({ content: part, delay: chunk.delay ?? 5 })
+              }
+            }
+            // userContent 为空时不插入任何内容
+          } else {
+            expanded.push(chunk)
+          }
+        }
+        scenario = { ...scenario, chunks: expanded }
       }
 
       if (!stream) {
