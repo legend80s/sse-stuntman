@@ -66,7 +66,7 @@ const DEFAULTS = {
   port: 11434,
   scenario: "default",
   delayMultiplier: 1,
-  defaultDelay: 5,
+  defaultDelay: 10, // ms
   provider: /** @type {import('./types.ts').Provider} */ ("openai"),
   model: "gpt-4o",
   endpointPaths: ["/v1/chat/completions"],

@@ -1,13 +1,17 @@
+import { generateId } from "../../string.mjs"
+
 export const anthropicMsger = {
   /**
    *
-   * @param {{ model: string; messageId: string; inputTokens?: number }} param0
+   * @param {{ model: string; inputTokens?: number }} param0
    * @returns
    */
-  message_start({ model, messageId, inputTokens = 0 }) {
+  message_start({ model, inputTokens = 0 }) {
+    const id = generateId()
+
     return this.genMsg("message_start", {
       message: {
-        id: messageId,
+        id,
         type: "message",
         role: "assistant",
         model: model,

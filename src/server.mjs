@@ -285,7 +285,9 @@ export function startServer(options) {
       Server: `http://localhost:${port}`,
       Provider: options.provider,
       "Endpoint(s)": `POST ${endpointPaths.join(", POST ")}`,
-      Scenario: `${options.scenario}  (use ?scenario=name to switch)`,
+      Scenario: isFilePath(options.scenario)
+        ? options.scenario
+        : `${options.scenario}  (use ?scenario=name to switch)`,
       Chunk: options.chunkStrategy,
       Delay: `${baseDelay}ms  (used when scenario has no @delay)`,
       "Delay Multiplier": `${options.delayMultiplier}x  (each @delay in scenario is multiplied by this)`,
@@ -295,15 +297,17 @@ export function startServer(options) {
     const maxKeyLength =
       Math.max(...Object.keys(info).map((key) => key.length)) + 2
 
+    const indent = " ".repeat(2)
+
     console.log(`\n  ${title}\n`)
     for (const [key, value] of Object.entries(info)) {
       const key1 = key ? `${key}:` : ""
       value &&
         console.log(
-          `  ${(`${key1}`).padEnd(maxKeyLength)} ${color.green(value)}`,
+          `${indent}${(`${key1}`).padEnd(maxKeyLength)} ${color.green(value)}`,
         )
     }
-    console.log(`\nPress Ctrl+C to stop.\n`)
+    console.log(`\n${indent}Press Ctrl+C to stop.\n`)
 
     //     console.log(`\n  ${title}`)
 
@@ -325,7 +329,18 @@ export function startServer(options) {
 }
 
 /**
+ * 判断场景名是否为文件路径（而非场景目录内的名称）。
+ *
+ * @param {string} name
+ * @returns {boolean}
+ */
+function isFilePath(name) {
+  return name.endsWith(".md") || name.includes("/") || name.includes("\\")
+}
+
+/**
  * 在多个目录中查找场景（优先级：先找到的为准）。
+ * 如果 name 是文件路径，直接解析该文件（不缓存）。
  *
  * @param {string} name
  * @param {string[]} dirs
@@ -333,6 +348,23 @@ export function startServer(options) {
  * @returns {Scenario | null}
  */
 function loadScenario(name, dirs, defaultDelay = 5, chunkStrategy = "word") {
+  // 文件路径：直接解析，不缓存
+  if (isFilePath(name)) {
+    const filePath = path.resolve(name)
+    try {
+      if (fs.existsSync(filePath)) {
+        return parseScenarioFile(filePath, {
+          defaultDelay: defaultDelay ?? 5,
+          chunkStrategy,
+        })
+      }
+    } catch {
+      return null
+    }
+    return null
+  }
+
+  // 场景名：走缓存 + 目录查找
   const cached = scenarioCache.get(name)
   if (cached) {
     return cached
@@ -416,7 +448,7 @@ function preloadScenarios(dirs, options) {
               "  " +
                 s.name.padEnd(25) +
                 " " +
-                (source + " [" + cached.error.type + "]").padEnd(22) +
+                source.padEnd(22) +
                 " " +
                 (cached.description ||
                   "Simulates HTTP " + cached.error.type + " error"),

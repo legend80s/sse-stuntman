@@ -1267,4 +1267,186 @@ describe("server", () => {
       }
     })
   })
+
+  describe('file path scenario (--scenario /path/to/file.md)', () => {
+    it('should serve scenario from absolute file path', async () => {
+      const port = getPort()
+      // 创建一个临时 .md 文件
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sse-filepath-'))
+      const scenarioPath = path.join(tmpDir, 'my-test.md')
+      fs.writeFileSync(scenarioPath,
+        '<!-- @desc: 文件路径场景 -->\n# File Path\n\nThis is from a file path scenario.',
+        'utf-8',
+      )
+
+      try {
+        const server = startServer({
+          port,
+          delayMultiplier: 0,
+          defaultDelay: 5,
+          model: 'gpt-4o',
+          scenario: scenarioPath,
+        })
+        await new Promise((resolve) => server.on("listening", resolve))
+        await new Promise((r) => setTimeout(r, 50))
+
+        try {
+          const { status, events, finished } = await sseRequest(
+            server,
+            {
+              method: "POST",
+              path: "/v1/chat/completions",
+              headers: { "Content-Type": "application/json" },
+            },
+            JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: "hi" }], stream: true }),
+          )
+
+          assert.equal(status, 200)
+          assert.ok(finished)
+
+          const contentEvents = events
+            .filter((e) => e !== "[DONE]")
+            .map((e) => JSON.parse(e).choices[0].delta.content)
+            .filter(Boolean)
+          const fullText = contentEvents.join("")
+          assert.ok(fullText.includes("File Path"))
+          assert.ok(fullText.includes("This is from a file path scenario"))
+        } finally {
+          server.close()
+        }
+      } finally {
+        // 清理临时文件
+        fs.rmSync(tmpDir, { recursive: true, force: true })
+      }
+    })
+
+    it('should serve scenario from relative file path', async () => {
+      const port = getPort()
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sse-filepath-rel-'))
+      const scenarioPath = path.join(tmpDir, 'relative-test.md')
+      fs.writeFileSync(scenarioPath,
+        '<!-- @desc: 相对路径场景 -->\n# Relative\n\nFrom relative path.',
+        'utf-8',
+      )
+
+      try {
+        const server = startServer({
+          port,
+          delayMultiplier: 0,
+          defaultDelay: 5,
+          model: 'gpt-4o',
+          scenario: scenarioPath,
+        })
+        await new Promise((resolve) => server.on("listening", resolve))
+        await new Promise((r) => setTimeout(r, 50))
+
+        try {
+          const { status, events, finished } = await sseRequest(
+            server,
+            {
+              method: "POST",
+              path: "/v1/chat/completions",
+              headers: { "Content-Type": "application/json" },
+            },
+            JSON.stringify({ model: "gpt-4o", stream: true }),
+          )
+
+          assert.equal(status, 200)
+          assert.ok(finished)
+
+          const contentEvents = events
+            .filter((e) => e !== "[DONE]")
+            .map((e) => JSON.parse(e).choices[0].delta.content)
+            .filter(Boolean)
+          const fullText = contentEvents.join("")
+          assert.ok(fullText.includes("Relative"))
+        } finally {
+          server.close()
+        }
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true })
+      }
+    })
+
+    it('should return 404 for non-existent file path', async () => {
+      const port = getPort()
+      const server = startServer({
+        port,
+        delayMultiplier: 0,
+        defaultDelay: 5,
+        model: 'gpt-4o',
+        scenario: '/tmp/nonexistent-scenario-file.md',
+      })
+      await new Promise((resolve) => server.on("listening", resolve))
+      await new Promise((r) => setTimeout(r, 50))
+
+      try {
+        const { status, body } = await request(
+          server,
+          {
+            method: "POST",
+            path: "/v1/chat/completions",
+            headers: { "Content-Type": "application/json" },
+          },
+          JSON.stringify({ model: "gpt-4o", stream: true }),
+        )
+
+        assert.equal(status, 404)
+        const parsed = JSON.parse(body)
+        assert.ok(parsed.error)
+      } finally {
+        server.close()
+      }
+    })
+
+    it('should still serve named scenarios from ?scenario= query param', async () => {
+      const port = getPort()
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sse-filepath-query-'))
+      const scenarioPath = path.join(tmpDir, 'file-scenario.md')
+      fs.writeFileSync(scenarioPath,
+        '# File Path Scenario\n\nThis should not appear when ?scenario=empty.',
+        'utf-8',
+      )
+
+      try {
+        const server = startServer({
+          port,
+          delayMultiplier: 0,
+          defaultDelay: 5,
+          model: 'gpt-4o',
+          scenario: scenarioPath,
+        })
+        await new Promise((resolve) => server.on("listening", resolve))
+        await new Promise((r) => setTimeout(r, 50))
+
+        try {
+          // 使用 ?scenario=empty 应该走内置场景，不走文件路径
+          const { status, events, finished } = await sseRequest(
+            server,
+            {
+              method: "POST",
+              path: "/v1/chat/completions?scenario=empty",
+              headers: { "Content-Type": "application/json" },
+            },
+            JSON.stringify({ model: "gpt-4o", stream: true }),
+          )
+
+          assert.equal(status, 200)
+          assert.ok(finished)
+
+          const contentEvents = events
+            .filter((e) => e !== "[DONE]")
+            .map((e) => JSON.parse(e).choices[0].delta.content)
+            .filter(Boolean)
+          const fullText = contentEvents.join("")
+          // empty 场景不应包含文件路径场景的内容
+          assert.ok(!fullText.includes("File Path Scenario"), "?scenario=empty should not serve file path content")
+        } finally {
+          server.close()
+        }
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true })
+      }
+    })
+  })
 })

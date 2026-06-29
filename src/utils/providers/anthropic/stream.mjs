@@ -26,6 +26,7 @@
  * ```
  */
 
+import { generateId } from "../../string.mjs"
 import { calculateTokens } from "../../token.mjs"
 import { anthropicMsger } from "./event-generator.mjs"
 
@@ -50,10 +51,8 @@ export async function writeAnthropicStream(chunks, res, options = {}) {
     inputTokens = 0,
   } = options
 
-  const messageId = `msg_${generateId()}`
-
   // 1. message_start
-  res.write(anthropicMsger.message_start({ model, messageId, inputTokens }))
+  res.write(anthropicMsger.message_start({ model, inputTokens }))
 
   // 2. content_block_start
   res.write(anthropicMsger.content_block_start())
@@ -138,7 +137,7 @@ export function writeAnthropicNonStreamingResponse(content, res, options = {}) {
   res.writeHead(200, { "Content-Type": "application/json" })
   res.end(
     JSON.stringify({
-      id: `msg_${generateId()}`,
+      id: generateId(),
       type: "message",
       role: "assistant",
       content: [{ type: "text", text: content }],
@@ -187,17 +186,6 @@ function mapAnthropicError(type) {
         message: "An unexpected error occurred.",
       }
   }
-}
-
-/**
- * 生成短 id。
- *
- * @returns {string}
- */
-function generateId() {
-  const timestamp = Date.now().toString(36)
-  const random = Math.random().toString(36).slice(2, 6)
-  return `${timestamp}${random}`
 }
 
 /**
