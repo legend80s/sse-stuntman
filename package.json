@@ -1,6 +1,6 @@
 {
   "name": "sse-stuntman",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "SSE Stuntman — stunt double for your AI API. Simulate streaming responses, errors, and edge cases.",
   "type": "module",
   "scripts": {
