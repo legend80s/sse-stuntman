@@ -78,6 +78,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
 
     // 正常内容 chunk
     await applyDelay(chunk.delay ?? 0, delay)
+
     writeEvent(res, {
       id,
       object: "chat.completion.chunk",
@@ -206,6 +207,7 @@ export function writeErrorResponse(error, res) {
  * @param {import('./types.ts').SSEEvent} data
  */
 function writeEvent(res, data) {
+  console.log("[writEvent]")
   res.write(`data: ${JSON.stringify(data)}\n\n`)
 }
 

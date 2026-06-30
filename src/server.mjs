@@ -149,9 +149,16 @@ export function startServer(options) {
       const scenarioName = url.searchParams.get("scenario") ?? options.scenario
 
       const reqProvider = url.searchParams.get("provider") ?? options.provider
-      const reqChunkStrategy = /** @type {import('./types.ts').ChunkStrategy} */ (url.searchParams.get("chunk-strategy") ?? options.chunkStrategy)
-      const reqDelayMultiplier = Number(url.searchParams.get("delay-multiplier") ?? options.delayMultiplier)
-      const reqDefaultDelay = Number(url.searchParams.get("default-delay") ?? options.defaultDelay)
+      const reqChunkStrategy =
+        /** @type {import('./types.ts').ChunkStrategy} */ (
+          url.searchParams.get("chunk-strategy") ?? options.chunkStrategy
+        )
+      const reqDelayMultiplier = Number(
+        url.searchParams.get("delay-multiplier") ?? options.delayMultiplier,
+      )
+      const reqDefaultDelay = Number(
+        url.searchParams.get("default-delay") ?? options.defaultDelay,
+      )
 
       const { startTime, traceId } = logStart({
         method: req.method,
@@ -197,7 +204,8 @@ export function startServer(options) {
           .reverse()
           .find((m) => m.role === "user")
         const userContent = extractUserPrompt(lastUserMsg)
-        const chunkStrategy = /** @type {import('./types.ts').ChunkStrategy} */ (reqChunkStrategy)
+        const chunkStrategy =
+          /** @type {import('./types.ts').ChunkStrategy} */ (reqChunkStrategy)
 
         const expanded = []
         for (const chunk of scenario.chunks) {
@@ -279,7 +287,8 @@ export function startServer(options) {
             model: requestModel ?? options.model,
           })
         }
-      } catch {
+      } catch (err) {
+        console.error(color.red("ERR:"), err)
         if (!res.destroyed) {
           res.end()
         }
@@ -376,7 +385,12 @@ export function startServer(options) {
  * @param {number} [defaultDelay]
  * @returns {Scenario | null}
  */
-function loadScenario(name, dirs, defaultDelay = DEFAULTS.defaultDelay, chunkStrategy = DEFAULTS.chunkStrategy) {
+function loadScenario(
+  name,
+  dirs,
+  defaultDelay = DEFAULTS.defaultDelay,
+  chunkStrategy = DEFAULTS.chunkStrategy,
+) {
   // 文件路径：直接解析，不缓存
   if (isFilePath(name)) {
     const filePath = path.resolve(name)
@@ -438,7 +452,14 @@ function preloadScenarios(dirs, options) {
             defaultDelay: options.defaultDelay ?? 5,
             chunkStrategy: options.chunkStrategy ?? DEFAULTS.chunkStrategy,
           })
-          scenarioCache.set(scenarioCacheKey(s.name, options.chunkStrategy, options.defaultDelay), scenario)
+          scenarioCache.set(
+            scenarioCacheKey(
+              s.name,
+              options.chunkStrategy,
+              options.defaultDelay,
+            ),
+            scenario,
+          )
         } catch {
           // 跳过无法解析的场景
         }
@@ -471,7 +492,13 @@ function preloadScenarios(dirs, options) {
             continue
           }
           seen.add(s.name)
-        const cached = scenarioCache.get(scenarioCacheKey(s.name, options.chunkStrategy, options.defaultDelay))
+          const cached = scenarioCache.get(
+            scenarioCacheKey(
+              s.name,
+              options.chunkStrategy,
+              options.defaultDelay,
+            ),
+          )
           const source = dir === BUILTIN_DIR ? "builtin" : "custom"
           if (cached?.error) {
             console.log(
@@ -537,7 +564,9 @@ function getIndexHtml(options, dirs) {
           continue
         }
         seen.add(s.name)
-        const cached = scenarioCache.get(scenarioCacheKey(s.name, options.chunkStrategy, options.defaultDelay))
+        const cached = scenarioCache.get(
+          scenarioCacheKey(s.name, options.chunkStrategy, options.defaultDelay),
+        )
         const label = cached?.description
           ? `${s.name} — ${cached.description}`
           : s.name
@@ -585,7 +614,17 @@ function getIndexHtml(options, dirs) {
  * @param {{ port: number; apiPath: string; scenarioOpts: string[]; model: string; scenarioCount: number; delayMultiplier: number; defaultDelay: number; provider: string; chunkStrategy: string }} param0
  * @returns
  */
-function renderHTML({ port, apiPath, scenarioOpts, model, scenarioCount, delayMultiplier, defaultDelay, provider, chunkStrategy }) {
+function renderHTML({
+  port,
+  apiPath,
+  scenarioOpts,
+  model,
+  scenarioCount,
+  delayMultiplier,
+  defaultDelay,
+  provider,
+  chunkStrategy,
+}) {
   // 2. 读取整个 HTML 模板
   const template = fs.readFileSync(
     path.join(__dirname, "index.template.html"),
@@ -605,5 +644,3 @@ function renderHTML({ port, apiPath, scenarioOpts, model, scenarioCount, delayMu
     .replaceAll("${provider}", provider)
     .replaceAll("${chunkStrategy}", chunkStrategy)
 }
-
-
