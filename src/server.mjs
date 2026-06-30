@@ -9,6 +9,7 @@
  *   2. ~/.sse-stuntman/scenarios/（用户全局目录）
  *   3. 内置 src/scenarios/（fallback）
  */
+/** biome-ignore-all lint/suspicious/noTemplateCurlyInString: <explanation> */
 
 import fs from "node:fs"
 import http from "node:http"
@@ -553,116 +554,45 @@ function getIndexHtml(options, dirs) {
       : ["/v1/chat/completions"])
   const ep = eps[0]
 
-  return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<title>SSE Stuntman</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; padding: 40px; }
-  .container { max-width: 800px; margin: 0 auto; }
-  h1 { font-size: 24px; margin-bottom: 8px; }
-  p { color: #666; margin-bottom: 24px; }
-  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 16px; }
-  label { display: block; font-weight: 600; margin-bottom: 6px; }
-  select, input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 16px; }
-  button { background: #0070f3; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-size: 14px; cursor: pointer; }
-  button:hover { background: #0051a8; }
-  pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px; overflow-x: auto; font-size: 13px; min-height: 200px; white-space: pre-wrap; word-break: break-word; }
-  .info { background: #eef2ff; border-left: 4px solid #6366f1; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #4338ca; margin-bottom: 16px; }
-  code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
-</style>
-</head>
-<body>
-<div class="container">
-  <h1>🏍️  SSE Stuntman</h1>
-  <p>Stunt double for your AI API — simulate streaming responses.</p>
-
-  <div class="info">
-    Endpoint: <code>POST http://localhost:${options.port}${ep}</code><br>
-    Use <code>?scenario=name</code> to switch scenarios.
-  </div>
-
-  <div class="card">
-    <label for="scenario">Scenario</label>
-    <select id="scenario">${scenarioOpts.join("\n")}</select>
-
-    <label for="model">Model</label>
-    <input id="model" type="text" value="${options.model}" placeholder="gpt-4o">
-
-    <button onclick="testStream()">Test Stream</button>
-  </div>
-
-  <div class="card">
-    <pre id="output">Click "Test Stream" to see the response...</pre>
-  </div>
-</div>
-
-<script>
-async function testStream() {
-  const output = document.getElementById('output');
-  const scenario = document.getElementById('scenario').value;
-  const model = document.getElementById('model').value;
-
-  output.textContent = 'Connecting...';
-
-  try {
-    const res = await fetch('${ep}?scenario=' + scenario, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, stream: true, messages: [{ role: 'user', content: 'Hello' }] })
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      output.textContent = 'HTTP ' + res.status + '\\n' + JSON.stringify(err, null, 2);
-      return;
-    }
-
-    output.textContent = '';
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const data = JSON.parse(jsonStr);
-            const content = data.choices?.[0]?.delta?.content || '';
-            output.textContent += content;
-          } catch {}
-        }
-      }
-    }
-  } catch (e) {
-    output.textContent = 'Error: ' + e.message;
-  }
-}
-</script>
-</body>
-</html>`
+  return renderHTML({
+    port: options.port,
+    // @ts-expect-error
+    apiPath: ep,
+    scenarioOpts,
+    model: options.model,
+  })
 }
 
 /**
  * @param {string} text
- * @param {keyof color} colorType
+ * @param {{defaultColor: keyof color; linkColor: keyof color}} colorType
  * @return {string}
  */
-function colorize(text, colorType = "green") {
+function colorize(text, { defaultColor = "yellow", linkColor = "green" }) {
   if (text.startsWith("http://") || text.startsWith("https://")) {
-    return color.underline(color.blue(text))
+    return color.underline(color[linkColor](text))
   }
 
-  return color[colorType](text)
+  return color[defaultColor](text)
+}
+
+/**
+ *
+ * @param {{ port: number; apiPath: string; scenarioOpts: string[]; model: string}} param0
+ * @returns
+ */
+function renderHTML({ port, apiPath, scenarioOpts, model }) {
+  // 2. 读取整个 HTML 模板
+  const template = fs.readFileSync(
+    path.join(__dirname, "index.template.html"),
+    "utf-8",
+  )
+
+  const scenarioOptsHTML = scenarioOpts.join(`\n${" ".repeat(6)}`)
+
+  return template
+    .replaceAll("${port}", String(port))
+    .replaceAll("${apiPath}", apiPath)
+    .replaceAll("${scenarioOptsHTML}", scenarioOptsHTML)
+    .replaceAll("${model}", model)
 }
