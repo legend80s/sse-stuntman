@@ -213,7 +213,7 @@ export function writeErrorResponse(error, res) {
  * @param {import('./types.ts').SSEEvent} data
  */
 function writeEvent(res, data) {
-  console.log("[writEvent]")
+  // console.log("[writEvent]")
   res.write(`data: ${JSON.stringify(data)}\n\n`)
 }
 
