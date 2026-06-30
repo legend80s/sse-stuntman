@@ -16,10 +16,12 @@
   "bin": {
     "sse-stuntman": "src/bin/index.mjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/legend80s/sse-stuntman.git"
+  },
   "files": [
-    "bin/",
-    "src/",
-    "README.md"
+    "src/"
   ],
   "keywords": [
     "sse",
@@ -33,6 +35,10 @@
   ],
   "author": "",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/legend80s/sse-stuntman/issues"
+  },
+  "homepage": "https://github.com/legend80s/sse-stuntman#readme",
   "devDependencies": {
     "@types/node": "^26.0.1"
   }
