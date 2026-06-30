@@ -31,6 +31,7 @@
 - [ ] UI 演示界面所有 cli 参数都需要演示一遍
 - [ ] 演示界面可下拉选择模型，两个面板一个展示原始 SSE 输出，一个展示 markdown 渲染后的输出
 - [ ] server launch screen: 增加提示输入 v to show curl 使用方式, h to show help, 输入 d 隐藏提示（保留启动时的提示）
+- [ ] 尝试将我们的 mock API 接入 Claude Code
 
 ```bash
 curl -X POST http://localhost:11434/v1/chat/completions?scenario=echo \
