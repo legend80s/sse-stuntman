@@ -7,6 +7,7 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, it } from "node:test"
+import { DEFAULTS } from "./cli.mjs"
 import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
 
 describe("scenario-parser", () => {
@@ -27,8 +28,8 @@ describe("scenario-parser", () => {
       assert.deepStrictEqual(result, {
         name: "test",
         chunks: [
-          { content: "# Hello\n", delay: 5 },
-          { content: "This is a test.\n", delay: 5 },
+          { content: "# Hello\n", delay: DEFAULTS.defaultDelay },
+          { content: "This is a test.\n", delay: DEFAULTS.defaultDelay },
           { content: "\n", delay: 100 },
           { content: "Second paragraph.", delay: 100 },
         ],
@@ -104,18 +105,18 @@ console.log("Hello from temp");
       assert.deepStrictEqual(result, {
         name: "test",
         chunks: [
-          { content: "这", delay: 5 },
-          { content: "是", delay: 5 },
-          { content: "逐句", delay: 5 },
-          { content: "输出", delay: 5 },
-          { content: "的", delay: 5 },
-          { content: "效果", delay: 5 },
-          { content: " ", delay: 5 },
-          { content: "Hello", delay: 5 },
-          { content: " ", delay: 5 },
-          { content: "world", delay: 5 },
-          { content: ".", delay: 5 },
-          { content: "\n", delay: 5 },
+          { content: "这", delay: DEFAULTS.defaultDelay },
+          { content: "是", delay: DEFAULTS.defaultDelay },
+          { content: "逐句", delay: DEFAULTS.defaultDelay },
+          { content: "输出", delay: DEFAULTS.defaultDelay },
+          { content: "的", delay: DEFAULTS.defaultDelay },
+          { content: "效果", delay: DEFAULTS.defaultDelay },
+          { content: " ", delay: DEFAULTS.defaultDelay },
+          { content: "Hello", delay: DEFAULTS.defaultDelay },
+          { content: " ", delay: DEFAULTS.defaultDelay },
+          { content: "world", delay: DEFAULTS.defaultDelay },
+          { content: ".", delay: DEFAULTS.defaultDelay },
+          { content: "\n", delay: DEFAULTS.defaultDelay },
           { content: "\n", delay: 100 },
           { content: "支持", delay: 100 },
           { content: " ", delay: 100 },
@@ -214,7 +215,7 @@ console.log("Hello from temp");
       for (const chunk of wordChunks) {
         assert.equal(
           chunk.delay,
-          5,
+          DEFAULTS.defaultDelay,
           "Word chunks should carry the default delay",
         )
       }

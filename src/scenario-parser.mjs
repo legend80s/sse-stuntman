@@ -51,7 +51,7 @@
 
 import fs from "node:fs"
 import path from "node:path"
-
+import { DEFAULTS } from "./cli.mjs"
 /**
  * @import { Chunk, ChunkStrategy, ErrorTrigger, Scenario } from './types.ts'
  */
@@ -66,7 +66,7 @@ import path from "node:path"
  * @returns {Scenario}
  */
 export function parseScenarioFile(filePath, options = {}) {
-  const { defaultDelay = 5, chunkStrategy = "word" } =
+  const { defaultDelay = DEFAULTS.defaultDelay, chunkStrategy = DEFAULTS.chunkStrategy } =
     /** @type {{ defaultDelay?: number, chunkStrategy?: import('./types.ts').ChunkStrategy }} */ (
       options
     )

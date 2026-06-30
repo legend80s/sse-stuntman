@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>SSE Stuntman</title>
@@ -26,6 +26,17 @@
   .info { background: #eef2ff; border-left: 4px solid #6366f1; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #4338ca; margin-bottom: 16px; }
   code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
 
+  .control-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .control-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 80px; }
+  .control-group label { font-size: 11px; font-weight: 600; color: #666; margin-bottom: 0; }
+  .control-group select,
+  .control-group input[type="number"] { margin-bottom: 0; width: auto; }
+  .btn-row { display: flex; gap: 8px; align-items: center; }
+  .btn-secondary { background: #e8e8e8; color: #333; }
+  .btn-secondary:hover { background: #d0d0d0; }
+  #streamBtn.stop { background: #e00; }
+  #streamBtn.stop:hover { background: #b00; }
+
   .output-wrapper {
     display: flex; gap: 1rem; max-height: 50vh;
   }
@@ -38,6 +49,10 @@
     .card {
       padding: 0.7rem;
     }
+
+    .control-row { flex-direction: column; }
+    .btn-row { flex-direction: column; }
+    .btn-row .btn-secondary { width: 100%; }
 
     .output-wrapper {
       gap: 0.5rem;
@@ -52,8 +67,7 @@
   <p>Stunt double for your AI API — simulate streaming responses.</p>
 
   <div class="info">
-    Endpoint: <code>POST http://localhost:${port}${apiPath}</code><br>
-    <!-- Endpoint: <code>POST http://localhost:${options.port}${apiPath}</code><br> -->
+    Port: <code>${port}</code> | Endpoint: <code>POST ${apiPath}</code> | Scenarios: <code>${scenarioCount} loaded</code><br>
     Use <code>?scenario=name</code> to switch scenarios.
   </div>
 
@@ -66,7 +80,38 @@
     <label for="model">Model</label>
     <input id="model" type="text" value="${model}" placeholder="gpt-4o">
 
-    <button type="button" onclick="testStream()">Test Stream</button>
+    <div class="control-row">
+      <div class="control-group">
+        <label for="provider" title="Response format provider">Provider</label>
+        <select id="provider" title="OpenAI Chat Completions SSE or Anthropic Messages SSE">
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="chunkStrategy" title="Text splitting strategy">Chunk</label>
+        <select id="chunkStrategy" title="How text is split into SSE chunks">
+          <option value="word">word</option>
+          <option value="sentence">sentence</option>
+          <option value="char">char</option>
+          <option value="line">line</option>
+          <option value="paragraph">paragraph</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="delayMultiplier" title="Global delay multiplier">Speed</label>
+        <input id="delayMultiplier" type="number" value="${delayMultiplier}" min="0" step="0.1" title="1=normal, 2=double speed, 0.5=half speed">
+      </div>
+      <div class="control-group">
+        <label for="defaultDelay" title="Default chunk delay">Chunk Delay</label>
+        <input id="defaultDelay" type="number" value="${defaultDelay}" min="0" title="Default ms between chunks when no @delay is set">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button id="streamBtn" type="button" onclick="toggleStream()">Test Stream</button>
+      <button type="button" class="btn-secondary" onclick="createScenario()" title="Create a new scenario file">+ New Scenario</button>
+    </div>
   </div>
 
   <div class="output-wrapper" style="">
@@ -78,34 +123,77 @@
 <script type="module">
 const output = document.getElementById('output');
 const rawElement = document.getElementById('raw');
-
+const streamBtn = document.getElementById('streamBtn');
 const scenarioElement = document.getElementById('scenario');
+const model = document.getElementById('model');
+const provider = document.getElementById('provider');
+const chunkStrategy = document.getElementById('chunkStrategy');
+const delayMultiplier = document.getElementById('delayMultiplier');
+const defaultDelay = document.getElementById('defaultDelay');
+
 scenarioElement.value = new URLSearchParams(window.location.search).get('scenario') || 'default';
-scenarioElement.addEventListener('change', () => {
-  window.location.search = `?scenario=${scenarioElement.value}`;
-})
+provider.value = new URLSearchParams(window.location.search).get('provider') || '${provider}';
+chunkStrategy.value = new URLSearchParams(window.location.search).get('chunk-strategy') || '${chunkStrategy}';
+delayMultiplier.value = new URLSearchParams(window.location.search).get('delay-multiplier') || '${delayMultiplier}';
+defaultDelay.value = new URLSearchParams(window.location.search).get('default-delay') || '${defaultDelay}';
 
-// let lastScrollTop = 0; // 记录上一次滚动位置
+let controller = null;
 
-globalThis.testStream = testStream
+globalThis.toggleStream = toggleStream;
+globalThis.createScenario = createScenario;
 
-async function testStream() {
-  const scenario = document.getElementById('scenario').value;
-  const model = document.getElementById('model').value;
+function buildQueryString() {
+  const params = new URLSearchParams();
+  params.set('scenario', scenarioElement.value);
+  if (provider.value !== '${provider}') params.set('provider', provider.value);
+  if (chunkStrategy.value !== '${chunkStrategy}') params.set('chunk-strategy', chunkStrategy.value);
+  if (delayMultiplier.value !== '${delayMultiplier}') params.set('delay-multiplier', delayMultiplier.value);
+  if (defaultDelay.value !== '${defaultDelay}') params.set('default-delay', defaultDelay.value);
+  const qs = params.toString();
+  return qs ? '?' + qs : '';
+}
+
+function updateURL() {
+  const qs = buildQueryString();
+  const url = window.location.pathname + (qs || window.location.search ? qs : '');
+  window.history.replaceState(null, '', url);
+}
+
+scenarioElement.addEventListener('change', updateURL);
+provider.addEventListener('change', updateURL);
+chunkStrategy.addEventListener('change', updateURL);
+delayMultiplier.addEventListener('input', updateURL);
+defaultDelay.addEventListener('input', updateURL);
+
+async function toggleStream() {
+  if (controller) {
+    controller.abort();
+    resetStreamState('Aborted.');
+    return;
+  }
+
+  controller = new AbortController();
+  streamBtn.textContent = 'Stop';
+  streamBtn.classList.add('stop');
 
   output.textContent = 'Connecting...';
   rawElement.textContent = 'Connecting...';
 
+  const qs = buildQueryString();
+
   try {
-    const res = await fetch('${apiPath}?scenario=' + scenario, {
+    const res = await fetch('${apiPath}' + qs, {
       method: 'POST',
+      signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, stream: true, messages: [{ role: 'user', content: 'Hello' }] })
+      body: JSON.stringify({ model: model.value, stream: true, messages: [{ role: 'user', content: 'Hello' }] })
     });
 
     if (!res.ok) {
       const err = await res.json();
       output.textContent = 'HTTP ' + res.status + '\n' + JSON.stringify(err, null, 2);
+      rawElement.textContent = 'HTTP ' + res.status;
+      resetStreamButton();
       return;
     }
 
@@ -117,42 +205,85 @@ async function testStream() {
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) {break;}
+      if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      // console.log('buffer:', buffer);
       rawElement.textContent += buffer;
       await scrollToBottom(rawElement);
       const lines = buffer.split('\n');
-      // console.log('lines:', lines);
       buffer = lines.pop() || '';
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') {continue;}
+          if (jsonStr === '[DONE]') continue;
           try {
             const data = JSON.parse(jsonStr);
-            const content = data.choices?.[0]?.delta?.content || '';
+            let content = '';
+            if (data.choices?.[0]?.delta?.content) {
+              content = data.choices[0].delta.content;
+            } else if (data.type === 'content_block_delta' && data.delta?.text) {
+              content = data.delta.text;
+            }
             output.textContent += content;
-
-            // const start = Date.now();
             await scrollToBottom(output);
-            // console.log('scrollToBottom:', Date.now() - start);
           } catch {}
         }
       }
     }
   } catch (e) {
+    if (e.name === 'AbortError') {
+      resetStreamState('Aborted.');
+      return;
+    }
     console.error(e);
     output.textContent = 'Error: ' + e.message;
     rawElement.textContent = 'Error';
   }
+
+  resetStreamButton();
+}
+
+function resetStreamButton() {
+  controller = null;
+  streamBtn.textContent = 'Test Stream';
+  streamBtn.classList.remove('stop');
+}
+
+function resetStreamState(msg) {
+  output.textContent = msg;
+  rawElement.textContent = msg;
+  resetStreamButton();
+}
+
+async function createScenario() {
+  const name = prompt('Enter scenario name:');
+  if (!name || !name.trim()) return;
+
+  try {
+    const res = await fetch('/scenarios/create?name=' + encodeURIComponent(name.trim()), { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert('Error: ' + (data.error || data.message || 'unknown'));
+      return;
+    }
+
+    const opt = document.createElement('option');
+    opt.value = data.name;
+    opt.textContent = data.name;
+    scenarioElement.appendChild(opt);
+    scenarioElement.value = data.name;
+    updateURL();
+    alert('Scenario "' + data.name + '" created!\nEdit: ' + data.filePath);
+  } catch (e) {
+    alert('Failed to create scenario: ' + e.message);
+  }
 }
 
 /**
- * 滚动到聊天底部（受保护）
- * @param {Element} target 滚动目标
+ * scroll to bottom with follow protection
+ * @param {Element} target
  */
 async function scrollToBottom(target) {
   await nextTick()
@@ -172,27 +303,26 @@ function handleScroll(scrollTarget) {
   const { scrollTop, scrollHeight, clientHeight } = scrollTarget;
   const currentScrollBottom = scrollHeight - scrollTop - clientHeight;
 
-  // 1. 如果用户向上滚动了（scrollTop 变小），并且之前是跟随状态
+  // 1. if user scrolled up (scrollTop decreased) and was in follow mode
   if (scrollTop < (scrollTarget.__lastScrollTop ?? 0)) {
-    // 只有用户主动往上滚，才取消“跟随底部”
-    // 防止出现负值（惯性滚动）导致的误判
+    // only cancel follow when user actively scrolls up, not inertial scroll
     if (currentScrollBottom > 10) {
       scrollTarget.__followBottom = false;
 
-      console.log('[Scroll] 用户手动向上滚动，停止跟随');
+      console.log('[Scroll] user scrolled up, unfollow bottom');
     }
   }
 
-  // 2. 如果用户当前已经是滚到底部了（距离底部 5px 以内）
+  // 2. if user is near the bottom (within 5px)
   if (currentScrollBottom <= 5) {
-    // 只要滚到底部，就无条件恢复跟随状态
+    // always resume follow when reaching bottom
     if (!scrollTarget.__followBottom) {
-      console.log('[Scroll] 用户滚到底部，恢复跟随');
+      console.log('[Scroll] scrolled to bottom, resume follow');
     }
     scrollTarget.__followBottom = true;
   }
 
-  // 更新上次滚动位置
+  // update last scroll position
   scrollTarget.__lastScrollTop = scrollTop;
 };
 

@@ -1,5 +1,6 @@
 import { color } from "./color.mjs"
 import { isFilePath } from "./string.mjs"
+import { scenarioCacheKey } from "../cli.mjs"
 
 /**
  * @import { Scenario, CliOptions } from "../types.ts"
@@ -42,7 +43,7 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
   ${green("✓")} Mock scenarios: ${green(scenarioCache.size)} loaded`
 
   const scenario = options.scenario
-  const cached = scenarioCache.get(scenario)
+  const cached = scenarioCache.get(scenarioCacheKey(scenario, options.chunkStrategy, options.defaultDelay))
 
   const info = {
     // Server: [endpoint, "SSE Live Demo. Click to try"],

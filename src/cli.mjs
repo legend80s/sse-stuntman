@@ -62,7 +62,7 @@ const HELP_TEXT = `
 `
 
 /** 内置默认值 */
-const DEFAULTS = {
+export const DEFAULTS = {
   port: 16828,
   scenario: "default",
   delayMultiplier: 1,
@@ -73,6 +73,35 @@ const DEFAULTS = {
   list: false,
   help: false,
   chunkStrategy: /** @type {import('./types.ts').ChunkStrategy} */ ("word"),
+}
+
+/**
+ * 场景缓存 key。
+ *
+ * 避免每次请求都重新解析 .md 文件。parseScenarioFile 是纯函数：
+ * 入参相同则输出相同，所以用入参做 key。
+ *
+ * 包含 name + strategy + defaultDelay——三者都直接影响解析结果：
+ *    name            → 选择哪个文件
+ *    strategy        → splitContent 如何切分文本
+ *    defaultDelay    → 无 @delay 指令的 chunk 的延迟值
+ *
+ * 曾踩过的坑：defaultDelay 不在 key 中时，UI 改了延迟但命中旧缓存，
+ * 导致修改不生效。见 cli.mjs 历史。
+ *
+ * 不包含 provider / delayMultiplier / port——它们不影响解析结果，
+ * 仅在后续写入 SSE 流时消费。
+ *
+ * @param {string} name
+ * @param {import('./types.ts').ChunkStrategy} [strategy]
+ * @param {number} [defaultDelay]
+ */
+export function scenarioCacheKey(
+  name,
+  strategy = /** @type {import('./types.ts').ChunkStrategy} */ (DEFAULTS.chunkStrategy),
+  defaultDelay = DEFAULTS.defaultDelay,
+) {
+  return `${name}::${strategy}::${defaultDelay}`
 }
 
 /**

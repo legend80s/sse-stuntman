@@ -31,6 +31,7 @@ import {
 import { extractUserPrompt, logEnd, logStart } from "./utils/request-logger.mjs"
 import { showLaunchScreen } from "./utils/server.mjs"
 import { isFilePath } from "./utils/string.mjs"
+import { DEFAULTS, scenarioCacheKey } from "./cli.mjs"
 import { calculateTokens } from "./utils/token.mjs"
 
 /**
@@ -147,9 +148,14 @@ export function startServer(options) {
 
       const scenarioName = url.searchParams.get("scenario") ?? options.scenario
 
+      const reqProvider = url.searchParams.get("provider") ?? options.provider
+      const reqChunkStrategy = /** @type {import('./types.ts').ChunkStrategy} */ (url.searchParams.get("chunk-strategy") ?? options.chunkStrategy)
+      const reqDelayMultiplier = Number(url.searchParams.get("delay-multiplier") ?? options.delayMultiplier)
+      const reqDefaultDelay = Number(url.searchParams.get("default-delay") ?? options.defaultDelay)
+
       const { startTime, traceId } = logStart({
         method: req.method,
-        pathname,
+        pathname: pathname + url.search,
         scenario: scenarioName,
         parsedMessages,
         requestModel,
@@ -166,8 +172,8 @@ export function startServer(options) {
       let scenario = loadScenario(
         scenarioName,
         scenarioDirs,
-        options.defaultDelay,
-        options.chunkStrategy,
+        reqDefaultDelay,
+        reqChunkStrategy,
       )
 
       if (!scenario) {
@@ -191,7 +197,7 @@ export function startServer(options) {
           .reverse()
           .find((m) => m.role === "user")
         const userContent = extractUserPrompt(lastUserMsg)
-        const chunkStrategy = options.chunkStrategy ?? "word"
+        const chunkStrategy = /** @type {import('./types.ts').ChunkStrategy} */ (reqChunkStrategy)
 
         const expanded = []
         for (const chunk of scenario.chunks) {
@@ -212,7 +218,7 @@ export function startServer(options) {
 
       if (!stream) {
         const fullContent = scenario.chunks.map((c) => c.content).join("")
-        if (options.provider === "anthropic") {
+        if (reqProvider === "anthropic") {
           writeAnthropicNonStreamingResponse(fullContent, res, {
             model: requestModel ?? options.model,
             inputTokens,
@@ -239,7 +245,7 @@ export function startServer(options) {
       }
 
       if (scenario.error) {
-        if (options.provider === "anthropic") {
+        if (reqProvider === "anthropic") {
           res.writeHead(200, {
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
@@ -261,15 +267,15 @@ export function startServer(options) {
       })
 
       try {
-        if (options.provider === "anthropic") {
+        if (reqProvider === "anthropic") {
           await writeAnthropicStream(scenario.chunks, res, {
-            delayMultiplier: options.delayMultiplier,
+            delayMultiplier: reqDelayMultiplier,
             model: requestModel ?? options.model,
             inputTokens,
           })
         } else {
           await writeOpenAIStream(scenario.chunks, res, {
-            delayMultiplier: options.delayMultiplier,
+            delayMultiplier: reqDelayMultiplier,
             model: requestModel ?? options.model,
           })
         }
@@ -277,6 +283,30 @@ export function startServer(options) {
         if (!res.destroyed) {
           res.end()
         }
+      }
+      return
+    }
+
+    if (req.method === "POST" && pathname === "/scenarios/create") {
+      const name = url.searchParams.get("name")
+      if (!name) {
+        res.writeHead(400, { "Content-Type": "application/json" })
+        res.end(JSON.stringify({ error: "Missing 'name' query parameter" }))
+        return
+      }
+      try {
+        const scenariosDir = getUserScenariosDir()
+        fs.mkdirSync(scenariosDir, { recursive: true })
+        const filePath = path.join(scenariosDir, `${name}.md`)
+        if (!fs.existsSync(filePath)) {
+          const content = `<!-- @desc: Custom scenario "${name}" -->\n# ${name}\n\nWrite your scenario content here.\n\n<!-- @delay: 100 -->\n\nYour content here.\n\n<!-- @done -->\n`
+          fs.writeFileSync(filePath, content, "utf-8")
+        }
+        res.writeHead(200, { "Content-Type": "application/json" })
+        res.end(JSON.stringify({ name, filePath }))
+      } catch (/** @type {unknown} */ e) {
+        res.writeHead(500, { "Content-Type": "application/json" })
+        res.end(JSON.stringify({ error: /** @type {Error} */ (e).message }))
       }
       return
     }
@@ -305,7 +335,7 @@ export function startServer(options) {
     //   Provider:  ${options.provider}
     //   Endpoint(s): POST ${endpointPaths.join(", POST ")}
     //   Scenario:  ${options.scenario}  (use ?scenario=name to switch)
-    //   Chunk:     ${options.chunkStrategy ?? "word"}
+    //   Chunk:     ${options.chunkStrategy ?? DEFAULTS.chunkStrategy}
     //   Delay:             ${baseDelay}ms  (used when scenario has no @delay)
     //   Delay Multiplier:  ${options.delayMultiplier}x  (each @delay in scenario is multiplied by this)
     //   ${effectiveDelay}
@@ -326,7 +356,7 @@ export function startServer(options) {
  * @param {number} [defaultDelay]
  * @returns {Scenario | null}
  */
-function loadScenario(name, dirs, defaultDelay = 5, chunkStrategy = "word") {
+function loadScenario(name, dirs, defaultDelay = DEFAULTS.defaultDelay, chunkStrategy = DEFAULTS.chunkStrategy) {
   // 文件路径：直接解析，不缓存
   if (isFilePath(name)) {
     const filePath = path.resolve(name)
@@ -344,7 +374,8 @@ function loadScenario(name, dirs, defaultDelay = 5, chunkStrategy = "word") {
   }
 
   // 场景名：走缓存 + 目录查找
-  const cached = scenarioCache.get(name)
+  const cacheKey = scenarioCacheKey(name, chunkStrategy, defaultDelay)
+  const cached = scenarioCache.get(cacheKey)
   if (cached) {
     return cached
   }
@@ -354,10 +385,10 @@ function loadScenario(name, dirs, defaultDelay = 5, chunkStrategy = "word") {
     try {
       if (fs.existsSync(filePath)) {
         const scenario = parseScenarioFile(filePath, {
-          defaultDelay: defaultDelay ?? 5,
+          defaultDelay,
           chunkStrategy,
         })
-        scenarioCache.set(name, scenario)
+        scenarioCache.set(cacheKey, scenario)
         return scenario
       }
     } catch {
@@ -385,9 +416,9 @@ function preloadScenarios(dirs, options) {
         try {
           const scenario = parseScenarioFile(s.file, {
             defaultDelay: options.defaultDelay ?? 5,
-            chunkStrategy: options.chunkStrategy ?? "word",
+            chunkStrategy: options.chunkStrategy ?? DEFAULTS.chunkStrategy,
           })
-          scenarioCache.set(s.name, scenario)
+          scenarioCache.set(scenarioCacheKey(s.name, options.chunkStrategy, options.defaultDelay), scenario)
         } catch {
           // 跳过无法解析的场景
         }
@@ -420,7 +451,7 @@ function preloadScenarios(dirs, options) {
             continue
           }
           seen.add(s.name)
-          const cached = scenarioCache.get(s.name)
+        const cached = scenarioCache.get(scenarioCacheKey(s.name, options.chunkStrategy, options.defaultDelay))
           const source = dir === BUILTIN_DIR ? "builtin" : "custom"
           if (cached?.error) {
             console.log(
@@ -482,7 +513,7 @@ function getIndexHtml(options, dirs) {
           continue
         }
         seen.add(s.name)
-        const cached = scenarioCache.get(s.name)
+        const cached = scenarioCache.get(scenarioCacheKey(s.name, options.chunkStrategy, options.defaultDelay))
         const label = cached?.description
           ? `${s.name} — ${cached.description}`
           : s.name
@@ -508,15 +539,20 @@ function getIndexHtml(options, dirs) {
     apiPath: ep,
     scenarioOpts,
     model: options.model,
+    scenarioCount: scenarioOpts.length,
+    delayMultiplier: options.delayMultiplier,
+    defaultDelay: options.defaultDelay,
+    provider: options.provider,
+    chunkStrategy: options.chunkStrategy,
   })
 }
 
 /**
- *
- * @param {{ port: number; apiPath: string; scenarioOpts: string[]; model: string}} param0
+
+ * @param {{ port: number; apiPath: string; scenarioOpts: string[]; model: string; scenarioCount: number; delayMultiplier: number; defaultDelay: number; provider: string; chunkStrategy: string }} param0
  * @returns
  */
-function renderHTML({ port, apiPath, scenarioOpts, model }) {
+function renderHTML({ port, apiPath, scenarioOpts, model, scenarioCount, delayMultiplier, defaultDelay, provider, chunkStrategy }) {
   // 2. 读取整个 HTML 模板
   const template = fs.readFileSync(
     path.join(__dirname, "index.template.html"),
@@ -530,4 +566,11 @@ function renderHTML({ port, apiPath, scenarioOpts, model }) {
     .replaceAll("${apiPath}", apiPath)
     .replaceAll("${scenarioOptsHTML}", scenarioOptsHTML)
     .replaceAll("${model}", model)
+    .replaceAll("${scenarioCount}", String(scenarioCount))
+    .replaceAll("${delayMultiplier}", String(delayMultiplier))
+    .replaceAll("${defaultDelay}", String(defaultDelay))
+    .replaceAll("${provider}", provider)
+    .replaceAll("${chunkStrategy}", chunkStrategy)
 }
+
+
