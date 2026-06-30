@@ -29,10 +29,12 @@ import {
   writeAnthropicStream,
 } from "./utils/providers/anthropic/stream.mjs"
 import { extractUserPrompt, logEnd, logStart } from "./utils/request-logger.mjs"
+import { showLaunchScreen } from "./utils/server.mjs"
+import { isFilePath } from "./utils/string.mjs"
 import { calculateTokens } from "./utils/token.mjs"
 
 /**
- * @import { Scenario, UserMessage } from './types.ts'
+ * @import { Scenario, UserMessage, CliOptions } from './types.ts'
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -44,7 +46,7 @@ const scenarioCache = new Map()
 /**
  * 构建有序的场景目录列表（优先级从高到低）。
  *
- * @param {import('./types.ts').CliOptions} options
+ * @param {CliOptions} options
  * @returns {string[]}
  */
 function getScenarioDirs(options) {
@@ -70,7 +72,7 @@ function getScenarioDirs(options) {
 /**
  * 启动服务器。
  *
- * @param {import('./types.ts').CliOptions} options
+ * @param {CliOptions} options
  */
 export function startServer(options) {
   const scenarioDirs = getScenarioDirs(options)
@@ -294,51 +296,7 @@ export function startServer(options) {
 
   const port = options.port
   server.listen(port, () => {
-    const baseDelay = options.defaultDelay ?? 5
-    let effectiveDelay = ""
-    if (options.delayMultiplier !== 1) {
-      effectiveDelay = `Effective: ${options.delayMultiplier * baseDelay}ms`
-    }
-
-    const title = "🏍️  SSE Stuntman — server ready"
-    const scenario = options.scenario
-    const cached = scenarioCache.get(scenario)
-
-    const info = {
-      Server: [`http://localhost:${port}`, "SSE Live Demo. Click to try"],
-      Provider: [options.provider],
-      "Endpoint(s)": [`POST ${endpointPaths.join(", POST ")}`],
-
-      Scenario: isFilePath(scenario)
-        ? [scenario]
-        : [scenario, cached?.description],
-
-      Chunk: [options.chunkStrategy],
-
-      Delay: [`${baseDelay}ms`, `used when scenario has no @delay`],
-      "Delay Multiplier": [
-        `${options.delayMultiplier}x`,
-        `each @delay in scenario is multiplied by this`,
-      ],
-      "": [effectiveDelay],
-    }
-
-    const maxKeyLength =
-      Math.max(...Object.keys(info).map((key) => key.length)) + 2
-
-    const indent = " ".repeat(2)
-
-    console.log(`\n  ${title}\n`)
-    for (const [key, meta] of Object.entries(info)) {
-      const [value, descRaw] = meta
-      const desc = descRaw ? `  (${descRaw})` : ""
-      const key1 = key ? `${key}:` : ""
-      value &&
-        console.log(
-          `${indent}${(`${key1}`).padEnd(maxKeyLength)} ${colorize(value)}${desc}`,
-        )
-    }
-    console.log(`\n${indent}Press Ctrl+C to stop.\n`)
+    showLaunchScreen(options, scenarioCache, endpointPaths)
 
     //     console.log(`\n  ${title}`)
 
@@ -357,16 +315,6 @@ export function startServer(options) {
   })
 
   return server
-}
-
-/**
- * 判断场景名是否为文件路径（而非场景目录内的名称）。
- *
- * @param {string} name
- * @returns {boolean}
- */
-function isFilePath(name) {
-  return name.endsWith(".md") || name.includes("/") || name.includes("\\")
 }
 
 /**
@@ -425,7 +373,7 @@ function loadScenario(name, dirs, defaultDelay = 5, chunkStrategy = "word") {
  * 同名场景：优先级高的目录覆盖优先级低的。
  *
  * @param {string[]} dirs
- * @param {import('./types.ts').CliOptions} options
+ * @param {CliOptions} options
  */
 function preloadScenarios(dirs, options) {
   // 从低优先级到高优先级加载（高优先级覆盖低优先级）
@@ -518,7 +466,7 @@ function setCorsHeaders(res) {
 /**
  * 生成主页 HTML。
  *
- * @param {import('./types.ts').CliOptions} options
+ * @param {CliOptions} options
  * @param {string[]} dirs
  * @returns {string}
  */
@@ -561,19 +509,6 @@ function getIndexHtml(options, dirs) {
     scenarioOpts,
     model: options.model,
   })
-}
-
-/**
- * @param {string} text
- * @param {Partial<{defaultColor: keyof typeof color; linkColor: keyof typeof color}>} colorType
- * @return {string}
- */
-function colorize(text, { defaultColor = "yellow", linkColor = "green" } = {}) {
-  if (text.startsWith("http://") || text.startsWith("https://")) {
-    return color.underline(color[linkColor](text))
-  }
-
-  return color[defaultColor](text)
 }
 
 /**
