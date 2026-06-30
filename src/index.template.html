@@ -54,7 +54,9 @@
     border-radius: 0;
     padding: 24px;
     box-sizing: border-box;
-    display: flex;
+    &:open {
+      display: flex;
+    }
     flex-direction: column;
     transition: translate 0.3s, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
     translate: 100% 0;
@@ -260,10 +262,10 @@ globalThis.updateFileNamePreview = updateFileNamePreview;
 function buildQueryString() {
   const params = new URLSearchParams();
   params.set('scenario', scenarioElement.value);
-  if (provider.value !== '${provider}') params.set('provider', provider.value);
-  if (chunkStrategy.value !== '${chunkStrategy}') params.set('chunk-strategy', chunkStrategy.value);
-  if (delayMultiplier.value !== '${delayMultiplier}') params.set('delay-multiplier', delayMultiplier.value);
-  if (defaultDelay.value !== '${defaultDelay}') params.set('default-delay', defaultDelay.value);
+  if (provider.value !== '${provider}') {params.set('provider', provider.value);}
+  if (chunkStrategy.value !== '${chunkStrategy}') {params.set('chunk-strategy', chunkStrategy.value);}
+  if (delayMultiplier.value !== '${delayMultiplier}') {params.set('delay-multiplier', delayMultiplier.value)};
+  if (defaultDelay.value !== '${defaultDelay}') {params.set('default-delay', defaultDelay.value);}
   const qs = params.toString();
   return qs ? '?' + qs : '';
 }
@@ -383,15 +385,9 @@ function getDefaultTemplate(name) {
   return [
     '<!-- @desc: Custom scenario "' + n + '" -->',
     '',
-    '<!--',
-    '  Available directives (place them anywhere in the file):',
+    'Available directives (place them anywhere in the file):',
     '',
-    '  @delay:N    → Wait N ms before the next chunk (e.g. @delay: 200)',
-    '  @desc:...   → Description shown in --list output',
-    '  @input      → Placeholder — replaced with the user\'s last message at runtime',
-    '  @done       → Stop streaming here',
-    '  @error:TYPE → Simulate an API error (rate-limit / content-filter / server-error)',
-    '-->',
+    '@error:TYPE → Simulate an API error (rate-limit / content-filter / server-error)',
     '',
     '# ' + n,
     '',
@@ -399,15 +395,15 @@ function getDefaultTemplate(name) {
     'according to the --chunk-strategy setting.',
     '',
     '<!-- @delay: 150 -->',
-    '',
     'This text appears after a 150ms pause.',
     '',
     '<!-- @input -->',
-    '',
     'If this scenario includes @input, the user\'s message appears here.',
     '',
     '<!-- @delay: 300 -->',
+    'One output, multiple delays — fully configurable.',
     '',
+    'Stop streaming here',
     '<!-- @done -->',
   ].join('\n');
 }
@@ -446,7 +442,7 @@ async function submitNewScenario() {
     scenarioElement.value = data.name;
     updateURL();
     createDrawer.close();
-    alert('Scenario "' + data.name + '" created!\nEdit: ' + data.filePath);
+    alert('Scenario "' + data.name + '" created!\nFeel free to modify this file whenever needed: ' + data.filePath);
   } catch (e) {
     alert('Failed to create scenario: ' + e.message);
   }
