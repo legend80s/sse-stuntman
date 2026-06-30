@@ -27,6 +27,10 @@
 - [ ] cli 参数 scenario 可以支持文件路径，自动读取指定文件当做 scenario
 - [x] add test for new directive `@input`: the `@input` can be added in any place and any times in builtin or user created scenario markdown, when the parser see this directive it will insert and replace the user promt. Thus the static scenario seems more real.
 - [x] 增加客户端请求日志
+- [ ] README 增加对演示界面介绍
+- [ ] UI 演示界面所有 cli 参数都需要演示一遍
+- [ ] 演示界面可下拉选择模型，两个面板一个展示原始 SSE 输出，一个展示 markdown 渲染后的输出
+- [ ] server launch screen: 增加提示输入 v to show curl 使用方式, h to show help, 输入 d 隐藏提示（保留启动时的提示）
 
 ```bash
 curl -X POST http://localhost:11434/v1/chat/completions?scenario=echo \

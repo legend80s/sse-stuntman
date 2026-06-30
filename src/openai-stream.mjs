@@ -217,6 +217,8 @@ function writeEvent(res, data) {
  */
 function applyDelay(ms, multiplier = 1) {
   const actual = ms * multiplier
-  if (actual <= 0) return
+  if (actual <= 0) {
+    return
+  }
   return new Promise((resolve) => setTimeout(resolve, actual))
 }

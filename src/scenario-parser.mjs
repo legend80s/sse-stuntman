@@ -101,6 +101,7 @@ export function parseScenarioFile(filePath, options = {}) {
   const DIRECTIVE_RE = /<!--\s*@(\w+)(?:\s*:\s*(.*?))?\s*-->/gs
 
   let match
+  // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
   while ((match = DIRECTIVE_RE.exec(content)) !== null) {
     // 指令前的文本暂存到 buffer
     const textBefore = content.slice(lastIndex, match.index)
@@ -113,7 +114,9 @@ export function parseScenarioFile(filePath, options = {}) {
       case "delay": {
         flushBuffer()
         currentDelay = parseInt(value ?? "50", 10)
-        if (Number.isNaN(currentDelay)) currentDelay = 50
+        if (Number.isNaN(currentDelay)) {
+          currentDelay = 50
+        }
         break
       }
       case "input": {
@@ -126,7 +129,9 @@ export function parseScenarioFile(filePath, options = {}) {
         break
       }
       case "desc": {
-        if (value) description = value
+        if (value) {
+          description = value
+        }
         break
       }
       case "done": {
@@ -158,7 +163,14 @@ export function parseScenarioFile(filePath, options = {}) {
     flushBuffer()
   }
 
-  return { name: basename, chunks, description }
+  let trimmedChunks = chunks
+  const [firstChunk, ...rest] = chunks
+
+  if (firstChunk && firstChunk.content.trim() === "") {
+    trimmedChunks = rest
+  }
+
+  return { name: basename, chunks: trimmedChunks, description }
 
   /** 将 textBuffer 按指定策略切分成 chunks */
   function flushBuffer() {
