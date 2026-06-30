@@ -522,8 +522,12 @@ function getIndexHtml(options, dirs) {
           continue
         }
         seen.add(s.name)
+        const cached = scenarioCache.get(s.name)
+        const label = cached?.description
+          ? `${s.name} — ${cached.description}`
+          : s.name
         scenarioOpts.push(
-          `<option value="${s.name}"${s.name === options.scenario ? " selected" : ""}>${s.name}</option>`,
+          `<option value="${s.name}"${s.name === options.scenario ? " selected" : ""}>${label}</option>`,
         )
       }
     } catch {
