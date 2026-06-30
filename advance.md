@@ -1,0 +1,218 @@
+# 高级用法
+
+## CLI 命令
+
+```bash
+sse-stuntman -h
+```
+
+| 参数 | 默认值 | 说明 |
+| ------ | -------- | ------ |
+| `--port <number>` | `16828` | 服务端口 |
+| `--scenario <name>` | `default` | 场景名或 `.md` 文件路径（支持绝对/相对路径） |
+| `--delay-multiplier <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
+| `--default-delay <number>` / `-d` | `10` | 场景内无 `@delay` 时的默认 chunk 间隔（毫秒） |
+| `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
+| `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | 自定义 POST 端点路径，可多次指定支持多路径（如 `-e /chat -e /api/chat`） |
+| `--provider <name>` | `openai` | 输出格式：`openai`（Chat Completions SSE）或 `anthropic`（Messages SSE） |
+| `--chunk-strategy <name>` | `word` | 文本切分策略：`word` / `sentence` / `char` / `line` / `paragraph` |
+| `--scenarios-dir <path>` | — | 自定义场景目录（覆盖默认路径） |
+| `--list` | — | 列出所有内置 + 自定义场景 |
+| `create-scenario <name>` | — | 创建新场景模板 |
+| `--help` / `-h` | — | 显示帮助 |
+
+## 自定义场景
+
+### 方式一：create-scenario 子命令（推荐）
+
+```bash
+sse-stuntman create-scenario review
+# ✅ 场景已创建！
+# 继续编辑: ~/.sse-stuntman/scenarios/review.md
+# (自动打开目录)
+```
+
+### 方式二：手动创建文件
+
+在 `~/.sse-stuntman/scenarios/` 目录下放任意 `.md` 文件即可：
+
+```bash
+echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
+```
+
+### 场景文件格式
+
+```markdown
+<!-- @desc: Code Review 场景 -->
+# Code Review
+
+我来帮你审查代码。
+
+<!-- @delay: 200 -->
+
+| 文件 | 问题 | 严重度 |
+|------|------|--------|
+| `src/auth.ts` | 缺少验证 | 🔴 高 |
+
+<!-- @delay: 150 -->
+
+这是逐词输出的内容（通过 `--chunk-strategy word` 启用）。
+
+<!-- @done -->
+```
+
+**指令一览：**
+
+| 指令 | 示例 | 作用 |
+| ------ | ------ | ------ |
+| `@delay:N` | `<!-- @delay: 200 -->` | chunk 间隔（毫秒） |
+| `@desc:TEXT` | `<!-- @desc: 描述 -->` | 场景描述（`--list` 显示） |
+| `@done` | `<!-- @done -->` | 在此处终止流 |
+| `@error:TYPE` | `<!-- @error: rate-limit -->` | 整文件标记为错误场景 |
+| `@input` | `<!-- @input -->` | 占位符，请求时替换为最后一条用户消息内容 |
+
+### 场景加载顺序
+
+```bash
+1. --scenarios-dir 指定目录    (显式指定，最高优先级)
+2. ~/.sse-stuntman/scenarios/  (用户全局场景)
+3. 内置场景                    (fallback)
+```
+
+同名场景，高优先级覆盖低优先级。
+
+## 配置文件
+
+通过 `~/.sse-stuntman/config.mjs` 持久化配置，免去每次启动传参。
+
+```js
+export default {
+  port: 8080,
+  scenario: 'my-scenario',
+  delay: 0.5,
+  model: 'deepseek-chat',
+  endpointPaths: ['/api/my/chat', '/api/v2/chat'],
+  scenariosDir: '/path/to/scenarios',
+}
+```
+
+**优先级：** CLI 参数 > 配置文件 > 内置默认值
+
+## 前端集成
+
+### curl 测试
+
+```bash
+# 流式请求
+curl -N -X POST http://localhost:16828/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{ "model": "gpt-4o", "stream": true, "messages": [] }'
+
+# 切换场景
+curl -N -X POST "http://localhost:16828/v1/chat/completions?scenario=markdown-demo" \
+  -H "Content-Type: application/json" \
+  -d '{ "model": "gpt-4o", "stream": true, "messages": [] }'
+
+# 非流式
+curl -s -X POST http://localhost:16828/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{ "model": "gpt-4o", "stream": false, "messages": [] }' | jq .
+```
+
+### Fetch API (浏览器)
+
+```js
+const res = await fetch('http://localhost:16828/v1/chat/completions', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ model: 'gpt-4o', messages: [], stream: true }),
+})
+```
+
+### Vercel AI SDK
+
+```ts
+import { streamText } from 'ai'
+import { openai } from '@ai-sdk/openai'
+
+const result = streamText({
+  model: openai('gpt-4o'),
+  messages: [{ role: 'user', content: 'Hello' }],
+  baseURL: 'http://localhost:16828/v1',
+})
+```
+
+### OpenAI SDK
+
+```ts
+import OpenAI from 'openai'
+const client = new OpenAI({ baseURL: 'http://localhost:16828/v1', apiKey: 'sk-mock' })
+const stream = await client.chat.completions.create({ model: 'gpt-4o', messages: [], stream: true })
+```
+
+## 内置场景 / Built-in Scenarios
+
+| 场景 | 说明 |
+| ------ | ------ |
+| `default` | 标准对话，markdown 列表/代码块/表格 |
+| `markdown-demo` | 完整 GFM 演示 — diff/Mermaid/数学公式 |
+| `english-i-have-a-dream` | 👨🏿‍🦱🎤🗽 Martin Luther King, Jr. I Have a Dream |
+| `echo` | 将请求中最后一条用户消息内容作为 SSE 流式输出返回 |
+| `empty` | 直接返回 `[DONE]` |
+| `error-interrupted` | 回复到一半中断 |
+| `error-malformed` | 输出包含非法 JSON |
+| `error-rate-limit` | HTTP 429 限流 |
+| `error-content-filter` | HTTP 400 内容过滤 |
+| `error-server-error` | HTTP 500 服务器错误 |
+| `error-timeout` | 输出一段后连接断开 |
+
+## 特殊指令介绍
+
+### `@input` 指令：让静态场景“活”起来
+
+`@input` 是一个`位置占位符指令`，可以在任意 `.md` 场景文件的任意位置插入 `<!-- @input -->`。请求处理时，它会被替换为请求体中最后一条 `role: "user"` 消息的内容。
+
+#### 为什么需要 `@input`？
+
+内置场景的输出内容都是固定的。前端测试时，希望看到**自己的输入内容**被流式返回，而非预设的示例文本。`@input` 的出现解决两个问题：
+
+1. **自定义测试** — 把自己的 markdown 内容发给后端，看它如何被渲染成 SSE 流
+2. **混合场景** — 在预设场景的上下文中间插入用户输入，让对话更真实
+
+#### 纯回显：echo 场景
+
+内置的 `echo` 场景只有 `@input` 指令，延迟完全由 `--default-delay` / `-d` 控制：
+
+```markdown
+<!-- @desc: Echo user messages as streaming markdown response -->
+<!-- @input -->
+```
+
+请求时自动将最后一条用户消息逐词流式返回：
+
+```bash
+curl -N -X POST "http://localhost:16828/v1/chat/completions?scenario=echo" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "# Hello\n\nYour **markdown** here"}]
+  }'
+# → 逐词流式输出 "# Hello\n\nYour **markdown** here"
+```
+
+#### 混合示例：静态 + 动态
+
+自定义场景文件 `interview.md`：
+
+```markdown
+欢迎！我来回答你的问题。
+
+<!-- @delay: 200 -->
+
+<!-- @input -->
+
+<!-- @delay: 150 -->
+
+以上是我的回答，有疑问请继续。
+```
+
+请求时 `@input` 展开为用户消息内容，得到 `"欢迎！...<用户消息>...以上是我的回答"` 的完整流。
