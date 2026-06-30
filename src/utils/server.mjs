@@ -38,7 +38,7 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
   ╚════════════════════════════════════════════════════════════════════════════════╝
 
   ${green("✓")} ${provider} provider ready
-  ${green("✓")} SSE endpoint: ${colorize(endpoint)} (SSE Live Demo. Click to try)}
+  ${green("✓")} SSE endpoint: ${colorize(endpoint)} (SSE Live Demo. Click to try)
   ${green("✓")} Mock scenarios: ${green(scenarioCache.size)} loaded`
 
   const scenario = options.scenario
