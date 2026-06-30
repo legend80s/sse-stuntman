@@ -1,98 +1,81 @@
 # SSE Stuntman 🏍️
 
 ```md
-  ╔═══════════════════════════════════════════════════╗
-  ║   ███████╗████████╗██╗   ██╗███╗   ██╗████████╗   ║
-  ║   ██╔════╝╚══██╔══╝██║   ██║████╗  ██║╚══██╔══╝   ║
-  ║   ███████╗   ██║   ██║   ██║██╔██╗ ██║   ██║      ║
-  ║   ╚════██║   ██║   ██║   ██║██║╚██╗██║   ██║      ║
-  ║   ███████║   ██║   ╚██████╔╝██║ ╚████║   ██║      ║
-  ║   ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝   ╚═╝      ║
-  ║                                                   ║
-  ║   🏍️  SSE Stuntman  |  Your AI's Stunt Double      ║
-  ╚═══════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════╗
+║   ███████╗████████╗██╗   ██╗███╗   ██╗████████╗   ║
+║   ██╔════╝╚══██╔══╝██║   ██║████╗  ██║╚══██╔══╝   ║
+║   ███████╗   ██║   ██║   ██║██╔██╗ ██║   ██║      ║
+║   ╚════██║   ██║   ██║   ██║██║╚██╗██║   ██║      ║
+║   ███████║   ██║   ╚██████╔╝██║ ╚████║   ██║      ║
+║   ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝   ╚═╝      ║
+║                                                   ║
+║   🏍️  SSE Stuntman  |  Your AI's Stunt Double      ║
+╚═══════════════════════════════════════════════════╝
 
-  ✓ OpenAI provider ready
-  ✓ SSE endpoint: http://localhost:11434
+✓ OpenAI provider ready
+✓ SSE endpoint: http://localhost:16828
 ```
 
 > **特技替身 (Stuntman) — 替真实 AI API 完成"危险"的测试任务**
 >
-> 前端开发时，AI 接口调通了但流式输出的打字机效果无法测试？
+> 前端开发时，如何快速测试 AI 流式输出的打字机效果？
+>
 > 一键启动 `sse-stuntman`，无需真实 API Key，即可模拟各种场景：
+>
 > 正常的 Markdown 流式输出、表格/代码块/Mermaid 图表、HTTP 错误、超时断连……
 
 ```bash
 npx sse-stuntman
-# 🏍️  SSE Stuntman — server ready at http://localhost:11434
+# 🏍️  SSE Stuntman — server ready at http://localhost:16828
 ```
 
----
+## 特性
 
-## 特性 / Features
-
-- ✨ **零依赖** — Node.js 内置 `http` 模块，即装即用
+- ✨ **零依赖** — 充分使用 Node.js 内置模块
 - 🎯 **OpenAI 兼容** — `POST /v1/chat/completions`，标准 SSE 格式，主流前端 SDK 直接对接
-- 📝 **场景即 Markdown** — 用 `.md` 文件描述 AI 输出内容和节奏，可读可版本控制
 - ⏱ **精准时序控制** — 每条消息间隔毫秒级可控，模拟真实打字机效果
 - 💥 **全面错误模拟** — `429` / `400` / `500` / 超时断连 / 空响应，覆盖真实异常
 - 🌐 **CORS 全开** — 浏览器直接跨域调用
-- 🖥 **内置 Web UI** — 浏览器打开首页即可测试流式输出
-- 📂 **自定义场景** — 在 `~/.sse-stuntman/scenarios/` 放 `.md` 文件自动生效
+- 🖥 **内置 Web UI** — 浏览器打开首页即可演示流式输出
+- 📝 **场景即 Markdown** — 内置 13 个场景。用 `.md` 文件描述 AI 输出内容和节奏，可读可版本控制，场景文件可放入代码库
+- 📂 **自定义场景** — 默认 `~/.sse-stuntman/scenarios/` 放 `.md` 文件自动生效，支持自定义目录，场景可纳入 git 管理
 - 🎤 **自定义输入** — 把请求消息内容注入场景流，用 `@input` 指令让静态场景"活"起来
 
-## 快速开始 / Quick Start
-
-### 直接使用（推荐）
+## 快速开始
 
 ```bash
 npx sse-stuntman
 ```
 
-### 全局安装
-
-```bash
-npm install -g sse-stuntman
-```
-
-### 项目内安装
-
-```bash
-npm install --save-dev sse-stuntman
-
-# package.json scripts 中添加
-# "mock": "sse-stuntman --port 11434"
-```
-
 ### 使用
 
-假设有一个 `POST http://localhost:9095/management-service/api/intelligent-qa/chat` SSE 请求，期待返回 OpenAI 标准格式的 Markdown 流式输出，前端想测试该接口：
+假设有一个 `POST http://localhost:9095/api/my/chat` SSE 请求，期待返回 OpenAI 标准格式的 Markdown 流式输出，前端想测试该接口：
 
 ```bash
-npx sse-stuntman --port 9095 --endpoint-path 'management-service/api/intelligent-qa/chat'
+npx sse-stuntman --port 9095 --endpoint-path 'api/my/chat'
 ```
 
 这样就开启了一个 SSE 请求模拟服务，你可以直接在你的代码中发起请求。可先试试 curl 看看是否输出了你预期的格式:
 
 ```bash
-curl -N -X POST http://localhost:9095/management-service/api/intelligent-qa/chat \
+curl -N -X POST http://localhost:9095/api/my/chat \
   -H "Content-Type: application/json" \
   -d '{ "model": "gpt-5.5", "stream": true, "messages": [] }'
 ```
 
-## CLI 命令 / CLI Usage
+## CLI 命令
 
-```
+```bash
 sse-stuntman [options]
 sse-stuntman create-scenario <name>
 ```
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `--port <number>` | `11434` | 服务端口（与 Ollama 一致，可零成本切换） |
+| ------ | -------- | ------ |
+| `--port <number>` | `16828` | 服务端口 |
 | `--scenario <name>` | `default` | 场景名或 `.md` 文件路径（支持绝对/相对路径） |
 | `--delay-multiplier <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
-| `--default-delay <number>` / `-d` | `5` | 场景内无 `@delay` 时的默认 chunk 间隔（毫秒） |
+| `--default-delay <number>` / `-d` | `10` | 场景内无 `@delay` 时的默认 chunk 间隔（毫秒） |
 | `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
 | `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | 自定义 POST 端点路径，可多次指定支持多路径（如 `-e /chat -e /api/chat`） |
 | `--provider <name>` | `openai` | 输出格式：`openai`（Chat Completions SSE）或 `anthropic`（Messages SSE） |
@@ -101,11 +84,6 @@ sse-stuntman create-scenario <name>
 | `--list` | — | 列出所有内置 + 自定义场景 |
 | `create-scenario <name>` | — | 创建新场景模板 |
 | `--help` / `-h` | — | 显示帮助 |
-
-> 💡 **为什么是 11434？** [Ollama](https://ollama.com) 的默认端口就是 `11434`。
-> 选择相同端口意味着你可以在 Ollama 和 `sse-stuntman` 之间无缝切换 —
-> 前端代码不改动 URL，只需关掉一个、启动另一个。开发时用 mock，
-> 联调时切回 Ollama，零成本切换。
 
 ### 示例
 
@@ -123,14 +101,13 @@ sse-stuntman create-scenario my-code-review
 sse-stuntman --scenario my-code-review
 
 # 直接使用 .md 文件作为场景（无需放入场景目录）
-sse-stuntman --scenario /path/to/your-scenario.md
 sse-stuntman --scenario ./relative/test.md
 
 # 半速输出
 sse-stuntman --delay-multiplier 0.5
 
 # 自定义端点路径（用于无法修改代码的客户端）
-sse-stuntman --endpoint-path /management-service/api/intelligent-qa/chat
+sse-stuntman --endpoint-path /api/my/chat
 
 # 多个端点路径（同时 mock 多个 URL）
 sse-stuntman -e /api/v1/chat -e /api/v2/chat -e /chat
@@ -138,7 +115,7 @@ sse-stuntman -e /api/v1/chat -e /api/v2/chat -e /chat
 
 ---
 
-## 自定义场景 / Custom Scenarios
+## 自定义场景
 
 ### 方式一：create-scenario 子命令（推荐）
 
@@ -181,7 +158,7 @@ echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
 **指令一览：**
 
 | 指令 | 示例 | 作用 |
-|------|------|------|
+| ------ | ------ | ------ |
 | `@delay:N` | `<!-- @delay: 200 -->` | chunk 间隔（毫秒） |
 | `@desc:TEXT` | `<!-- @desc: 描述 -->` | 场景描述（`--list` 显示） |
 | `@done` | `<!-- @done -->` | 在此处终止流 |
@@ -190,7 +167,7 @@ echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
 
 ### 场景加载顺序
 
-```
+```bash
 1. --scenarios-dir 指定目录    (显式指定，最高优先级)
 2. ~/.sse-stuntman/scenarios/  (用户全局场景)
 3. 内置场景                    (fallback)
@@ -198,9 +175,7 @@ echo '<!-- @desc: 我的场景 -->' > ~/.sse-stuntman/scenarios/my-scenario.md
 
 同名场景，高优先级覆盖低优先级。
 
----
-
-## 配置文件 / Config File
+## 配置文件
 
 通过 `~/.sse-stuntman/config.mjs` 持久化配置，免去每次启动传参。
 
@@ -210,32 +185,30 @@ export default {
   scenario: 'my-scenario',
   delay: 0.5,
   model: 'deepseek-chat',
-  endpointPaths: ['/management-service/api/intelligent-qa/chat', '/api/v2/chat'],
+  endpointPaths: ['/api/my/chat', '/api/v2/chat'],
   scenariosDir: '/path/to/scenarios',
 }
 ```
 
 **优先级：** CLI 参数 > 配置文件 > 内置默认值
 
----
-
-## 前端集成 / Frontend Integration
+## 前端集成
 
 ### curl 测试
 
 ```bash
 # 流式请求
-curl -N -X POST http://localhost:11434/v1/chat/completions \
+curl -N -X POST http://localhost:16828/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{ "model": "gpt-4o", "stream": true, "messages": [] }'
 
 # 切换场景
-curl -N -X POST "http://localhost:11434/v1/chat/completions?scenario=markdown-demo" \
+curl -N -X POST "http://localhost:16828/v1/chat/completions?scenario=markdown-demo" \
   -H "Content-Type: application/json" \
   -d '{ "model": "gpt-4o", "stream": true, "messages": [] }'
 
 # 非流式
-curl -s -X POST http://localhost:11434/v1/chat/completions \
+curl -s -X POST http://localhost:16828/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{ "model": "gpt-4o", "stream": false, "messages": [] }' | jq .
 ```
@@ -243,7 +216,7 @@ curl -s -X POST http://localhost:11434/v1/chat/completions \
 ### Fetch API (浏览器)
 
 ```js
-const res = await fetch('http://localhost:11434/v1/chat/completions', {
+const res = await fetch('http://localhost:16828/v1/chat/completions', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ model: 'gpt-4o', messages: [], stream: true }),
@@ -259,7 +232,7 @@ import { openai } from '@ai-sdk/openai'
 const result = streamText({
   model: openai('gpt-4o'),
   messages: [{ role: 'user', content: 'Hello' }],
-  baseURL: 'http://localhost:11434/v1',
+  baseURL: 'http://localhost:16828/v1',
 })
 ```
 
@@ -267,7 +240,7 @@ const result = streamText({
 
 ```ts
 import OpenAI from 'openai'
-const client = new OpenAI({ baseURL: 'http://localhost:11434/v1', apiKey: 'sk-mock' })
+const client = new OpenAI({ baseURL: 'http://localhost:16828/v1', apiKey: 'sk-mock' })
 const stream = await client.chat.completions.create({ model: 'gpt-4o', messages: [], stream: true })
 ```
 
@@ -313,7 +286,7 @@ const stream = await client.chat.completions.create({ model: 'gpt-4o', messages:
 请求时自动将最后一条用户消息逐词流式返回：
 
 ```bash
-curl -N -X POST "http://localhost:11434/v1/chat/completions?scenario=echo" \
+curl -N -X POST "http://localhost:16828/v1/chat/completions?scenario=echo" \
   -H "Content-Type: application/json" \
   -d '{
     "messages": [{"role": "user", "content": "# Hello\n\nYour **markdown** here"}]
@@ -341,20 +314,22 @@ curl -N -X POST "http://localhost:11434/v1/chat/completions?scenario=echo" \
 
 ---
 
-## 开发命令 / Dev Commands
+## 开发
 
 ```bash
 # 启动服务
-npm start
+node --watch --watch-preserve-output src/bin/index.mjs -s english-i-have-a-dream.md -p 16828
 
 # 运行测试（74 个用例）
 npm test
 
 # 查看场景列表
-npx sse-stuntman --list
+node src/bin/index.mjs --list
 ```
 
----
+## 高级用法
+
+包括：内置场景、自定义场景、配置文件、前端集成、特殊指令介绍
 
 ## License
 
