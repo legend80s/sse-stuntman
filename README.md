@@ -1,5 +1,19 @@
 # SSE Stuntman 🏍️
 
+<p>
+  <a href="https://www.npmjs.com/package/sse-stuntman" target="_blank">
+    <img src="https://img.shields.io/npm/v/sse-stuntman.svg" alt="npm version" />
+  </a>
+
+  <a href="https://www.npmjs.com/package/sse-stuntman">
+    <img src="https://img.shields.io/npm/dm/sse-stuntman.svg" alt="npm downloads" />
+  </a>
+
+  <a href="https://github.com/legend80s/sse-stuntman/blob/main/advance.md" target="_blank">
+    <img alt="coverage" src="https://img.shields.io/badge/coverage%2095.8%25-green" />
+  </a>
+</p>
+
 ```md
 ╔═══════════════════════════════════════════════════╗
 ║   ███████╗████████╗██╗   ██╗███╗   ██╗████████╗   ║
@@ -24,11 +38,6 @@
 >
 > 正常的 Markdown 流式输出、表格/代码块/Mermaid 图表、HTTP 错误、超时断连……
 
-```bash
-npx sse-stuntman
-# 🏍️  SSE Stuntman — server ready at http://localhost:16828
-```
-
 ## 特性
 
 - ✨ **零依赖** — 充分使用 Node.js 内置模块
@@ -45,6 +54,7 @@ npx sse-stuntman
 
 ```bash
 npx sse-stuntman --default-delay 100 --scenario echo
+# 🏍️  SSE Stuntman — server ready at http://localhost:16828
 ```
 
 ```bash
