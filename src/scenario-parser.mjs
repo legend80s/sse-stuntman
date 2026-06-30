@@ -166,7 +166,8 @@ export function parseScenarioFile(filePath, options = {}) {
   let trimmedChunks = chunks
   const [firstChunk, ...rest] = chunks
 
-  if (firstChunk && firstChunk.content.trim() === "") {
+  // input will be filled with user prompt so we should keep it
+  if (firstChunk && firstChunk.content.trim() === "" && !firstChunk.input) {
     trimmedChunks = rest
   }
 
