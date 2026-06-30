@@ -288,10 +288,31 @@ export function startServer(options) {
     }
 
     if (req.method === "POST" && pathname === "/scenarios/create") {
-      const name = url.searchParams.get("name")
+      // Try JSON body first, fall back to ?name= query param
+      let body = ""
+      try {
+        for await (const chunk of req) {
+          body += chunk
+        }
+      } catch {
+        /* ignore */
+      }
+
+      let name = url.searchParams.get("name")
+      let content = ""
+      if (body) {
+        try {
+          const parsed = JSON.parse(body)
+          name = parsed.name ?? name
+          content = parsed.content ?? ""
+        } catch {
+          /* ignore */
+        }
+      }
+
       if (!name) {
         res.writeHead(400, { "Content-Type": "application/json" })
-        res.end(JSON.stringify({ error: "Missing 'name' query parameter" }))
+        res.end(JSON.stringify({ error: "Missing 'name' field" }))
         return
       }
       try {
@@ -299,7 +320,6 @@ export function startServer(options) {
         fs.mkdirSync(scenariosDir, { recursive: true })
         const filePath = path.join(scenariosDir, `${name}.md`)
         if (!fs.existsSync(filePath)) {
-          const content = `<!-- @desc: Custom scenario "${name}" -->\n# ${name}\n\nWrite your scenario content here.\n\n<!-- @delay: 100 -->\n\nYour content here.\n\n<!-- @done -->\n`
           fs.writeFileSync(filePath, content, "utf-8")
         }
         res.writeHead(200, { "Content-Type": "application/json" })
