@@ -44,7 +44,13 @@ npx sse-stuntman
 ## 快速开始
 
 ```bash
-npx sse-stuntman
+npx sse-stuntman --default-delay 100 --scenario echo
+```
+
+```bash
+curl -N -X POST http://localhost:16828/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{"messages":[{"role":"user","content":"# Hello\n\nYour **markdown** here"}],"stream": true}'
 ```
 
 ### 使用

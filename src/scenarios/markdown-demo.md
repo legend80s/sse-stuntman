@@ -107,6 +107,7 @@ sequenceDiagram
 
 - 链接：[GitHub](https://github.com)
 - 自动链接：<https://example.com>
+- 图片：![picsum](https://picsum.photos/seed/picsum/1600/900)
 
 ## 9. Emoji 与特殊字符
 
