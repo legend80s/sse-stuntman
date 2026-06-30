@@ -145,7 +145,7 @@ node src/bin/index.mjs --list
 
 ## 高级用法
 
-[advance.md](./advance.md) 包括：CLI 命令参数、内置场景、自定义场景、配置文件、前端集成、特殊指令介绍
+[advance.md](./advance.zh-CN.md) 包括：CLI 命令参数、内置场景、自定义场景、配置文件、前端集成、特殊指令介绍
 
 ## License
 

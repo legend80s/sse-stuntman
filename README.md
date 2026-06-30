@@ -30,27 +30,27 @@
 ✓ SSE endpoint: http://localhost:16828
 ```
 
-> **特技替身 (Stuntman) — 替真实 AI API 完成"危险"的测试任务**
+> **Stuntman — takes on the "dangerous" testing tasks so your real AI API doesn't have to**
 >
-> 前端开发时，如何快速测试 AI 流式输出的打字机效果？
+> As a frontend developer, how do you quickly test that typewriter-style AI streaming output?
 >
-> 一键启动 `sse-stuntman`，无需真实 API Key，即可模拟各种场景：
+> Start `sse-stuntman` with one command — no real API key needed — to simulate various scenarios:
 >
-> 正常的 Markdown 流式输出、表格/代码块/Mermaid 图表、HTTP 错误、超时断连……
+> Normal markdown streaming output, tables/code blocks/Mermaid diagrams, HTTP errors, timeout disconnections…
 
-## 特性
+## Features
 
-- ✨ **零依赖** — 充分使用 Node.js 内置模块
-- 🎯 **OpenAI 兼容** — `POST /v1/chat/completions`，标准 SSE 格式，主流前端 SDK 直接对接
-- ⏱ **精准时序控制** — 每条消息间隔毫秒级可控，模拟真实打字机效果
-- 💥 **全面错误模拟** — `429` / `400` / `500` / 超时断连 / 空响应，覆盖真实异常
-- 🌐 **CORS 全开** — 浏览器直接跨域调用
-- 🖥 **内置 Web UI** — 浏览器打开首页即可演示流式输出
-- 📝 **场景即 Markdown** — 内置 13 个场景。用 `.md` 文件描述 AI 输出内容和节奏，可读可版本控制，场景文件可放入代码库
-- 📂 **自定义场景** — 默认 `~/.sse-stuntman/scenarios/` 放 `.md` 文件自动生效，支持自定义目录，场景可纳入 git 管理
-- 🎤 **自定义输入** — 把请求消息内容注入场景流，用 `@input` 指令让静态场景"活"起来
+- ✨ **Zero dependencies** — fully leverages Node.js built-in modules
+- 🎯 **OpenAI and Anthropic compatible** — `POST /v1/chat/completions`, standard SSE format, works directly with mainstream frontend SDKs
+- ⏱ **Precise timing control** — millisecond-level control per message interval to simulate real typewriter effects
+- 💥 **Comprehensive error simulation** — `429` / `400` / `500` / timeout disconnection / empty response, covering real-world exceptions
+- 🌐 **CORS fully open** — cross-origin calls directly from the browser
+- 🖥 **Built-in Web UI** — open the homepage in a browser for a streaming output demo
+- 📝 **Scenarios are Markdown** — 13 built-in scenarios. Use `.md` files to describe AI output content and pacing. Readable, version-controllable, scenario files can be checked into your codebase
+- 📂 **Custom scenarios** — place `.md` files in `~/.sse-stuntman/scenarios/` to auto-register. Supports custom directories. Scenarios can be managed with git
+- 🎤 **Custom input** — inject request message content into scenario streams with the `@input` directive to make static scenarios "alive"
 
-## 快速开始
+## Quick Start
 
 ```bash
 npx sse-stuntman --default-delay 100 --scenario echo
@@ -63,15 +63,15 @@ curl -N -X POST http://localhost:16828/v1/chat/completions \
     -d '{"messages":[{"role":"user","content":"# Hello\n\nYour **markdown** here"}],"stream": true}'
 ```
 
-### 使用
+### Usage
 
-假设有一个 `POST http://localhost:9095/api/my/chat` SSE 请求，期待返回 OpenAI 标准格式的 Markdown 流式输出，前端想测试该接口：
+Suppose you have a `POST http://localhost:9095/api/my/chat` SSE request that should return OpenAI-standard markdown streaming output, and your frontend needs to test it:
 
 ```bash
 npx sse-stuntman --port 9095 --endpoint-path 'api/my/chat'
 ```
 
-这样就开启了一个 SSE 请求模拟服务，你可以直接在你的代码中发起请求。可先试试 curl 看看是否输出了你预期的格式:
+This starts an SSE mock server. You can directly make requests from your code. Try curl to see response:
 
 ```bash
 curl -N -X POST http://localhost:9095/api/my/chat \
@@ -79,73 +79,73 @@ curl -N -X POST http://localhost:9095/api/my/chat \
   -d '{ "model": "gpt-5.5", "stream": true, "messages": [] }'
 ```
 
-## CLI 命令常用参数
+## CLI Common Arguments
 
 ```bash
 sse-stuntman -h
 ```
 
-| 参数 | 默认值 | 说明 |
+| Argument | Default | Description |
 | ------ | -------- | ------ |
-| `--port <number>` | `16828` | 服务端口 |
-| `--scenario <name>` | `default` | 场景名或 `.md` 文件路径（支持绝对/相对路径） |
-| `--delay-multiplier <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
-| `--default-delay <number>` / `-d` | `10` | 场景内无 `@delay` 时的默认 chunk 间隔（毫秒） |
-| `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
-| `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | 自定义 POST 端点路径，可多次指定支持多路径（如 `-e /chat -e /api/chat`） |
-| `--provider <name>` | `openai` | 输出格式：`openai`（Chat Completions SSE）或 `anthropic`（Messages SSE） |
-| `--chunk-strategy <name>` | `word` | 文本切分策略：`word` / `sentence` / `char` / `line` / `paragraph` |
-| `--scenarios-dir <path>` | — | 自定义场景目录（覆盖默认路径） |
-| `--list` | — | 列出所有内置 + 自定义场景 |
-| `create-scenario <name>` | — | 创建新场景模板 |
-| `--help` / `-h` | — | 显示帮助 |
+| `--port <number>` | `16828` | Server port |
+| `--scenario <name>` | `default` | Scenario name or `.md` file path (absolute/relative) |
+| `--delay-multiplier <number>` | `1` | Global delay multiplier (`0.5` half speed, `2` double speed) |
+| `--default-delay <number>` / `-d` | `10` | Default chunk interval (ms) when no `@delay` in scenario |
+| `--model <name>` | `gpt-4o` | Model name in SSE events |
+| `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | Custom POST endpoint path; can be specified multiple times for multiple paths (e.g. `-e /chat -e /api/chat`) |
+| `--provider <name>` | `openai` | Output format: `openai` (Chat Completions SSE) or `anthropic` (Messages SSE) |
+| `--chunk-strategy <name>` | `word` | Text chunking strategy: `word` / `sentence` / `char` / `line` / `paragraph` |
+| `--scenarios-dir <path>` | — | Custom scenarios directory (overrides default path) |
+| `--list` | — | List all built-in + custom scenarios |
+| `create-scenario <name>` | — | Create a new scenario template |
+| `--help` / `-h` | — | Show help |
 
-### 示例
+### Examples
 
 ```bash
-# 启动服务
+# Start server
 sse-stuntman
 
-# 查看所有场景
+# List all scenarios
 sse-stuntman --list
 
-# 创建自定义场景
+# Create a custom scenario
 sse-stuntman create-scenario my-code-review
 
-# 使用自定义场景
+# Use a custom scenario
 sse-stuntman --scenario my-code-review
 
-# 直接使用 .md 文件作为场景（无需放入场景目录）
+# Use a .md file directly as a scenario (no need to place in scenarios dir)
 sse-stuntman --scenario ./relative/test.md
 
-# 半速输出
+# Half speed output
 sse-stuntman --delay-multiplier 0.5
 
-# 自定义端点路径（用于无法修改代码的客户端）
+# Custom endpoint path (for clients that can't modify code)
 sse-stuntman --endpoint-path /api/my/chat
 
-# 多个端点路径（同时 mock 多个 URL）
+# Multiple endpoint paths (mock multiple URLs at once)
 sse-stuntman -e /api/v1/chat -e /api/v2/chat -e /chat
 ```
 
 ---
 
-## 开发
+## Development
 
 ```bash
-# 启动服务
+# Start server
 node --watch --watch-preserve-output src/bin/index.mjs -s english-i-have-a-dream.md -p 16828
 
-# 运行测试（74 个用例）
+# Run tests (74 test cases)
 npm test
 
-# 查看场景列表
+# List scenarios
 node src/bin/index.mjs --list
 ```
 
-## 高级用法
+## Advanced Usage
 
-[advance.md](./advance.md) 包括：CLI 命令参数、内置场景、自定义场景、配置文件、前端集成、特殊指令介绍
+[advance.md](./advance.md) covers: CLI arguments, built-in scenarios, custom scenarios, configuration file, frontend integration, special directives
 
 ## License
 
