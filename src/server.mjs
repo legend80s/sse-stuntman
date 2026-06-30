@@ -335,7 +335,7 @@ export function startServer(options) {
       const key1 = key ? `${key}:` : ""
       value &&
         console.log(
-          `${indent}${(`${key1}`).padEnd(maxKeyLength)} ${colorize(value, "yellow")}${desc}`,
+          `${indent}${(`${key1}`).padEnd(maxKeyLength)} ${colorize(value)}${desc}`,
         )
     }
     console.log(`\n${indent}Press Ctrl+C to stop.\n`)
@@ -565,10 +565,10 @@ function getIndexHtml(options, dirs) {
 
 /**
  * @param {string} text
- * @param {{defaultColor: keyof color; linkColor: keyof color}} colorType
+ * @param {Partial<{defaultColor: keyof typeof color; linkColor: keyof typeof color}>} colorType
  * @return {string}
  */
-function colorize(text, { defaultColor = "yellow", linkColor = "green" }) {
+function colorize(text, { defaultColor = "yellow", linkColor = "green" } = {}) {
   if (text.startsWith("http://") || text.startsWith("https://")) {
     return color.underline(color[linkColor](text))
   }
