@@ -42,7 +42,7 @@
 
 - ✨ **Zero dependencies** — fully leverages Node.js built-in modules
 - 🎯 **OpenAI and Anthropic compatible** — `POST /v1/chat/completions`, standard SSE format, works directly with mainstream frontend SDKs
-- ⏱ **Precise timing control** — millisecond-level control per message interval to simulate real typewriter effects
+- ⏱ **Fine-grained timing control** — Each message interval can be configured with different pacing via directives `<-- @delay <time> -->` to simulate real-world business effects.
 - 💥 **Comprehensive error simulation** — `429` / `400` / `500` / timeout disconnection / empty response, covering real-world exceptions
 - 🌐 **CORS fully open** — cross-origin calls directly from the browser
 - 🖥 **Built-in Web UI** — open the homepage in a browser for a streaming output demo
