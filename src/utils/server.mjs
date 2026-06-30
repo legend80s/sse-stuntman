@@ -5,6 +5,9 @@ import { isFilePath } from "./string.mjs"
  * @import { Scenario, CliOptions } from "../types.ts"
  */
 
+const green = color.green
+const yellow = color.yellow
+
 /**
  *
  * @param {CliOptions} options
@@ -19,14 +22,32 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
     effectiveDelay = `Effective: ${options.delayMultiplier * baseDelay}ms`
   }
 
-  const title = "🏍️  SSE Stuntman — server ready"
+  const provider = options.provider
+  const endpoint = `http://localhost:${port}`
+
+  const title = `
+  ╔═══════════════════════════════════════════════════╗
+  ║   ███████╗████████╗██╗   ██╗███╗   ██╗████████╗   ║
+  ║   ██╔════╝╚══██╔══╝██║   ██║████╗  ██║╚══██╔══╝   ║
+  ║   ███████╗   ██║   ██║   ██║██╔██╗ ██║   ██║      ║
+  ║   ╚════██║   ██║   ██║   ██║██║╚██╗██║   ██║      ║
+  ║   ███████║   ██║   ╚██████╔╝██║ ╚████║   ██║      ║
+  ║   ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝   ╚═╝      ║
+  ║                                                   ║
+  ║   🏍️  SSE Stuntman  |  Your AI's Stunt Double      ║
+  ╚═══════════════════════════════════════════════════╝
+
+  ${green("✓")} ${provider} provider ready
+  ${green("✓")} SSE endpoint: ${colorize(endpoint)} (SSE Live Demo. Click to try)}
+  ${green("✓")} Mock scenarios: ${green(scenarioCache.size)} loaded`
+
   const scenario = options.scenario
   const cached = scenarioCache.get(scenario)
 
   const info = {
-    Server: [`http://localhost:${port}`, "SSE Live Demo. Click to try"],
-    Provider: [options.provider],
-    "Endpoint(s)": [`POST ${endpointPaths.join(", POST ")}`],
+    // Server: [endpoint, "SSE Live Demo. Click to try"],
+    // Provider: [provider],
+    "API(s)": [`POST ${endpointPaths.join(", POST ")}`],
 
     Scenario: isFilePath(scenario)
       ? [scenario]
@@ -47,7 +68,7 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
 
   const indent = " ".repeat(2)
 
-  console.log(`\n  ${title}\n`)
+  console.log(`${title}\n`)
   for (const [key, meta] of Object.entries(info)) {
     const [value, descRaw] = meta
     const desc = descRaw ? `  (${descRaw})` : ""
@@ -57,7 +78,10 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
         `${indent}${(`${key1}`).padEnd(maxKeyLength)} ${colorize(value)}${desc}`,
       )
   }
-  console.log(`\n${indent}Press Ctrl+C to stop.\n`)
+
+  console.log(green(`\n  ═══>  Waiting for requests...  ═══>`))
+
+  console.log(`\n${indent}Press ${green("Ctrl+C")} to stop.\n`)
 }
 
 /**

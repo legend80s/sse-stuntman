@@ -8,31 +8,31 @@ const UNDERLINED = "\x1b[4m"
 const RESET = "\x1b[0m"
 
 export const color = {
-  /** @param {string} text */
+  /** @param {string | number} text */
   green(text) {
     return `${GREEN}${text}${RESET}`
   },
-  /** @param {string} text */
+  /** @param {string | number} text */
   cyan(text) {
     return `${CYAN}${text}${RESET}`
   },
-  /** @param {string} text */
+  /** @param {string | number} text */
   yellow(text) {
     return `${YELLOW}${text}${RESET}`
   },
-  /** @param {string} text */
+  /** @param {string | number} text */
   red(text) {
     return `${RED}${text}${RESET}`
   },
-  /** @param {string} text */
+  /** @param {string | number} text */
   dim(text) {
     return `${DIM}${text}${RESET}`
   },
-  /** @param {string} text */
+  /** @param {string | number} text */
   blue(text) {
     return `${BLUE}${text}${RESET}`
   },
-  /** @param {string} text */
+  /** @param {string | number} text */
   underline(text) {
     return `${UNDERLINED}${text}${RESET}`
   },
