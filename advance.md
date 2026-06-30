@@ -1,5 +1,26 @@
 # 高级用法
 
+## CLI 命令
+
+```bash
+sse-stuntman -h
+```
+
+| 参数 | 默认值 | 说明 |
+| ------ | -------- | ------ |
+| `--port <number>` | `16828` | 服务端口 |
+| `--scenario <name>` | `default` | 场景名或 `.md` 文件路径（支持绝对/相对路径） |
+| `--delay-multiplier <number>` | `1` | 全局延迟倍率（`0.5` 半速，`2` 倍速） |
+| `--default-delay <number>` / `-d` | `10` | 场景内无 `@delay` 时的默认 chunk 间隔（毫秒） |
+| `--model <name>` | `gpt-4o` | SSE 事件中的模型名 |
+| `--endpoint-path <path>` / `-e` | `/v1/chat/completions` | 自定义 POST 端点路径，可多次指定支持多路径（如 `-e /chat -e /api/chat`） |
+| `--provider <name>` | `openai` | 输出格式：`openai`（Chat Completions SSE）或 `anthropic`（Messages SSE） |
+| `--chunk-strategy <name>` | `word` | 文本切分策略：`word` / `sentence` / `char` / `line` / `paragraph` |
+| `--scenarios-dir <path>` | — | 自定义场景目录（覆盖默认路径） |
+| `--list` | — | 列出所有内置 + 自定义场景 |
+| `create-scenario <name>` | — | 创建新场景模板 |
+| `--help` / `-h` | — | 显示帮助 |
+
 ## 自定义场景
 
 ### 方式一：create-scenario 子命令（推荐）
