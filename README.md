@@ -9,7 +9,7 @@
 ║   ███████║   ██║   ╚██████╔╝██║ ╚████║   ██║      ║
 ║   ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝   ╚═╝      ║
 ║                                                   ║
-║   🏍️  SSE Stuntman  |  Your AI's Stunt Double      ║
+║     SSE Stuntman  |  Your AI's Stunt Double       ║
 ╚═══════════════════════════════════════════════════╝
 
 ✓ OpenAI provider ready

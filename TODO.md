@@ -32,9 +32,10 @@
 - [ ] 演示界面可下拉选择模型，两个面板一个展示原始 SSE 输出，一个展示 markdown 渲染后的输出
 - [ ] server launch screen: 增加提示输入 v to show curl 使用方式, h to show help, 输入 d 隐藏提示（保留启动时的提示）
 - [ ] 尝试将我们的 mock API 接入 Claude Code
+- [ ] 增加 programmatically use startServer 的例子
 
 ```bash
-curl -X POST http://localhost:11434/v1/chat/completions?scenario=echo \
+curl -X POST http://localhost:16828/v1/chat/completions?scenario=echo \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"# Hello\n\nYour **markdown** here"}]}'
 ```

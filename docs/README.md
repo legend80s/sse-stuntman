@@ -28,12 +28,12 @@ npx sse-stuntman
 
 # 或本地安装后
 npm install -g sse-stuntman
-sse-stuntman --port 11434 --scenario markdown-demo
+sse-stuntman --port 16828 --scenario markdown-demo
 ```
 
 ```js
 // 前端集成
-const res = await fetch('http://localhost:11434/v1/chat/completions', {
+const res = await fetch('http://localhost:16828/v1/chat/completions', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ model: 'gpt-4o', stream: true, messages: [] }),

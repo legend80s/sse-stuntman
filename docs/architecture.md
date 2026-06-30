@@ -56,7 +56,7 @@
 解析命令行参数，返回 `CliOptions` 对象。纯函数，无副作用。
 
 ```
---port <number>      端口号                    (默认: 11434)
+--port <number>      端口号                    (默认: 16828)
 --scenario <name>    场景名                    (默认: "default")
 --delay <number>     全局延迟倍率              (默认: 1)
 --model <name>       SSE 事件的 model 字段     (默认: "gpt-4o")

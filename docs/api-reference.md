@@ -13,7 +13,7 @@ sse-stuntman [options]
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `--port` | number | `11434` | 服务器端口，范围 1-65535 |
+| `--port` | number | `16828` | 服务器端口，范围 1-65535 |
 | `--scenario` | string | `"default"` | 初始场景名，可被 URL query 覆盖 |
 | `--delay` | number | `1` | 全局延迟倍率。`0.5`=半速，`2`=倍速 |
 | `--model` | string | `"gpt-4o"` | SSE 事件中 `model` 字段的默认值 |
@@ -41,7 +41,7 @@ export default {
 ### 使用示例 / Examples
 
 ```bash
-# 默认启动 (port 11434, scenario: default)
+# 默认启动 (port 16828, scenario: default)
 sse-stuntman
 
 # 自定义端口和场景
@@ -66,7 +66,7 @@ sse-stuntman -e /api/v1/chat -e /api/v2/chat
 ### 通过 npx 直接使用
 
 ```bash
-npx sse-stuntman --port 11434
+npx sse-stuntman --port 16828
 ```
 
 ---
@@ -240,7 +240,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ```js
 async function testStream(scenario = 'default') {
-  const res = await fetch(`http://localhost:11434/v1/chat/completions?scenario=${scenario}`, {
+  const res = await fetch(`http://localhost:16828/v1/chat/completions?scenario=${scenario}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: 'gpt-4o', stream: true }),
@@ -296,7 +296,7 @@ const body = JSON.stringify({
 
 const req = http.request({
   hostname: 'localhost',
-  port: 11434,
+  port: 16828,
   path: '/v1/chat/completions?scenario=default',
   method: 'POST',
   headers: { 'Content-Type': 'application/json', 'Content-Length': body.length },
