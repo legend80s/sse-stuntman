@@ -31,9 +31,9 @@
 
   .control-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   .control-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 80px; }
-  .control-group label { font-size: 11px; font-weight: 600; color: #666; margin-bottom: 0; }
+  /* .control-group label { font-size: 11px; font-weight: 600; color: #666; margin-bottom: 0; } */
   .control-group select,
-  .control-group input[type="number"] { margin-bottom: 0; width: auto; }
+  .control-group input { margin-bottom: 0; width: auto; }
   .btn-row { display: flex; gap: 8px; align-items: center; }
   .btn-secondary { background: #e8e8e8; color: #333; }
   .btn-secondary:hover { background: #d0d0d0; }
@@ -168,25 +168,30 @@
   </div>
 
   <div class="card">
-    <label for="scenario">Scenario</label>
-    <select id="scenario">
-      ${scenarioOptsHTML}
-    </select>
-
-    <label for="model">Model</label>
-    <input id="model" type="text" value="${model}" placeholder="gpt-4o">
-
     <div class="control-row">
       <div class="control-group">
-        <label for="provider" title="Response format provider">Provider</label>
-        <select id="provider" title="OpenAI Chat Completions SSE or Anthropic Messages SSE">
+        <label for="scenario">Scenario</label>
+        <select id="scenario">
+          ${scenarioOptsHTML}
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="model">Model</label>
+        <input id="model" type="text" value="${model}" placeholder="gpt-4o">
+      </div>
+      <div class="control-group">
+        <label for="provider">Provider</label>
+        <select id="provider">
           <option value="openai">OpenAI</option>
           <option value="anthropic">Anthropic</option>
         </select>
       </div>
+    </div>
+
+    <div class="control-row">
       <div class="control-group">
-        <label for="chunkStrategy" title="Text splitting strategy">Chunk</label>
-        <select id="chunkStrategy" title="How text is split into SSE chunks">
+        <label for="chunkStrategy">Chunk</label>
+        <select id="chunkStrategy">
           <option value="word">word</option>
           <option value="sentence">sentence</option>
           <option value="char">char</option>
@@ -195,12 +200,12 @@
         </select>
       </div>
       <div class="control-group">
-        <label for="delayMultiplier" title="Global delay multiplier">Speed</label>
-        <input id="delayMultiplier" type="number" value="${delayMultiplier}" min="0" step="0.1" title="1=normal, 2=double speed, 0.5=half speed">
+        <label for="delayMultiplier">Speed</label>
+        <input id="delayMultiplier" type="number" value="${delayMultiplier}" min="0" step="0.1">
       </div>
       <div class="control-group">
-        <label for="defaultDelay" title="Default chunk delay">Chunk Delay</label>
-        <input id="defaultDelay" type="number" value="${defaultDelay}" min="0" title="Default ms between chunks when no @delay is set">
+        <label for="defaultDelay">Chunk Delay</label>
+        <input id="defaultDelay" type="number" value="${defaultDelay}" min="0">
       </div>
     </div>
 
