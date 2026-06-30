@@ -1,6 +1,6 @@
 {
   "name": "sse-stuntman",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "SSE Stuntman — stunt double for your AI API. Simulate streaming responses, errors, and edge cases.",
   "type": "module",
   "scripts": {
@@ -9,7 +9,6 @@
     "pub:major": "npm version major",
     "preversion": "npm test && npm run typecheck",
     "postversion": "npm publish && git push && git push --tags",
-
     "typecheck": "tsgo --noEmit",
     "start": "node bin/index.mjs",
     "test": "node --test"
