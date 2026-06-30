@@ -163,13 +163,19 @@ export function parseScenarioFile(filePath, options = {}) {
     flushBuffer()
   }
 
-  let trimmedChunks = chunks
-  const [firstChunk, ...rest] = chunks
+  const trimmedChunks = trimArrayStart(chunks, (firstChunk) => {
+    return !!(
+      firstChunk &&
+      firstChunk.content.replace(/[\r\s]+$/, "") === "" &&
+      // input will be filled with user prompt so we should keep it
+      !firstChunk.input
+    )
+  })
+  // const [firstChunk, ...rest] = chunks
 
-  // input will be filled with user prompt so we should keep it
-  if (firstChunk && firstChunk.content.trim() === "" && !firstChunk.input) {
-    trimmedChunks = rest
-  }
+  // console.log("filePath:", filePath)
+  // console.log("firstChunk:", firstChunk)
+  // console.log("rest:", rest.slice(0, 2))
 
   return { name: basename, chunks: trimmedChunks, description }
 
@@ -266,4 +272,19 @@ export function listScenarios(scenariosDir) {
     }
   }
   return scenarios.sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/**
+ * trim 数组开始部分，直到遇到第一个不满足 predicate 的元素。
+ * @template T
+ * @param {Array<T>} arr - 要处理的数组
+ * @param {(item: T | undefined) => boolean} predicate - 判断元素是否满足条件的函数
+ * @returns {Array<T>} - 处理后的数组
+ */
+function trimArrayStart(arr, predicate) {
+  while (arr.length > 0 && predicate(arr[0])) {
+    arr.shift()
+  }
+
+  return arr
 }

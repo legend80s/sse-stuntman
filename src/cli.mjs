@@ -26,7 +26,7 @@ const HELP_TEXT = `
     $ sse-stuntman create-scenario <name>  Create a new scenario
 
   SERVER OPTIONS
-    -p, --port <number>      Server port                        (default: 11434)
+    -p, --port <number>      Server port                        (default: 16828)
     -s, --scenario <name>    Scenario name                      (default: "default")
     --delay-multiplier <number> Global delay multiplier          (default: 1)
                              Each chunk's delay (ms) is multiplied by this value.
@@ -63,7 +63,7 @@ const HELP_TEXT = `
 
 /** 内置默认值 */
 const DEFAULTS = {
-  port: 11434,
+  port: 16828,
   scenario: "default",
   delayMultiplier: 1,
   defaultDelay: 10, // ms

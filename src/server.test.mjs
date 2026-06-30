@@ -5,12 +5,12 @@
  * 每个测试用例启动/停止独立服务器实例。
  */
 
-import { describe, it, before, after } from "node:test"
 import assert from "node:assert/strict"
-import http from "node:http"
-import path, { parse } from "node:path"
 import fs from "node:fs"
+import http from "node:http"
 import os from "node:os"
+import path from "node:path"
+import { after, before, describe, it } from "node:test"
 import { startServer } from "./server.mjs"
 
 /**

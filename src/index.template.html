@@ -75,16 +75,26 @@
   </div>
 </div>
 
-<script>
+<script type="module">
 const output = document.getElementById('output');
+const rawElement = document.getElementById('raw');
+
+const scenarioElement = document.getElementById('scenario');
+scenarioElement.value = new URLSearchParams(window.location.search).get('scenario') || 'default';
+scenarioElement.addEventListener('change', () => {
+  window.location.search = `?scenario=${scenarioElement.value}`;
+})
+
+// let lastScrollTop = 0; // 记录上一次滚动位置
+
+globalThis.testStream = testStream
 
 async function testStream() {
-  const raw = document.getElementById('raw');
   const scenario = document.getElementById('scenario').value;
   const model = document.getElementById('model').value;
 
   output.textContent = 'Connecting...';
-  raw.textContent = 'Connecting...';
+  rawElement.textContent = 'Connecting...';
 
   try {
     const res = await fetch('${apiPath}?scenario=' + scenario, {
@@ -100,7 +110,7 @@ async function testStream() {
     }
 
     output.textContent = '';
-    raw.textContent = '';
+    rawElement.textContent = '';
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -111,8 +121,8 @@ async function testStream() {
 
       buffer += decoder.decode(value, { stream: true });
       // console.log('buffer:', buffer);
-      raw.textContent += buffer;
-      await scrollToBottom(raw);
+      rawElement.textContent += buffer;
+      await scrollToBottom(rawElement);
       const lines = buffer.split('\n');
       // console.log('lines:', lines);
       buffer = lines.pop() || '';
@@ -126,9 +136,9 @@ async function testStream() {
             const content = data.choices?.[0]?.delta?.content || '';
             output.textContent += content;
 
-            const start = Date.now();
+            // const start = Date.now();
             await scrollToBottom(output);
-            console.log('scrollToBottom:', Date.now() - start);
+            // console.log('scrollToBottom:', Date.now() - start);
           } catch {}
         }
       }
@@ -136,7 +146,7 @@ async function testStream() {
   } catch (e) {
     console.error(e);
     output.textContent = 'Error: ' + e.message;
-    raw.textContent = 'Error';
+    rawElement.textContent = 'Error';
   }
 }
 
@@ -144,11 +154,47 @@ async function testStream() {
  * 滚动到聊天底部（受保护）
  * @param {Element} target 滚动目标
  */
-const scrollToBottom = async (target) => {
+async function scrollToBottom(target) {
   await nextTick()
 
-  target.scrollTop = target.scrollHeight
+  if (target.__followBottom ?? true) {
+    target.scrollTop = target.scrollHeight
+  }
 }
+
+output.addEventListener('scroll', () => handleScroll(output));
+rawElement.addEventListener('scroll', () => handleScroll(rawElement));
+
+/**
+ * @param {Element} scrollTarget
+ */
+function handleScroll(scrollTarget) {
+  const { scrollTop, scrollHeight, clientHeight } = scrollTarget;
+  const currentScrollBottom = scrollHeight - scrollTop - clientHeight;
+
+  // 1. 如果用户向上滚动了（scrollTop 变小），并且之前是跟随状态
+  if (scrollTop < (scrollTarget.__lastScrollTop ?? 0)) {
+    // 只有用户主动往上滚，才取消“跟随底部”
+    // 防止出现负值（惯性滚动）导致的误判
+    if (currentScrollBottom > 10) {
+      scrollTarget.__followBottom = false;
+
+      console.log('[Scroll] 用户手动向上滚动，停止跟随');
+    }
+  }
+
+  // 2. 如果用户当前已经是滚到底部了（距离底部 5px 以内）
+  if (currentScrollBottom <= 5) {
+    // 只要滚到底部，就无条件恢复跟随状态
+    if (!scrollTarget.__followBottom) {
+      console.log('[Scroll] 用户滚到底部，恢复跟随');
+    }
+    scrollTarget.__followBottom = true;
+  }
+
+  // 更新上次滚动位置
+  scrollTarget.__lastScrollTop = scrollTop;
+};
 
 function nextTick() {
   return new Promise((resolve) => {
