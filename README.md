@@ -1,4 +1,4 @@
-# SSE Stuntman 🏍️
+# SSE Stuntman 🏍️ An SSE Stream Mock Server
 
 <p>
   <a href="https://www.npmjs.com/package/sse-stuntman" target="_blank">

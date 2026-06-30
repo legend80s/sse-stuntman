@@ -1,7 +1,7 @@
 {
   "name": "sse-stuntman",
   "version": "0.0.5",
-  "description": "SSE Stuntman — stunt double for your AI API. Simulate streaming responses, errors, and edge cases.",
+  "description": "SSE Mock — stunt double for your AI API. Mock streaming responses, errors, and edge cases.",
   "type": "module",
   "scripts": {
     "pub:patch": "npm version patch",
@@ -25,10 +25,11 @@
   ],
   "keywords": [
     "sse",
-    "stuntman",
     "mock",
     "ai",
     "streaming",
+    "anthropic",
+    "simulate",
     "openai",
     "test",
     "testing"
