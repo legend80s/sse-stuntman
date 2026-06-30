@@ -60,9 +60,12 @@ export async function writeAnthropicStream(chunks, res, options = {}) {
   // 3. 遍历内容 chunks
   let totalOutput = ""
   for (const chunk of chunks) {
+    if (res.destroyed) return
+
     // 错误场景 - 流中内嵌的 @error
     if (chunk.error) {
       await applyDelay(chunk.delay ?? 0)
+      if (res.destroyed) return
       res.write(
         anthropicMsger.error({
           error: mapAnthropicError(chunk.error.type),
@@ -74,21 +77,24 @@ export async function writeAnthropicStream(chunks, res, options = {}) {
 
     // @done 终止指令 — 正常结束流
     if (chunk.done) {
-      res.write(anthropicMsger.content_block_stop())
-      res.write(
-        anthropicMsger.message_delta({
-          done_reason: "end_turn",
-          prompt_eval_count: inputTokens,
-          eval_count: calculateTokens(totalOutput),
-        }),
-      )
-      res.write(anthropicMsger.message_stop())
-      res.end()
+      if (!res.destroyed) {
+        res.write(anthropicMsger.content_block_stop())
+        res.write(
+          anthropicMsger.message_delta({
+            done_reason: "end_turn",
+            prompt_eval_count: inputTokens,
+            eval_count: calculateTokens(totalOutput),
+          }),
+        )
+        res.write(anthropicMsger.message_stop())
+        res.end()
+      }
       return
     }
 
     // 正常内容 chunk
     await applyDelay(chunk.delay ?? 0, delay)
+    if (res.destroyed) return
     totalOutput += chunk.content
     res.write(anthropicMsger.content_block_delta(chunk.content))
   }

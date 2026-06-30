@@ -46,11 +46,14 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
 
   // 2. 遍历内容 chunks
   for (const chunk of chunks) {
+    if (res.destroyed) return
+
     // 错误场景
     if (chunk.error) {
       // 已经通过 HTTP 错误码处理的场景不会走到这里。
       // 只有流中内嵌的 @error 才会在此处处理。
       await applyDelay(chunk.delay ?? 0)
+      if (res.destroyed) return
       writeEvent(res, {
         id,
         object: "chat.completion.chunk",
@@ -71,14 +74,16 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
 
     // @done 终止指令
     if (chunk.done) {
-      res.write("data: [DONE]\n\n")
-      res.end()
+      if (!res.destroyed) {
+        res.write("data: [DONE]\n\n")
+        res.end()
+      }
       return
     }
 
     // 正常内容 chunk
     await applyDelay(chunk.delay ?? 0, delay)
-
+    if (res.destroyed) return
     writeEvent(res, {
       id,
       object: "chat.completion.chunk",
