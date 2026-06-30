@@ -300,17 +300,26 @@ export function startServer(options) {
     }
 
     const title = "🏍️  SSE Stuntman — server ready"
+    const scenario = options.scenario
+    const cached = scenarioCache.get(scenario)
+
     const info = {
-      Server: `http://localhost:${port}`,
-      Provider: options.provider,
-      "Endpoint(s)": `POST ${endpointPaths.join(", POST ")}`,
-      Scenario: isFilePath(options.scenario)
-        ? options.scenario
-        : `${options.scenario}  (use ?scenario=name to switch)`,
-      Chunk: options.chunkStrategy,
-      Delay: `${baseDelay}ms  (used when scenario has no @delay)`,
-      "Delay Multiplier": `${options.delayMultiplier}x  (each @delay in scenario is multiplied by this)`,
-      "": effectiveDelay,
+      Server: [`http://localhost:${port}`, "SSE Live Demo. Click to try"],
+      Provider: [options.provider],
+      "Endpoint(s)": [`POST ${endpointPaths.join(", POST ")}`],
+
+      Scenario: isFilePath(scenario)
+        ? [scenario]
+        : [scenario, cached?.description],
+
+      Chunk: [options.chunkStrategy],
+
+      Delay: [`${baseDelay}ms`, `used when scenario has no @delay`],
+      "Delay Multiplier": [
+        `${options.delayMultiplier}x`,
+        `each @delay in scenario is multiplied by this`,
+      ],
+      "": [effectiveDelay],
     }
 
     const maxKeyLength =
@@ -319,11 +328,13 @@ export function startServer(options) {
     const indent = " ".repeat(2)
 
     console.log(`\n  ${title}\n`)
-    for (const [key, value] of Object.entries(info)) {
+    for (const [key, meta] of Object.entries(info)) {
+      const [value, descRaw] = meta
+      const desc = descRaw ? `  (${descRaw})` : ""
       const key1 = key ? `${key}:` : ""
       value &&
         console.log(
-          `${indent}${(`${key1}`).padEnd(maxKeyLength)} ${color.green(value)}`,
+          `${indent}${(`${key1}`).padEnd(maxKeyLength)} ${colorize(value, "yellow")}${desc}`,
         )
     }
     console.log(`\n${indent}Press Ctrl+C to stop.\n`)
@@ -641,4 +652,17 @@ async function testStream() {
 </script>
 </body>
 </html>`
+}
+
+/**
+ * @param {string} text
+ * @param {keyof color} colorType
+ * @return {string}
+ */
+function colorize(text, colorType = "green") {
+  if (text.startsWith("http://") || text.startsWith("https://")) {
+    return color.underline(color.blue(text))
+  }
+
+  return color[colorType](text)
 }
