@@ -373,8 +373,12 @@ function resetStreamState(msg) {
   resetStreamButton();
 }
 
+/** @type {string} */
+let _lastTemplateName = 'my-scenario';
+
 function createScenario() {
   document.getElementById('newScenarioName').value = '';
+  _lastTemplateName = 'my-scenario';
   document.getElementById('newScenarioContent').value = getDefaultTemplate('');
   updateFileNamePreview();
   createDrawer.showModal();
@@ -408,9 +412,32 @@ function getDefaultTemplate(name) {
   ].join('\n');
 }
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function updateFileNamePreview() {
   const name = document.getElementById('newScenarioName').value.trim() || 'my-scenario';
   document.getElementById('fileNamePreview').textContent = name + '.md';
+
+  const oldName = _lastTemplateName;
+  if (oldName === name) return;
+
+  const content = document.getElementById('newScenarioContent');
+  let newContent = content.value;
+
+  newContent = newContent.replace(
+    '<!-- @desc: Custom scenario "' + oldName + '" -->',
+    '<!-- @desc: Custom scenario "' + name + '" -->',
+  );
+
+  newContent = newContent.replace(
+    new RegExp('^# ' + escapeRegex(oldName) + '$', 'm'),
+    '# ' + name,
+  );
+
+  content.value = newContent;
+  _lastTemplateName = name;
 }
 
 async function submitNewScenario() {
