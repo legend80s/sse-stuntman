@@ -19,14 +19,16 @@
 
   .container { max-width: 1280px; margin: 0 auto; }
   h1 { font-size: 24px; margin-bottom: 8px; }
-  p { color: #666; margin-bottom: 24px; }
+  p { line-height: 2rem; }
   .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 16px; }
   label { display: block; font-weight: 600; margin-bottom: 6px; }
   select, input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 16px; }
   button { background: #0070f3; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-size: 14px; cursor: pointer; }
   button:hover { background: #0051a8; }
   pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px; overflow-x: auto; font-size: 13px; min-height: 200px; white-space: pre-wrap;word-break: break-word; font-family: var(--ds-font-family-code); }
-  .info { background: #eef2ff; border-left: 4px solid #6366f1; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #4338ca; margin-bottom: 16px; }
+  .info {
+    background: #eef2ff; border-left: 4px solid #6366f1; padding: 12px 16px; border-radius: 4px; 
+    font-size: 16px; color: #4338ca; margin-bottom: 16px; }
   code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
 
   .control-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -163,8 +165,8 @@
   <p>Stunt double for your AI API — simulate streaming responses.</p>
 
   <div class="info">
-    Port: <code>${port}</code> | Endpoint: <code>POST ${apiPath}</code> | Scenarios: <code>${scenarioCount} loaded</code><br>
-    Use <code>?scenario=name</code> to switch scenarios.
+    <p>Port: <code>${port}</code> | Endpoint: <code>POST ${apiPath}</code></p>
+    <p>Scenarios: <code>${scenarioCount} loaded</code></p>
   </div>
 
   <div class="card">
