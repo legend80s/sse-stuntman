@@ -467,6 +467,11 @@ async function submitNewScenario() {
     return;
   }
 
+  const exists = Array.from(scenarioElement.options).some(o => o.value === name);
+  if (exists && !confirm(`Scenario "${name}" already exists. Overwrite?`)) {
+    return;
+  }
+
   const content = document.getElementById('newScenarioContent').value;
 
   try {
@@ -482,14 +487,16 @@ async function submitNewScenario() {
       return;
     }
 
-    const opt = document.createElement('option');
-    opt.value = data.name;
-    opt.textContent = data.name;
-    scenarioElement.appendChild(opt);
+    if (!data.overwritten) {
+      const opt = document.createElement('option');
+      opt.value = data.name;
+      opt.textContent = data.name;
+      scenarioElement.appendChild(opt);
+    }
     scenarioElement.value = data.name;
     updateURL();
     createDrawer.close();
-    alert('Scenario "' + data.name + '" created!\nFeel free to modify this file whenever needed: ' + data.filePath);
+    alert(data.message + '\n\nFeel free to modify this file whenever needed: ' + data.filePath);
   } catch (e) {
     alert('Failed to create scenario: ' + e.message);
   }

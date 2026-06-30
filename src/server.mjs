@@ -328,11 +328,26 @@ export function startServer(options) {
         const scenariosDir = getUserScenariosDir()
         fs.mkdirSync(scenariosDir, { recursive: true })
         const filePath = path.join(scenariosDir, `${name}.md`)
-        if (!fs.existsSync(filePath)) {
-          fs.writeFileSync(filePath, content, "utf-8")
+        const exists = fs.existsSync(filePath)
+        fs.writeFileSync(filePath, content, "utf-8")
+        // Invalidate all cached entries for this scenario name
+        // Otherwise the overwritten scenario will respond with old content.
+        for (const key of scenarioCache.keys()) {
+          if (key.startsWith(name + "::")) {
+            scenarioCache.delete(key)
+          }
         }
         res.writeHead(200, { "Content-Type": "application/json" })
-        res.end(JSON.stringify({ name, filePath }))
+        res.end(
+          JSON.stringify({
+            name,
+            filePath,
+            overwritten: exists,
+            message: exists
+              ? `Scenario "${name}" overwritten.`
+              : `Scenario "${name}" created.`,
+          }),
+        )
       } catch (/** @type {unknown} */ e) {
         res.writeHead(500, { "Content-Type": "application/json" })
         res.end(JSON.stringify({ error: /** @type {Error} */ (e).message }))
