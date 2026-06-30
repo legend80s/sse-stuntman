@@ -46,6 +46,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
 
   // 2. 遍历内容 chunks
   for (const chunk of chunks) {
+    // Client disconnected — stop wasting cycles on a dead socket
     if (res.destroyed) return
 
     // 错误场景
@@ -53,7 +54,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
       // 已经通过 HTTP 错误码处理的场景不会走到这里。
       // 只有流中内嵌的 @error 才会在此处处理。
       await applyDelay(chunk.delay ?? 0)
-      if (res.destroyed) return
+      if (res.destroyed) return // Client disconnected during delay
       writeEvent(res, {
         id,
         object: "chat.completion.chunk",
@@ -83,7 +84,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
 
     // 正常内容 chunk
     await applyDelay(chunk.delay ?? 0, delay)
-    if (res.destroyed) return
+    if (res.destroyed) return // Client disconnected during delay
     writeEvent(res, {
       id,
       object: "chat.completion.chunk",

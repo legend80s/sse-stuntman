@@ -60,12 +60,13 @@ export async function writeAnthropicStream(chunks, res, options = {}) {
   // 3. 遍历内容 chunks
   let totalOutput = ""
   for (const chunk of chunks) {
+    // Client disconnected — stop wasting cycles on a dead socket
     if (res.destroyed) return
 
     // 错误场景 - 流中内嵌的 @error
     if (chunk.error) {
       await applyDelay(chunk.delay ?? 0)
-      if (res.destroyed) return
+      if (res.destroyed) return // Client disconnected during delay
       res.write(
         anthropicMsger.error({
           error: mapAnthropicError(chunk.error.type),
@@ -94,7 +95,7 @@ export async function writeAnthropicStream(chunks, res, options = {}) {
 
     // 正常内容 chunk
     await applyDelay(chunk.delay ?? 0, delay)
-    if (res.destroyed) return
+    if (res.destroyed) return // Client disconnected during delay
     totalOutput += chunk.content
     res.write(anthropicMsger.content_block_delta(chunk.content))
   }
