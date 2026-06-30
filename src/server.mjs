@@ -524,8 +524,12 @@ function setCorsHeaders(res) {
 
 function getIndexHtml(options, dirs) {
   const seen = new Set()
-  const scenarioOpts = []
+  /** @type {string[]} */
+  const customOpts = []
+  /** @type {string[]} */
+  const builtinOpts = []
   for (const dir of dirs) {
+    const isBuiltin = dir === BUILTIN_DIR
     try {
       const scenarios = listScenarios(dir)
       for (const s of scenarios) {
@@ -537,14 +541,23 @@ function getIndexHtml(options, dirs) {
         const label = cached?.description
           ? `${s.name} — ${cached.description}`
           : s.name
-        scenarioOpts.push(
-          `<option value="${s.name}"${s.name === options.scenario ? " selected" : ""}>${label}</option>`,
-        )
+        const opt = `<option value="${s.name}"${s.name === options.scenario ? " selected" : ""}>${label}</option>`
+        ;(isBuiltin ? builtinOpts : customOpts).push(opt)
       }
     } catch {
       /* skip */
     }
   }
+
+  const scenarioOpts = []
+  if (customOpts.length > 0) {
+    scenarioOpts.push('<optgroup label="Your Scenarios">')
+    scenarioOpts.push(...customOpts)
+    scenarioOpts.push("</optgroup>")
+  }
+  scenarioOpts.push('<optgroup label="Built-in">')
+  scenarioOpts.push(...builtinOpts)
+  scenarioOpts.push("</optgroup>")
 
   const eps =
     options.endpointPaths ??
