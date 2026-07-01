@@ -28,14 +28,18 @@
   .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 16px; }
   label { display: block; font-weight: 600; margin-bottom: 6px; }
   select, input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; 
-    font-size: 0.8rem; margin-bottom: 16px; }
+    font-size: max(0.8rem, 13px); margin-bottom: 16px; }
   button { background: #0070f3; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
   button:hover { background: #0051a8; }
   pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px; overflow-x: auto; 
-    font-size: 0.70rem; min-height: 12.5rem; white-space: pre-wrap;word-break: break-word; font-family: var(--ds-font-family-code); }
+    font-size: max(0.70rem, 13px); min-height: 12.5rem; white-space: pre-wrap;word-break: break-word; font-family: var(--ds-font-family-code); }
   .info {
-    background: #eef2ff; border-left: 4px solid #6366f1; padding: 0.75rem 1rem; border-radius: 4px; 
-    color: #4338ca; margin-bottom: 16px; }
+    /* background: #eef2ff; */
+    /* border-left: 4px solid #6366f1; */
+    /* padding: 0.75rem 1rem; */
+    /* border-radius: 4px;  */
+    color: #4338ca;
+    margin-bottom: 16px; }
   code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px;
     font-size: 0.8em; }
 
@@ -172,8 +176,10 @@
     <h1 style="text-align: center;">🏍️  SSE Stuntman</h1>
     <p style="text-align: center; margin-bottom: 1rem;">Stunt double for your AI API — simulate streaming responses.</p>
     <div class="info">
-      <p>Port: <code>${port}</code> | Endpoint: <code>POST ${apiPath}</code></p>
-      <p>Scenarios: <code>${scenarioCount} loaded</code></p>
+      <div style="margin-inline: auto; width: fit-content;">
+        <p>Port: <code>${port}</code> | Endpoint: <code>POST ${apiPath}</code></p>
+        <p>Scenarios: <code>${scenarioCount} loaded</code></p>
+      </div>
     </div>
     <div class="card">
       <div class="control-row">
