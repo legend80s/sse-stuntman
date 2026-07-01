@@ -1,4 +1,4 @@
-# SSE Stuntman 🏍️ An AI SSE Stream Mock Server
+# SSE Stuntman 🏍️ AI SSE Stream 测试工具
 
 <p>
   <a href="https://www.npmjs.com/package/sse-stuntman" target="_blank">
@@ -30,6 +30,8 @@
 ✓ SSE endpoint: http://localhost:16828
 ```
 
+[English](./README.md) | 中文
+
 > **特技替身 (Stuntman) — 替真实 AI API 完成"危险"的测试任务**
 >
 > 前端开发时，如何快速测试 AI 流式输出的打字机效果？
@@ -37,18 +39,6 @@
 > 一键启动 `sse-stuntman`，无需真实 API Key，即可模拟各种场景：
 >
 > 正常的 Markdown 流式输出、表格/代码块/Mermaid 图表、HTTP 错误、超时断连……
-
-## 特性
-
-- ✨ **零依赖** — 充分使用 Node.js 内置模块
-- 🎯 **OpenAI 兼容** — `POST /v1/chat/completions`，标准 SSE 格式，主流前端 SDK 直接对接
-- ⏱ **灵活时序控制** — 每条消息间隔通过指令可设置不同速度，模拟真实业务效果
-- 💥 **全面错误模拟** — `429` / `400` / `500` / 超时断连 / 空响应，覆盖真实异常
-- 🌐 **CORS 全开** — 浏览器直接跨域调用
-- 🖥 **内置 Web UI** — 浏览器打开首页即可演示流式输出
-- 📝 **场景即 Markdown** — 内置 13 个场景。用 `.md` 文件描述 AI 输出内容和节奏，可读可版本控制，场景文件可放入代码库
-- 📂 **自定义场景** — 默认 `~/.sse-stuntman/scenarios/` 放 `.md` 文件自动生效，支持自定义目录，场景可纳入 git 管理
-- 🎤 **自定义输入** — 把请求消息内容注入场景流，用 `@input` 指令让静态场景"活"起来
 
 ## 快速开始
 
@@ -127,6 +117,18 @@ sse-stuntman --endpoint-path /api/my/chat
 # 多个端点路径（同时 mock 多个 URL）
 sse-stuntman -e /api/v1/chat -e /api/v2/chat -e /chat
 ```
+
+## 特性
+
+- ✨ **零依赖** — 充分使用 Node.js 内置模块
+- 🎯 **OpenAI 兼容** — `POST /v1/chat/completions`，标准 SSE 格式，主流前端 SDK 直接对接
+- ⏱ **灵活时序控制** — 每条消息间隔通过指令可设置不同速度，模拟真实业务效果
+- 💥 **全面错误模拟** — `429` / `400` / `500` / 超时断连 / 空响应，覆盖真实异常
+- 🌐 **CORS 全开** — 浏览器直接跨域调用
+- 🖥 **内置 Web UI** — 浏览器打开首页即可演示流式输出
+- 📝 **场景即 Markdown** — 内置 13 个场景。用 `.md` 文件描述 AI 输出内容和节奏，可读可版本控制，场景文件可放入代码库
+- 📂 **自定义场景** — 默认 `~/.sse-stuntman/scenarios/` 放 `.md` 文件自动生效，支持自定义目录，场景可纳入 git 管理
+- 🎤 **自定义输入** — 把请求消息内容注入场景流，用 `@input` 指令让静态场景"活"起来
 
 ---
 

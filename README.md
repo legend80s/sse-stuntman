@@ -1,4 +1,4 @@
-# SSE Stuntman 🏍️ An SSE Stream Mock Server
+# SSE Stuntman 🏍️ Mock AI SSE Stream
 
 <p>
   <a href="https://www.npmjs.com/package/sse-stuntman" target="_blank">
@@ -30,6 +30,8 @@
 ✓ SSE endpoint: http://localhost:16828
 ```
 
+English | [中文](./README.zh-CN.md)
+
 > **Stuntman — takes on the "dangerous" testing tasks so your real AI API doesn't have to**
 >
 > As a frontend developer, how do you quickly test that typewriter-style AI streaming output?
@@ -37,18 +39,6 @@
 > Start `sse-stuntman` with one command — no real API key needed — to simulate various scenarios:
 >
 > Normal markdown streaming output, tables/code blocks/Mermaid diagrams, HTTP errors, timeout disconnections…
-
-## Features
-
-- ✨ **Zero dependencies** — fully leverages Node.js built-in modules
-- 🎯 **OpenAI and Anthropic compatible** — `POST /v1/chat/completions`, standard SSE format, works directly with mainstream frontend SDKs
-- ⏱ **Fine-grained timing control** — Each message interval can be configured with different pacing via directives `<-- @delay <time> -->` to simulate real-world business effects.
-- 💥 **Comprehensive error simulation** — `429` / `400` / `500` / timeout disconnection / empty response, covering real-world exceptions
-- 🌐 **CORS fully open** — cross-origin calls directly from the browser
-- 🖥 **Built-in Web UI** — open the homepage in a browser for a streaming output demo
-- 📝 **Scenarios are Markdown** — 13 built-in scenarios. Use `.md` files to describe AI output content and pacing. Readable, version-controllable, scenario files can be checked into your codebase
-- 📂 **Custom scenarios** — place `.md` files in `~/.sse-stuntman/scenarios/` to auto-register. Supports custom directories. Scenarios can be managed with git
-- 🎤 **Custom input** — inject request message content into scenario streams with the `@input` directive to make static scenarios "alive"
 
 ## Quick Start
 
@@ -127,6 +117,18 @@ sse-stuntman --endpoint-path /api/my/chat
 # Multiple endpoint paths (mock multiple URLs at once)
 sse-stuntman -e /api/v1/chat -e /api/v2/chat -e /chat
 ```
+
+## Features
+
+- ✨ **Zero dependencies** — fully leverages Node.js built-in modules
+- 🎯 **OpenAI and Anthropic compatible** — `POST /v1/chat/completions`, standard SSE format, works directly with mainstream frontend SDKs
+- ⏱ **Fine-grained timing control** — Each message interval can be configured with different pacing via directives `<-- @delay <time> -->` to simulate real-world business effects.
+- 💥 **Comprehensive error simulation** — `429` / `400` / `500` / timeout disconnection / empty response, covering real-world exceptions
+- 🌐 **CORS fully open** — cross-origin calls directly from the browser
+- 🖥 **Built-in Web UI** — open the homepage in a browser for a streaming output demo
+- 📝 **Scenarios are Markdown** — 13 built-in scenarios. Use `.md` files to describe AI output content and pacing. Readable, version-controllable, scenario files can be checked into your codebase
+- 📂 **Custom scenarios** — place `.md` files in `~/.sse-stuntman/scenarios/` to auto-register. Supports custom directories. Scenarios can be managed with git
+- 🎤 **Custom input** — inject request message content into scenario streams with the `@input` directive to make static scenarios "alive"
 
 ---
 

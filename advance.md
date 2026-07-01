@@ -176,7 +176,7 @@ const stream = await client.chat.completions.create({ model: 'gpt-4o', messages:
 
 Built-in scenarios have fixed output. When testing a frontend, you want to see **your own input** streamed back, not preset example text. `@input` solves two problems:
 
-1. **Custom testing** — Send your own markdown content to the backend and see how it renders as an SSE stream
+1. **Custom testing** — Send your own markdown content to the backend and see how it renders as a SSE stream
 2. **Hybrid scenarios** — Insert user input in the middle of a preset scenario's context for more realistic conversations
 
 #### Pure Echo: `echo` Scenario
