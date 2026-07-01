@@ -19,6 +19,7 @@ import { DEFAULTS, scenarioCacheKey } from "./cli.mjs"
 import { getUserScenariosDir } from "./commands/create-scenario.mjs"
 import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
 import {
+  BUILTIN_DIR,
   listScenarios,
   parseScenarioFile,
   splitContent,
@@ -31,15 +32,16 @@ import {
 } from "./utils/providers/anthropic/stream.mjs"
 import { extractUserPrompt, logEnd, logStart } from "./utils/request-logger.mjs"
 import { showLaunchScreen } from "./utils/server.mjs"
-import { isFilePath } from "./utils/string.mjs"
+import { isFilePath, SPACE } from "./utils/string.mjs"
 import { calculateTokens } from "./utils/token.mjs"
+
+const { red, green } = color
 
 /**
  * @import { Scenario, UserMessage, CliOptions } from './types.ts'
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const BUILTIN_DIR = path.join(__dirname, "scenarios")
 
 /** @type {Map<string, Scenario>} */
 const scenarioCache = new Map()
@@ -186,7 +188,7 @@ export function startServer(options) {
       if (!scenario) {
         const message = `Scenario "${scenarioName}" not found`
 
-        console.error(color.red("ERR:"), message)
+        console.error(red("ERR:"), message)
 
         res.writeHead(404, { "Content-Type": "application/json" })
         res.end(
@@ -288,7 +290,7 @@ export function startServer(options) {
           })
         }
       } catch (err) {
-        console.error(color.red("ERR:"), err)
+        console.error(red("ERR:"), err)
         if (!res.destroyed) {
           res.end()
         }
@@ -466,6 +468,7 @@ function preloadScenarios(dirs, options) {
           const scenario = parseScenarioFile(s.file, {
             defaultDelay: options.defaultDelay ?? 5,
             chunkStrategy: options.chunkStrategy ?? DEFAULTS.chunkStrategy,
+            isBuiltin: s.isBuiltin,
           })
           scenarioCache.set(
             scenarioCacheKey(
@@ -514,7 +517,10 @@ function preloadScenarios(dirs, options) {
               options.defaultDelay,
             ),
           )
-          const source = dir === BUILTIN_DIR ? "builtin" : "custom"
+          const source = s.isBuiltin
+            ? "builtin"
+            : `${green("custom")}${SPACE.repeat(16)}`
+
           if (cached?.error) {
             console.log(
               "  " +
@@ -571,7 +577,7 @@ function getIndexHtml(options, dirs) {
   /** @type {string[]} */
   const builtinOpts = []
   for (const dir of dirs) {
-    const isBuiltin = dir === BUILTIN_DIR
+    // const isBuiltin = dir === BUILTIN_DIR
     try {
       const scenarios = listScenarios(dir)
       for (const s of scenarios) {
@@ -586,7 +592,7 @@ function getIndexHtml(options, dirs) {
           ? `${s.name} — ${cached.description}`
           : s.name
         const opt = `<option value="${s.name}"${s.name === options.scenario ? " selected" : ""}>${label}</option>`
-        ;(isBuiltin ? builtinOpts : customOpts).push(opt)
+        ;(s.isBuiltin ? builtinOpts : customOpts).push(opt)
       }
     } catch {
       /* skip */

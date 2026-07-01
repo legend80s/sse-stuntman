@@ -1,3 +1,5 @@
+export const SPACE = " "
+
 /**
  * @returns {string}
  */

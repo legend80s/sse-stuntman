@@ -3,7 +3,7 @@ import { isFilePath } from "./string.mjs"
 import { scenarioCacheKey } from "../cli.mjs"
 
 /**
- * @import { Scenario, CliOptions } from "../types.ts"
+ * @import { Scenario, CliOptions, int } from "../types.ts"
  */
 
 const green = color.green
@@ -26,6 +26,11 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
   const provider = options.provider
   const endpoint = `http://localhost:${port}`
 
+  const { positiveCount: builtinCount, negativeCount: customCount } = countBy(
+    scenarioCache,
+    (_, s) => s.isBuiltin,
+  )
+
   const title = `
   ╔════════════════════════════════════════════════════════════════════════════════╗
   ║   ███████╗████████╗██╗   ██╗███╗   ██╗████████╗███╗   ███╗ █████╗ ███╗   ██╗   ║
@@ -40,7 +45,7 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
 
   ${green("✓")} ${normalizeProvider(provider)} provider ready
   ${green("✓")} SSE endpoint: ${colorize(endpoint)} (SSE Live Demo. Click to try)
-  ${green("✓")} Mock scenarios: ${green(scenarioCache.size)} loaded`
+  ${green("✓")} Mock scenarios: ${green(scenarioCache.size)} loaded (builtin: ${builtinCount}, custom: ${customCount})`
 
   const scenario = options.scenario
   const cached = scenarioCache.get(
@@ -115,4 +120,26 @@ function normalizeProvider(provider) {
 
   // @ts-expect-error
   return map[provider] || provider
+}
+
+/**
+ * @template T
+ * @template K
+ * @param {Map<K, T>} map
+ * @param {(key: K, value: T) => boolean} [predicate]
+ * @returns {{ positiveCount: int; negativeCount: int }}
+ */
+function countBy(map, predicate = () => true) {
+  let positiveCount = 0
+  let negativeCount = 0
+
+  for (const [key, value] of map.entries()) {
+    if (predicate(key, value)) {
+      positiveCount++
+    } else {
+      negativeCount++
+    }
+  }
+
+  return { positiveCount, negativeCount }
 }

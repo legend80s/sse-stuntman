@@ -1,3 +1,5 @@
+export type int = number
+
 /**
  * 单个输出片段。
  *
@@ -65,6 +67,8 @@ export interface Scenario {
   chunks: Chunk[]
   /** 若为错误场景，此处存放错误信息 */
   error?: ErrorTrigger
+
+  isBuiltin: boolean
 }
 
 /** CLI 选项 */

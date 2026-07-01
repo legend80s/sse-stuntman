@@ -51,7 +51,13 @@
 
 import fs from "node:fs"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 import { DEFAULTS } from "./cli.mjs"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+export const BUILTIN_DIR = path.join(__dirname, "scenarios")
+
 /**
  * @import { Chunk, ChunkStrategy, ErrorTrigger, Scenario } from './types.ts'
  */
@@ -62,14 +68,16 @@ import { DEFAULTS } from "./cli.mjs"
  * @param {string} filePath - .md 文件的绝对路径
  * @param {object} [options]
  * @param {number} [options.defaultDelay=5]
- * @param {string} [options.chunkStrategy]
+ * @param {ChunkStrategy} [options.chunkStrategy]
+ * @param {boolean} [options.isBuiltin=false]
  * @returns {Scenario}
  */
 export function parseScenarioFile(filePath, options = {}) {
-  const { defaultDelay = DEFAULTS.defaultDelay, chunkStrategy = DEFAULTS.chunkStrategy } =
-    /** @type {{ defaultDelay?: number, chunkStrategy?: import('./types.ts').ChunkStrategy }} */ (
-      options
-    )
+  const {
+    defaultDelay = DEFAULTS.defaultDelay,
+    chunkStrategy = DEFAULTS.chunkStrategy,
+    isBuiltin = false,
+  } = options
   const content = fs.readFileSync(filePath, "utf-8")
   const basename = path.basename(filePath, ".md")
 
@@ -78,6 +86,7 @@ export function parseScenarioFile(filePath, options = {}) {
 
   if (errorMatch) {
     return {
+      isBuiltin,
       name: basename,
       chunks: [],
       description: descMatch?.[1]?.trim() || "",
@@ -177,7 +186,7 @@ export function parseScenarioFile(filePath, options = {}) {
   // console.log("firstChunk:", firstChunk)
   // console.log("rest:", rest.slice(0, 2))
 
-  return { name: basename, chunks: trimmedChunks, description }
+  return { name: basename, chunks: trimmedChunks, description, isBuiltin }
 
   /** 将 textBuffer 按指定策略切分成 chunks */
   function flushBuffer() {
@@ -258,16 +267,20 @@ export function splitContent(text, strategy) {
  * 列出场景目录下所有内置场景的名称。
  *
  * @param {string} scenariosDir - 场景目录的绝对路径
- * @returns {Array<{ name: string, file: string }>}
+ * @returns {Array<{ name: string, file: string, isBuiltin: boolean }>}
  */
 export function listScenarios(scenariosDir) {
   const files = fs.readdirSync(scenariosDir)
   const scenarios = []
+
+  const isBuiltin = scenariosDir === BUILTIN_DIR
+
   for (const f of files) {
     if (f.endsWith(".md")) {
       scenarios.push({
         name: path.basename(f, ".md"),
         file: path.join(scenariosDir, f),
+        isBuiltin,
       })
     }
   }
