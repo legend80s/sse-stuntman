@@ -134,6 +134,7 @@ export type LogStartParams = {
 }
 
 export type LogEndParams = {
+  resDestroyed?: boolean
   statusCode: number
   traceId: string
   startTime: number

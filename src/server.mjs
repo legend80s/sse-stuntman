@@ -170,7 +170,35 @@ export function startServer(options) {
         requestModel,
       })
 
+      // const resDestroyed = req.aborted
+      // console.log("1 req.aborted:", req.aborted)
+      // console.log("1 res.destroyed:", res.destroyed)
+      // res.on("error", (err) => {
+      //   console.log("ERR:", err)
+      // })
+
+      // 监听连接关闭
+      // req.on("close", () => {
+      //   console.log("close")
+      //   console.log("1 res.destroyed:", res.destroyed)
+      //   if (req.destroyed) {
+      //     console.log("🛑 请求流已被销毁（客户端中止）")
+      //     // cleanup();
+      //   } else {
+      //     console.log("连接正常关闭")
+      //   }
+      // })
+
+      // 监听客户端断开连接
+      // req.on("aborted", () => {
+      //   console.log("客户端已断开连接（aborted事件）")
+      //   console.log("1 res.destroyed:", res.destroyed)
+      //   // 清理资源、停止处理等
+      // })
+
       res.on("close", () => {
+        // console.log("2 res.destroyed:", res.destroyed)
+        // console.log("2 req.aborted:", req.aborted)
         logEnd({
           traceId,
           startTime,

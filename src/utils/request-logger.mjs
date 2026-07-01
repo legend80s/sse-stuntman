@@ -27,7 +27,7 @@ export const logStart = ({
       (userContent.length > 40 ? "…" : "")
     : ""
   console.log(
-    `  ${color.cyan("→")} [${traceId}] ${method} ${pathname}  scenario=${scenario}  model=${requestModel}${userPreview ? `  "${userPreview}"` : ""}`,
+    `  ${color.cyan("→")} [${timeNow()}] ${traceId} ${method} ${pathname} scenario=${scenario} model=${requestModel}${userPreview ? ` "${userPreview}"` : ""}`,
   )
 
   return { traceId, startTime }
@@ -37,10 +37,17 @@ export const logStart = ({
  *
  * @param {LogEndParams} param0
  */
-export const logEnd = ({ statusCode, traceId, startTime }) => {
+export const logEnd = ({ resDestroyed, statusCode, traceId, startTime }) => {
   const elapsed = Date.now() - startTime
   const statusColor = statusCode >= 400 ? color.red : color.green
-  console.log(`  ${statusColor("←")} [${traceId}] ${statusCode} ${elapsed}ms`)
+  const resDestroyedTips = resDestroyed ? color.yellow(" DESTROYED") : ""
+  console.log(
+    `  ${statusColor("←")} [${timeNow()}] ${traceId} ${statusCode}${resDestroyedTips} ${elapsed}ms`,
+  )
+}
+
+function timeNow() {
+  return new Date().toLocaleString()
 }
 
 /**
