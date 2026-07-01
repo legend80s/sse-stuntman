@@ -11,7 +11,7 @@
 <style>
   :root {
     --ds-font-family-code: Menlo, Monaco, Consolas, "Cascadia Mono", "Ubuntu Mono", "DejaVu Sans Mono", "Liberation Mono", "JetBrains Mono", "Fira Code", Cousine, "Roboto Mono", "Courier New", Courier, sans-serif, system-ui;
-    /* font-size: clamp(16px, 100vw / 2560 * 28.6, 36px); */
+    font-size: clamp(16px, 100vw / 2560 * 28.6, 36px);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -22,26 +22,29 @@
     padding-inline: 2rem;
   }
 
-  .container { max-width: 1280px; margin: 0 auto; }
-  h1 { font-size: 24px; margin-bottom: 8px; }
-  p { line-height: 2rem; }
-  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 16px; }
+  .container { max-width: 80rem; margin: 0 auto; }
+  h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  p { line-height: 1.2rem; }
+  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 16px; }
   label { display: block; font-weight: 600; margin-bottom: 6px; }
-  select, input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 16px; }
-  button { background: #0070f3; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-size: 14px; cursor: pointer; }
+  select, input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; 
+    font-size: 0.8rem; margin-bottom: 16px; }
+  button { background: #0070f3; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
   button:hover { background: #0051a8; }
-  pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px; overflow-x: auto; font-size: 13px; min-height: 200px; white-space: pre-wrap;word-break: break-word; font-family: var(--ds-font-family-code); }
+  pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px; overflow-x: auto; 
+    font-size: 0.70rem; min-height: 12.5rem; white-space: pre-wrap;word-break: break-word; font-family: var(--ds-font-family-code); }
   .info {
-    background: #eef2ff; border-left: 4px solid #6366f1; padding: 12px 16px; border-radius: 4px; 
-    font-size: 16px; color: #4338ca; margin-bottom: 16px; }
-  code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+    background: #eef2ff; border-left: 4px solid #6366f1; padding: 0.75rem 1rem; border-radius: 4px; 
+    color: #4338ca; margin-bottom: 16px; }
+  code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px;
+    font-size: 0.8em; }
 
-  .control-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .control-row { display: flex; gap: 0.625rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
   .control-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 80px; }
   /* .control-group label { font-size: 11px; font-weight: 600; color: #666; margin-bottom: 0; } */
   .control-group select,
-  .control-group input { margin-bottom: 0; width: auto; }
-  .btn-row { display: flex; gap: 8px; align-items: center; }
+  .control-group input { margin-bottom: 0; max-width: 100%; }
+  .btn-row { display: flex; gap: 0.5rem; align-items: center; }
   .btn-secondary { background: #e8e8e8; color: #333; }
   .btn-secondary:hover { background: #d0d0d0; }
   #streamBtn.stop { background: #e00; }
@@ -55,7 +58,7 @@
     margin: 0 0 0 auto;
     height: 100vh;
     max-height: 100vh;
-    width: 480px;
+    width: 30rem;
     max-width: 90vw;
     border: 0;
     border-radius: 0;
@@ -86,15 +89,15 @@
   }
 
   .drawer h2 {
-    margin-bottom: 20px;
-    font-size: 20px;
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
   }
 
   .drawer label {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #666;
-    margin-bottom: 4px;
+    margin-bottom: 0.25rem;
   }
 
   .drawer input,
@@ -103,7 +106,7 @@
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 0.875rem;
     margin-bottom: 16px;
     box-sizing: border-box;
   }
@@ -112,12 +115,12 @@
     flex: 1;
     min-height: 180px;
     font-family: var(--ds-font-family-code);
-    font-size: 13px;
+    font-size: 0.55rem;
     resize: vertical;
   }
 
   .drawer .path-hint {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: #666;
     background: #f5f5f5;
     padding: 8px 12px;
@@ -166,9 +169,8 @@
 </head>
 <body>
 <div class="container">
-  <div style="text-align: center;">
-    <h1>🏍️  SSE Stuntman</h1>
-    <p>Stunt double for your AI API — simulate streaming responses.</p>
+    <h1 style="text-align: center;">🏍️  SSE Stuntman</h1>
+    <p style="text-align: center; margin-bottom: 1rem;">Stunt double for your AI API — simulate streaming responses.</p>
     <div class="info">
       <p>Port: <code>${port}</code> | Endpoint: <code>POST ${apiPath}</code></p>
       <p>Scenarios: <code>${scenarioCount} loaded</code></p>
@@ -220,11 +222,10 @@
     </div>
   </div>
 
-  <div class="output-wrapper" style="">
+  <div class="container output-wrapper" style="">
     <pre id="output" style="flex: 1;line-height: 1.8em;">Click "Test Stream" to see the response...</pre>
     <pre id="raw" style="flex: 1; ">Raw SSE response...</pre>
   </div>
-</div>
 
 <dialog id="createDrawer" class="drawer">
   <h2>+ New Scenario</h2>
@@ -387,7 +388,7 @@ function resetStreamState(msg) {
 
 // click outside to close
 document.addEventListener('click', (event) => {
-  console.log('event.target:', event.target);
+  // console.log('event.target:', event.target);
   if (createDrawer === event.target) {
     createDrawer.close()
   }
