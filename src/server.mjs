@@ -15,6 +15,7 @@ import fs from "node:fs"
 import http from "node:http"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { DEFAULTS, scenarioCacheKey } from "./cli.mjs"
 import { getUserScenariosDir } from "./commands/create-scenario.mjs"
 import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
 import {
@@ -31,7 +32,6 @@ import {
 import { extractUserPrompt, logEnd, logStart } from "./utils/request-logger.mjs"
 import { showLaunchScreen } from "./utils/server.mjs"
 import { isFilePath } from "./utils/string.mjs"
-import { DEFAULTS, scenarioCacheKey } from "./cli.mjs"
 import { calculateTokens } from "./utils/token.mjs"
 
 /**

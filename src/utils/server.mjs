@@ -38,12 +38,14 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
   ║                   🏍️  SSE Stuntman  |  Your AI's Stunt Double                   ║
   ╚════════════════════════════════════════════════════════════════════════════════╝
 
-  ${green("✓")} ${provider} provider ready
+  ${green("✓")} ${normalizeProvider(provider)} provider ready
   ${green("✓")} SSE endpoint: ${colorize(endpoint)} (SSE Live Demo. Click to try)
   ${green("✓")} Mock scenarios: ${green(scenarioCache.size)} loaded`
 
   const scenario = options.scenario
-  const cached = scenarioCache.get(scenarioCacheKey(scenario, options.chunkStrategy, options.defaultDelay))
+  const cached = scenarioCache.get(
+    scenarioCacheKey(scenario, options.chunkStrategy, options.defaultDelay),
+  )
 
   const info = {
     // Server: [endpoint, "SSE Live Demo. Click to try"],
@@ -96,4 +98,21 @@ function colorize(text, { defaultColor = "yellow", linkColor = "green" } = {}) {
   }
 
   return color[defaultColor](text)
+}
+
+/**
+ * Formats the provider name for display
+ * @param {string} provider
+ * @returns {string}
+ */
+function normalizeProvider(provider) {
+  const map = {
+    openai: "OpenAI",
+    // "azure": "Azure",
+    // "google": "Google",
+    anthropic: "Anthropic",
+  }
+
+  // @ts-expect-error
+  return map[provider] || provider
 }
