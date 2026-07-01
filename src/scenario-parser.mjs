@@ -122,7 +122,7 @@ export function parseScenarioFile(filePath, options = {}) {
     switch (key) {
       case "delay": {
         flushBuffer()
-        currentDelay = parseInt(value ?? "50", 10)
+        currentDelay = Number(value) || DEFAULTS.defaultDelay
         if (Number.isNaN(currentDelay)) {
           currentDelay = 50
         }

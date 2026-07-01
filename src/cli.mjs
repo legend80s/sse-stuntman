@@ -62,7 +62,7 @@ const HELP_TEXT = `
 `
 
 /** 内置默认值 */
-export const DEFAULTS = {
+export const DEFAULTS = /** @type {const} */ ({
   port: 16828,
   scenario: "default",
   delayMultiplier: 1,
@@ -73,7 +73,7 @@ export const DEFAULTS = {
   list: false,
   help: false,
   chunkStrategy: /** @type {import('./types.ts').ChunkStrategy} */ ("word"),
-}
+})
 
 /**
  * 场景缓存 key。
@@ -98,7 +98,9 @@ export const DEFAULTS = {
  */
 export function scenarioCacheKey(
   name,
-  strategy = /** @type {import('./types.ts').ChunkStrategy} */ (DEFAULTS.chunkStrategy),
+  strategy = /** @type {import('./types.ts').ChunkStrategy} */ (
+    DEFAULTS.chunkStrategy
+  ),
   defaultDelay = DEFAULTS.defaultDelay,
 ) {
   return `${name}::${strategy}::${defaultDelay}`
