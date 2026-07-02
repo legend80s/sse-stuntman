@@ -1,6 +1,11 @@
 import { generateId } from "../../string.mjs"
 
-export const anthropicMsger = {
+export class AnthropicMessageGenerator {
+  /** @param {string} separator */
+  constructor(separator) {
+    this.separator = separator
+  }
+
   /**
    *
    * @param {{ model: string; inputTokens?: number }} param0
@@ -24,14 +29,14 @@ export const anthropicMsger = {
         },
       },
     })
-  },
+  }
 
   content_block_start() {
     return this.genMsg("content_block_start", {
       index: 0,
       content_block: { type: "text", text: "" },
     })
-  },
+  }
 
   /**
    *
@@ -43,13 +48,13 @@ export const anthropicMsger = {
       index: 0,
       delta: { type: "text_delta", text: content },
     })
-  },
+  }
 
   content_block_stop() {
     return this.genMsg("content_block_stop", {
       index: 0,
     })
-  },
+  }
 
   /**
    * 
@@ -71,11 +76,11 @@ export const anthropicMsger = {
         output_tokens: data.eval_count || 0,
       },
     })
-  },
+  }
 
   message_stop() {
     return this.genMsg("message_stop")
-  },
+  }
 
   /**
    *
@@ -84,11 +89,11 @@ export const anthropicMsger = {
    */
   error(payload) {
     return this.genMsg("error", payload)
-  },
+  }
 
   ping() {
     return this.genMsg("ping")
-  },
+  }
 
   /**
    * @template {string} E
@@ -101,11 +106,11 @@ export const anthropicMsger = {
       type: event,
 
       ...payload,
-    })}\n\n`
+    })}${this.separator}`
 
     // console.log("[genMsg] msg:", msg)
 
     // @ts-expect-error
     return msg
-  },
+  }
 }

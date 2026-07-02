@@ -41,6 +41,7 @@ const HELP_TEXT = `
                              (can be specified multiple times for multiple paths)
                              Automatically defaults to "/v1/messages" when --provider anthropic
     --scenarios-dir <path>   Custom scenarios directory
+    --separator <string>     Custom separator for SSE events   (default: "\\n\\n")
     --open-scenarios-dir / --no-open-scenarios-dir
                              Open file manager after creating scenario
                              (default: on, use --no-open-scenarios-dir to disable)
@@ -74,6 +75,7 @@ export const DEFAULTS = /** @type {const} */ ({
   list: false,
   help: false,
   chunkStrategy: "word",
+  separator: "\n\n",
 })
 
 /**
@@ -134,6 +136,7 @@ export function parseCliArgs(argv) {
       "endpoint-path": { type: "string", multiple: true, short: "e" },
       "scenarios-dir": { type: "string" },
       "open-scenarios-dir": { type: "boolean", default: true },
+      separator: { type: "string", default: DEFAULTS.separator },
       list: { type: "boolean", default: false, short: "l" },
       help: { type: "boolean", default: false, short: "h" },
     },
@@ -162,38 +165,48 @@ export function parseCliArgs(argv) {
   }
 
   // 收集 CLI 显式提供的值（未提供时不包含该属性）
-  const cliValues = {}
-  if (values.port !== undefined) {
-    cliValues.port = Number(values.port)
+  const {
+    port,
+    "delay-multiplier": delayMultiplier,
+    "default-delay": defaultDelay,
+    provider,
+    "chunk-strategy": chunkStrategy,
+    "endpoint-path": endpointPaths,
+    ...restValues
+  } = values
+
+  /** @type {Partial<CliOptions>} */
+  const cliValues = { ...restValues }
+
+  if (port !== undefined) {
+    cliValues.port = Number(port)
   }
-  if (values.scenario !== undefined) {
-    cliValues.scenario = values.scenario
+  // if (values.scenario !== undefined) {
+  //   cliValues.scenario = values.scenario
+  // }
+  if (delayMultiplier !== undefined) {
+    cliValues.delayMultiplier = Number(delayMultiplier)
   }
-  if (values["delay-multiplier"] !== undefined) {
-    cliValues.delayMultiplier = Number(values["delay-multiplier"])
+  if (defaultDelay !== undefined) {
+    cliValues.defaultDelay = Number(defaultDelay)
   }
-  if (values["default-delay"] !== undefined) {
-    cliValues.defaultDelay = Number(values["default-delay"])
+  // if (values.model !== undefined) {
+  //   cliValues.model = values.model
+  // }
+  if (provider !== undefined) {
+    cliValues.provider = normalizeProvider(provider)
   }
-  if (values.model !== undefined) {
-    cliValues.model = values.model
+  if (chunkStrategy !== undefined) {
+    cliValues.chunkStrategy = normalizeChunkStrategy(chunkStrategy)
   }
-  if (values.provider !== undefined) {
-    cliValues.provider = normalizeProvider(values.provider)
+  if (endpointPaths !== undefined) {
+    cliValues.endpointPaths = endpointPaths.map(normalizePath).filter(Boolean)
   }
-  if (values["chunk-strategy"] !== undefined) {
-    cliValues.chunkStrategy = normalizeChunkStrategy(values["chunk-strategy"])
-  }
-  if (values["endpoint-path"]) {
-    cliValues.endpointPaths = values["endpoint-path"]
-      .map(normalizePath)
-      .filter(Boolean)
-  }
-  if (values["scenarios-dir"] !== undefined) {
-    cliValues.scenariosDir = values["scenarios-dir"]
-  }
-  cliValues.list = values.list ?? false
-  cliValues.help = values.help ?? false
+  // if (values["scenarios-dir"] !== undefined) {
+  //   cliValues.scenariosDir = values["scenarios-dir"]
+  // }
+  // cliValues.list = values.list ?? false
+  // cliValues.help = values.help ?? false
 
   // 校验 port
   if (cliValues.port != null) {
@@ -278,67 +291,69 @@ function normalizeChunkStrategy(s) {
  * @returns {CliOptions}
  */
 export function mergeOptions(cliValues, configValues) {
+  // console.log("cliValues:", cliValues)
+  // console.log("configValues:", configValues)
   /** @type {CliOptions} */
-  const result = { ...DEFAULTS }
+  const result = { ...DEFAULTS, ...configValues, ...cliValues }
 
   if (configValues) {
-    if (configValues.port != null) {
-      result.port = configValues.port
-    }
-    if (configValues.scenario != null) {
-      result.scenario = configValues.scenario
-    }
-    if (configValues.delayMultiplier != null) {
-      result.delayMultiplier = configValues.delayMultiplier
-    }
-    if (configValues.defaultDelay != null) {
-      result.defaultDelay = configValues.defaultDelay
-    }
-    if (configValues.model != null) {
-      result.model = configValues.model
-    }
+    // if (configValues.port != null) {
+    //   result.port = configValues.port
+    // }
+    // if (configValues.scenario != null) {
+    //   result.scenario = configValues.scenario
+    // }
+    // if (configValues.delayMultiplier != null) {
+    //   result.delayMultiplier = configValues.delayMultiplier
+    // }
+    // if (configValues.defaultDelay != null) {
+    //   result.defaultDelay = configValues.defaultDelay
+    // }
+    // if (configValues.model != null) {
+    //   result.model = configValues.model
+    // }
     if (configValues.provider != null) {
       result.provider = normalizeProvider(configValues.provider)
     }
     if (configValues.chunkStrategy != null) {
       result.chunkStrategy = normalizeChunkStrategy(configValues.chunkStrategy)
     }
-    if (configValues.endpointPaths != null) {
-      result.endpointPaths = configValues.endpointPaths
-    }
-    if (configValues.scenariosDir != null) {
-      result.scenariosDir = configValues.scenariosDir
-    }
+    // if (configValues.endpointPaths != null) {
+    //   result.endpointPaths = configValues.endpointPaths
+    // }
+    // if (configValues.scenariosDir != null) {
+    //   result.scenariosDir = configValues.scenariosDir
+    // }
   }
 
   // CLI 覆盖
-  if (cliValues.port != null) {
-    result.port = cliValues.port
-  }
-  if (cliValues.scenario != null) {
-    result.scenario = cliValues.scenario
-  }
-  if (cliValues.delayMultiplier != null) {
-    result.delayMultiplier = cliValues.delayMultiplier
-  }
-  if (cliValues.defaultDelay != null) {
-    result.defaultDelay = cliValues.defaultDelay
-  }
-  if (cliValues.model != null) {
-    result.model = cliValues.model
-  }
-  if (cliValues.provider != null) {
-    result.provider = cliValues.provider
-  }
-  if (cliValues.chunkStrategy != null) {
-    result.chunkStrategy = cliValues.chunkStrategy
-  }
-  if (cliValues.endpointPaths != null) {
-    result.endpointPaths = cliValues.endpointPaths
-  }
-  if (cliValues.scenariosDir != null) {
-    result.scenariosDir = cliValues.scenariosDir
-  }
+  // if (cliValues.port != null) {
+  //   result.port = cliValues.port
+  // }
+  // if (cliValues.scenario != null) {
+  //   result.scenario = cliValues.scenario
+  // }
+  // if (cliValues.delayMultiplier != null) {
+  //   result.delayMultiplier = cliValues.delayMultiplier
+  // }
+  // if (cliValues.defaultDelay != null) {
+  //   result.defaultDelay = cliValues.defaultDelay
+  // }
+  // if (cliValues.model != null) {
+  //   result.model = cliValues.model
+  // }
+  // if (cliValues.provider != null) {
+  //   result.provider = cliValues.provider
+  // }
+  // if (cliValues.chunkStrategy != null) {
+  //   result.chunkStrategy = cliValues.chunkStrategy
+  // }
+  // if (cliValues.endpointPaths != null) {
+  //   result.endpointPaths = cliValues.endpointPaths
+  // }
+  // if (cliValues.scenariosDir != null) {
+  //   result.scenariosDir = cliValues.scenariosDir
+  // }
 
   // 当 provider 为 anthropic 且未显式指定 endpointPaths 时，默认路径切换到 /v1/messages
   if (
@@ -350,17 +365,42 @@ export function mergeOptions(cliValues, configValues) {
   }
 
   // 布尔值
-  if (cliValues.list != null) {
-    result.list = cliValues.list
-  }
-  if (cliValues.help != null) {
-    result.help = cliValues.help
-  }
-  if (cliValues.createScenario != null) {
-    result.createScenario = cliValues.createScenario
+  // if (cliValues.list != null) {
+  //   result.list = cliValues.list
+  // }
+  // if (cliValues.help != null) {
+  //   result.help = cliValues.help
+  // }
+  // if (cliValues.createScenario != null) {
+  //   result.createScenario = cliValues.createScenario
+  // }
+
+  if (result.separator != null) {
+    result.separator = normalizeSeparator(result.separator)
   }
 
   return result
+}
+
+// 在解析参数后，手动转换
+/**
+ *
+ * @param {string} separator
+ * @returns {string}
+ */
+function normalizeSeparator(separator) {
+  // 如果传入的是字面字符串 '\\r\\n'，先转换
+  if (typeof separator === "string") {
+    // 处理双反斜杠的情况
+    const result = separator
+      .replace(/\\\\r/g, "\r")
+      .replace(/\\\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\n/g, "\n")
+
+    return result
+  }
+  return separator
 }
 
 /**

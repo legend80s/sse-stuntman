@@ -35,6 +35,7 @@
 - [ ] server launch screen: 增加提示输入 v to show curl 使用方式, h to show help, 输入 d 隐藏提示（保留启动时的提示）
 - [ ] 尝试将我们的 mock API 接入 Claude Code
 - [ ] 增加 programmatically use startServer 的例子
+- [x] customize separator default is `\n\n` can be customized by cli option `--separator` for example `--separator=\r\n\r\n`
 
 ```bash
 curl -X POST http://localhost:16828/v1/chat/completions?scenario=echo \

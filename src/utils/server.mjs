@@ -1,13 +1,13 @@
 import { color } from "./color.mjs"
 import { isFilePath } from "./string.mjs"
-import { scenarioCacheKey } from "../cli.mjs"
+import { DEFAULTS, scenarioCacheKey } from "../cli.mjs"
 
 /**
  * @import { Scenario, CliOptions, int } from "../types.ts"
  */
 
 const green = color.green
-const yellow = color.yellow
+// const yellow = color.yellow
 
 /**
  *
@@ -63,11 +63,25 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
 
     Chunk: [options.chunkStrategy],
 
+    ...(options.separator !== DEFAULTS.separator && {
+      Separator: [
+        options.separator === "\n\n"
+          ? // show LF_LF instead of original "\n\n" to avoid confusion with the actual LF character and mistake \\n\\n for real \n\n
+            "LF_LF"
+          : options.separator === "\r\n\r\n"
+            ? "CRLF_CRLF"
+            : `"${options.separator}"`,
+      ],
+    }),
+
     Delay: [`${baseDelay}ms`, `used when scenario has no @delay`],
-    "Delay Multiplier": [
-      `${options.delayMultiplier}x`,
-      `each @delay in scenario is multiplied by this`,
-    ],
+
+    ...(options.delayMultiplier !== DEFAULTS.delayMultiplier && {
+      "Delay Multiplier": [
+        `${options.delayMultiplier}x`,
+        `each @delay in scenario is multiplied by this`,
+      ],
+    }),
     "": [effectiveDelay],
   }
 

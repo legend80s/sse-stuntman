@@ -1,5 +1,32 @@
 export type int = number
 
+/** CLI 选项 */
+export interface CliOptions {
+  port: number
+  scenario: string
+  /** 全局延迟倍率（1 = 正常，0.5 = 半速，2 = 倍速） */
+  delayMultiplier: number
+  /** 场景内未显式指定 @delay 时的默认延迟（ms），默认 5 */
+  defaultDelay: number
+  /** 模型名，默认 "gpt-5.6" */
+  model: string
+  /** AI Provider：openai 或 anthropic（默认 "openai"） */
+  provider: Provider
+  /** 文本切分策略，默认 "word" */
+  chunkStrategy: ChunkStrategy
+  /** 自定义 POST 端点路径列表（默认 ['/v1/chat/completions']） */
+  separator: string
+  endpointPaths?: string[]
+  list: boolean
+  help: boolean
+  /** 自定义场景目录 */
+  scenariosDir?: string | undefined
+  /** create-scenario 子命令的场景名 */
+  createScenario?: string
+  /** 创建场景后是否打开文件管理器（默认 true） */
+  openScenariosDir?: boolean
+}
+
 /**
  * 单个输出片段。
  *
@@ -69,31 +96,6 @@ export interface Scenario {
   error?: ErrorTrigger
 
   isBuiltin: boolean
-}
-
-/** CLI 选项 */
-export interface CliOptions {
-  port: number
-  scenario: string
-  /** 全局延迟倍率，1 = 正常速度 */
-  delayMultiplier: number
-  /** 场景内未显式指定 @delay 时的默认延迟（ms），默认 5 */
-  defaultDelay: number
-  model: string
-  /** AI Provider：openai 或 anthropic（默认 "openai"） */
-  provider: Provider
-  /** 文本切分策略，默认 "word" */
-  chunkStrategy: ChunkStrategy
-  /** 自定义 POST 端点路径列表（默认 ['/v1/chat/completions']） */
-  endpointPaths?: string[]
-  list: boolean
-  help: boolean
-  /** 自定义场景目录 */
-  scenariosDir?: string | undefined
-  /** create-scenario 子命令的场景名 */
-  createScenario?: string
-  /** 创建场景后是否打开文件管理器（默认 true） */
-  openScenariosDir?: boolean
 }
 
 /**

@@ -31,7 +31,9 @@ function request(server, options, body) {
       },
     )
     req.on("error", reject)
-    if (body) req.write(body)
+    if (body) {
+      req.write(body)
+    }
     req.end()
   })
 }
@@ -55,7 +57,9 @@ function sseRequest(server, options, body) {
             if (line.startsWith("data: ")) {
               const data = line.slice(6).trim()
               events.push(data)
-              if (data === "[DONE]") finished = true
+              if (data === "[DONE]") {
+                finished = true
+              }
             }
           }
         })
@@ -71,7 +75,9 @@ function sseRequest(server, options, body) {
       },
     )
     req.on("error", reject)
-    if (body) req.write(body)
+    if (body) {
+      req.write(body)
+    }
     req.end()
   })
 }
@@ -249,6 +255,61 @@ describe("server", () => {
         assert.equal(parsed.object, "chat.completion")
         assert.ok(parsed.choices[0].message.content.length > 0)
         assert.equal(parsed.choices[0].finish_reason, "stop")
+      } finally {
+        server.close()
+      }
+    })
+
+    it("should customize separator", async () => {
+      // 固定 ID 和日期 以便测试
+      const originalRandomUUID = crypto.randomUUID
+      const originalNow = Date.now
+      before(() => {
+        // console.log("before")
+        crypto.randomUUID = () => "afad7f18-3aab-4a60-9a54-faa613030845"
+        Date.now = () => 1782974761000
+      })
+      after(() => {
+        // console.log("after")
+        crypto.randomUUID = originalRandomUUID
+        Date.now = originalNow
+      })
+      const port = getPort()
+      const server = startServer({
+        port,
+        delayMultiplier: 0,
+        defaultDelay: 5,
+        model: "gpt-4o",
+        scenario: "echo",
+        separator: "%%%",
+      })
+      await new Promise((resolve) => server.on("listening", resolve))
+      await new Promise((r) => setTimeout(r, 50))
+      const userContent = "# Hello\n\nYour **markdown** here"
+
+      try {
+        const { status, body } = await request(
+          server,
+          {
+            method: "POST",
+            path: "/v1/chat/completions",
+            headers: { "Content-Type": "application/json" },
+          },
+          JSON.stringify({
+            model: "gpt-4o",
+            stream: true,
+            messages: [{ role: "user", content: userContent }],
+          }),
+        )
+
+        assert.equal(status, 200)
+        // const parsed = JSON.parse(body)
+        // console.log("body:", `|${body}|`)
+        // console.log("events:", events)
+        assert.equal(
+          body,
+          `data: {"id":"afad7f18-3aab-4a60-9a54-faa613030845","object":"chat.completion.chunk","created":1782974761,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}%%%data: {"id":"afad7f18-3aab-4a60-9a54-faa613030845","object":"chat.completion.chunk","created":1782974761,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"# Hello\\n"},"finish_reason":null}]}%%%data: {"id":"afad7f18-3aab-4a60-9a54-faa613030845","object":"chat.completion.chunk","created":1782974761,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"\\n"},"finish_reason":null}]}%%%data: {"id":"afad7f18-3aab-4a60-9a54-faa613030845","object":"chat.completion.chunk","created":1782974761,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"Your **markdown** here"},"finish_reason":null}]}%%%data: {"id":"afad7f18-3aab-4a60-9a54-faa613030845","object":"chat.completion.chunk","created":1782974761,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}%%%data: [DONE]%%%`,
+        )
       } finally {
         server.close()
       }

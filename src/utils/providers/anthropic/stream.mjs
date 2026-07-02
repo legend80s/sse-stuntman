@@ -28,7 +28,7 @@
 
 import { generateId } from "../../string.mjs"
 import { calculateTokens } from "../../token.mjs"
-import { anthropicMsger } from "./event-generator.mjs"
+import { AnthropicMessageGenerator } from "./event-generator.mjs"
 
 /**
  * @import { Chunk } from '../../../types.ts'
@@ -43,12 +43,14 @@ import { anthropicMsger } from "./event-generator.mjs"
  * @param {number} [options.delayMultiplier] - 全局延迟倍率（1 = 正常，0.5 = 半速，2 = 倍速）
  * @param {string} [options.model] - 模型名，默认 "claude-sonnet-4-20250514"
  * @param {number} [options.inputTokens] - 请求的 input_tokens 统计
+ * @param {AnthropicMessageGenerator} options.anthropicMsger
  */
-export async function writeAnthropicStream(chunks, res, options = {}) {
+export async function writeAnthropicStream(chunks, res, options) {
   const {
     delayMultiplier: delay = 1,
     model = "claude-sonnet-4-20250514",
     inputTokens = 0,
+    anthropicMsger,
   } = options
 
   // 1. message_start
@@ -118,8 +120,9 @@ export async function writeAnthropicStream(chunks, res, options = {}) {
  *
  * @param {import('../../../types.ts').ErrorTrigger} error
  * @param {import('node:http').ServerResponse} res
+ * @param {AnthropicMessageGenerator} anthropicMsger
  */
-export function writeAnthropicErrorStream(error, res) {
+export function writeAnthropicErrorStream(error, res, anthropicMsger) {
   res.write(
     anthropicMsger.error({
       error: mapAnthropicError(error.type),

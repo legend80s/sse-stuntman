@@ -25,6 +25,7 @@ import {
   splitContent,
 } from "./scenario-parser.mjs"
 import { color } from "./utils/color.mjs"
+import { AnthropicMessageGenerator } from "./utils/providers/anthropic/event-generator.mjs"
 import {
   writeAnthropicErrorStream,
   writeAnthropicNonStreamingResponse,
@@ -282,6 +283,8 @@ export function startServer(options) {
         return
       }
 
+      const anthropicMsger = new AnthropicMessageGenerator(options.separator)
+
       if (scenario.error) {
         if (reqProvider === "anthropic") {
           res.writeHead(200, {
@@ -290,9 +293,9 @@ export function startServer(options) {
             Connection: "keep-alive",
             "X-Accel-Buffering": "no",
           })
-          writeAnthropicErrorStream(scenario.error, res)
+          writeAnthropicErrorStream(scenario.error, res, anthropicMsger)
         } else {
-          writeErrorResponse(scenario.error, res)
+          writeErrorResponse(scenario.error, res, options.separator)
         }
         return
       }
@@ -310,11 +313,13 @@ export function startServer(options) {
             delayMultiplier: reqDelayMultiplier,
             model: requestModel ?? options.model,
             inputTokens,
+            anthropicMsger,
           })
         } else {
           await writeOpenAIStream(scenario.chunks, res, {
             delayMultiplier: reqDelayMultiplier,
             model: requestModel ?? options.model,
+            separator: options.separator,
           })
         }
       } catch (err) {

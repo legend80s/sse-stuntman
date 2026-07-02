@@ -17,26 +17,32 @@
 import { generateId } from "./utils/string.mjs"
 
 /**
- * @import { Chunk, SSEEvent, SSEChoice } from './types.ts'
+ * @import { Chunk, SSEEvent, CliOptions, ErrorTrigger } from './types.ts'
+ */
+
+/**
+ * @typedef {Pick<CliOptions, 'delayMultiplier' | 'model' | 'separator'>} IWriteOpenAIStreamParams
  */
 
 /**
  * 将 Chunk 列表以 OpenAI SSE 格式写入 HTTP 响应。
  *
- * @param {import('./types.ts').Chunk[]} chunks
+ * @param {Chunk[]} chunks
  * @param {import('node:http').ServerResponse} res
- * @param {object} options
- * @param {number} [options.delayMultiplier] - 全局延迟倍率（1 = 正常，0.5 = 半速，2 = 倍速）
- * @param {string} [options.model] - 模型名，默认 "gpt-4o"
+ * @param {IWriteOpenAIStreamParams} options
  */
-export async function writeOpenAIStream(chunks, res, options = {}) {
-  const { delayMultiplier: delay = 1, model = "gpt-4o" } = options
+export async function writeOpenAIStream(chunks, res, options) {
+  const { delayMultiplier: delay = 1, model = "gpt-4o", separator } = options
 
   const id = generateId()
   const created = Math.floor(Date.now() / 1000)
 
+  // bind writeEvent with separator
+  /** @param {SSEEvent} data */
+  const writeEventBound = (data) => writeEvent(res, data, separator)
+
   // 1. 角色声明 chunk（始终立即发送）
-  writeEvent(res, {
+  writeEventBound({
     id,
     object: "chat.completion.chunk",
     created,
@@ -55,7 +61,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
       // 只有流中内嵌的 @error 才会在此处处理。
       await applyDelay(chunk.delay ?? 0)
       if (res.destroyed) return // Client disconnected during delay
-      writeEvent(res, {
+      writeEventBound({
         id,
         object: "chat.completion.chunk",
         created,
@@ -68,7 +74,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
           },
         ],
       })
-      res.write("data: [DONE]\n\n")
+      res.write(`data: [DONE]${separator}`)
       res.end()
       return
     }
@@ -76,7 +82,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
     // @done 终止指令
     if (chunk.done) {
       if (!res.destroyed) {
-        res.write("data: [DONE]\n\n")
+        res.write(`data: [DONE]${separator}`)
         res.end()
       }
       return
@@ -85,7 +91,7 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
     // 正常内容 chunk
     await applyDelay(chunk.delay ?? 0, delay)
     if (res.destroyed) return // Client disconnected during delay
-    writeEvent(res, {
+    writeEventBound({
       id,
       object: "chat.completion.chunk",
       created,
@@ -98,24 +104,28 @@ export async function writeOpenAIStream(chunks, res, options = {}) {
 
   // 3. 结束标记
   // 最后一条 content event 带 finish_reason
-  writeEvent(res, {
+  writeEventBound({
     id,
     object: "chat.completion.chunk",
     created,
     model,
     choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
   })
-  res.write("data: [DONE]\n\n")
+  res.write(`data: [DONE]${separator}`)
   res.end()
 }
 
 /**
  * 如果场景是错误场景（非流式），通过 HTTP 状态码和 JSON 体返回错误。
  *
- * @param {import('./types.ts').ErrorTrigger} error
+ * @param {ErrorTrigger} error
  * @param {import('node:http').ServerResponse} res
+ * @param {CliOptions['separator']} separator
  */
-export function writeErrorResponse(error, res) {
+export function writeErrorResponse(error, res, separator) {
+  /** @param {SSEEvent} data */
+  const writeEventBound = (data) => writeEvent(res, data, separator)
+
   switch (error.type) {
     case "rate-limit": {
       res.writeHead(429, {
@@ -174,7 +184,7 @@ export function writeErrorResponse(error, res) {
         "Access-Control-Allow-Origin": "*",
       })
       // 写几条数据后直接断开
-      writeEvent(res, {
+      writeEventBound({
         id: generateId(),
         object: "chat.completion.chunk",
         created: Math.floor(Date.now() / 1000),
@@ -199,7 +209,7 @@ export function writeErrorResponse(error, res) {
         "Cache-Control": "no-cache",
         "Access-Control-Allow-Origin": "*",
       })
-      res.write("data: [DONE]\n\n")
+      res.write(`data: [DONE]${separator}`)
       res.end()
       break
     }
@@ -210,11 +220,19 @@ export function writeErrorResponse(error, res) {
  * 向响应流写入一条 SSE data: 事件。
  *
  * @param {import('node:http').ServerResponse} res
- * @param {import('./types.ts').SSEEvent} data
+ * @param {SSEEvent} data
+ * @param {CliOptions['separator']} separator
  */
-function writeEvent(res, data) {
-  // console.log("[writEvent]")
-  res.write(`data: ${JSON.stringify(data)}\n\n`)
+function writeEvent(res, data, separator) {
+  // console.log(
+  //   "[writEvent] separator == \\n\\n ?",
+  //   separator === "\n\n" ? "YES" : "NO",
+  // )
+  // console.log(
+  //   "[writEvent] separator == \\r\\n\\r\\n ?",
+  //   separator === "\r\n\r\n" ? "YES" : "NO",
+  // )
+  res.write(`data: ${JSON.stringify(data)}${separator}`)
 }
 
 /**
