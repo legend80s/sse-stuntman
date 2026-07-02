@@ -38,7 +38,7 @@ import { calculateTokens } from "./utils/token.mjs"
 const { red, green } = color
 
 /**
- * @import { Scenario, UserMessage, CliOptions } from './types.ts'
+ * @import { Scenario, UserMessage, CliOptions, ChunkStrategy } from './types.ts'
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -428,6 +428,7 @@ export function startServer(options) {
  * @param {string} name
  * @param {string[]} dirs
  * @param {number} [defaultDelay]
+ * @param {ChunkStrategy} [chunkStrategy]
  * @returns {Scenario | null}
  */
 function loadScenario(
