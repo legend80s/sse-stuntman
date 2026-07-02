@@ -1,10 +1,12 @@
 /**
  * @file anthropic-stream 单元测试
  */
+// @xts-check
 
 import assert from "node:assert/strict"
 import { EventEmitter } from "node:events"
 import { describe, it, mock } from "node:test"
+import { AnthropicMessageGenerator } from "./event-generator.mjs"
 import {
   writeAnthropicErrorStream,
   writeAnthropicNonStreamingResponse,
@@ -14,6 +16,8 @@ import {
 /**
  * @import { SSEEvent } from '../../../types.ts'
  */
+
+const anthropicMsger = new AnthropicMessageGenerator("\n\n")
 
 /**
  * 创建一个模拟的 ServerResponse。
@@ -65,6 +69,7 @@ describe("anthropic-stream", () => {
         delayMultiplier: 0,
         model: "claude-sonnet-4-20250514",
         inputTokens: 5,
+        anthropicMsger,
       })
 
       const msgStartEvent = res.chunks.find((c) =>
@@ -82,6 +87,7 @@ describe("anthropic-stream", () => {
       const res = mockResponse()
       await writeAnthropicStream([{ content: "hello" }], res, {
         delayMultiplier: 0,
+        anthropicMsger,
       })
 
       const cbStartEvents = res.chunks.filter((c) =>
@@ -98,7 +104,7 @@ describe("anthropic-stream", () => {
       await writeAnthropicStream(
         [{ content: "hello" }, { content: " world" }],
         res,
-        { delayMultiplier: 0 },
+        { delayMultiplier: 0, anthropicMsger },
       )
 
       const deltaEvents = res.chunks.filter((c) =>
@@ -116,6 +122,7 @@ describe("anthropic-stream", () => {
       await writeAnthropicStream([{ content: "test" }], res, {
         delayMultiplier: 0,
         inputTokens: 3,
+        anthropicMsger,
       })
 
       const lines = res.chunks.join("")
@@ -142,7 +149,7 @@ describe("anthropic-stream", () => {
           { content: "after" },
         ],
         res,
-        { delayMultiplier: 0 },
+        { delayMultiplier: 0, anthropicMsger },
       )
 
       const allContent = res.chunks.join("")
@@ -159,7 +166,7 @@ describe("anthropic-stream", () => {
       await writeAnthropicStream(
         [{ content: "before" }, { content: "", error: { type: "rate-limit" } }],
         res,
-        { delayMultiplier: 0 },
+        { delayMultiplier: 0, anthropicMsger },
       )
 
       const allContent = res.chunks.join("")
@@ -178,7 +185,7 @@ describe("anthropic-stream", () => {
           { content: "second", delay: 100 },
         ],
         res,
-        { delayMultiplier: 0.5 },
+        { delayMultiplier: 0.5, anthropicMsger },
       )
       const elapsed = Date.now() - start
 
@@ -191,6 +198,7 @@ describe("anthropic-stream", () => {
       await writeAnthropicStream([{ content: "hi" }], res, {
         delayMultiplier: 0,
         model: "claude-3-opus-20240229",
+        anthropicMsger,
       })
 
       const msgStartEvent = res.chunks.find((c) =>
@@ -204,7 +212,7 @@ describe("anthropic-stream", () => {
   describe("writeAnthropicErrorStream()", () => {
     it("should emit error SSE event for rate-limit", () => {
       const res = mockResponse()
-      writeAnthropicErrorStream({ type: "rate-limit" }, res)
+      writeAnthropicErrorStream({ type: "rate-limit" }, res, anthropicMsger)
 
       const errorLine = res.chunks.find((c) => c.startsWith("event: error"))
       assert.ok(errorLine, "Should have error event")
@@ -214,7 +222,7 @@ describe("anthropic-stream", () => {
 
     it("should emit error SSE event for content-filter", () => {
       const res = mockResponse()
-      writeAnthropicErrorStream({ type: "content-filter" }, res)
+      writeAnthropicErrorStream({ type: "content-filter" }, res, anthropicMsger)
 
       const errorLine = res.chunks.find((c) => c.startsWith("event: error"))
       assert.ok(errorLine, "Should have error event")
@@ -224,7 +232,7 @@ describe("anthropic-stream", () => {
 
     it("should emit error SSE event for server-error", () => {
       const res = mockResponse()
-      writeAnthropicErrorStream({ type: "server-error" }, res)
+      writeAnthropicErrorStream({ type: "server-error" }, res, anthropicMsger)
 
       const errorLine = res.chunks.find((c) => c.startsWith("event: error"))
       assert.ok(errorLine, "Should have error event")

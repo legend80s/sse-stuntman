@@ -79,6 +79,7 @@ function getScenarioDirs(options) {
  * @param {CliOptions} options
  */
 export function startServer(options) {
+  options.separator = options.separator ?? DEFAULTS.separator
   const scenarioDirs = getScenarioDirs(options)
 
   // 预加载场景
@@ -152,13 +153,16 @@ export function startServer(options) {
       const scenarioName = url.searchParams.get("scenario") ?? options.scenario
 
       const reqProvider = url.searchParams.get("provider") ?? options.provider
+
       const reqChunkStrategy =
         /** @type {import('./types.ts').ChunkStrategy} */ (
           url.searchParams.get("chunk-strategy") ?? options.chunkStrategy
         )
+
       const reqDelayMultiplier = Number(
         url.searchParams.get("delay-multiplier") ?? options.delayMultiplier,
       )
+
       const reqDefaultDelay = Number(
         url.searchParams.get("default-delay") ?? options.defaultDelay,
       )

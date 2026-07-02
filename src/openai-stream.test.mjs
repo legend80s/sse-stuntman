@@ -1,11 +1,12 @@
 /**
  * @file openai-stream 单元测试
  */
-
-import { describe, it, mock } from 'node:test'
-import assert from 'node:assert/strict'
-import { EventEmitter } from 'node:events'
-import { writeOpenAIStream, writeErrorResponse } from './openai-stream.mjs'
+// @ts-check
+import assert from "node:assert/strict"
+import { EventEmitter } from "node:events"
+import { describe, it, mock } from "node:test"
+import { DEFAULTS } from "./cli.mjs"
+import { writeErrorResponse, writeOpenAIStream } from "./openai-stream.mjs"
 
 /**
  * 创建一个模拟的 ServerResponse。
@@ -37,130 +38,165 @@ function mockResponse() {
     if (data) chunks.push(data.toString())
     ended = true
     res.ended = true
-    res.emit('finish')
+    res.emit("finish")
   })
   res.destroy = mock.fn(() => {
     ended = true
     res.ended = true
   })
 
-  Object.defineProperty(res, 'destroyed', { get: () => ended })
+  Object.defineProperty(res, "destroyed", { get: () => ended })
 
   return res
 }
 
-describe('openai-stream', () => {
-  describe('writeOpenAIStream()', () => {
-    it('should write role-assistant chunk first', async () => {
+const separator = DEFAULTS.separator
+
+describe("openai-stream", () => {
+  describe("writeOpenAIStream()", () => {
+    it("should write role-assistant chunk first", async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'hello' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
+      await writeOpenAIStream([{ content: "hello" }], res, {
+        delayMultiplier: 0,
+        model: "gpt-4o",
+        separator,
+      })
 
       const firstData = res.chunks[0]
       const parsed = JSON.parse(firstData.slice(6)) // strip "data: "
-      assert.equal(parsed.choices[0].delta.role, 'assistant')
+      assert.equal(parsed.choices[0].delta.role, "assistant")
     })
 
-    it('should write content chunks', async () => {
+    it("should write content chunks", async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'hello' }, { content: ' world' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
+      await writeOpenAIStream(
+        [{ content: "hello" }, { content: " world" }],
+        res,
+        { delayMultiplier: 0, model: "gpt-4o", separator },
+      )
 
       // first is role, next two are content
-      const contentEvents = res.chunks.filter(c => {
-        if (c.startsWith('data: [DONE]')) return false
+      const contentEvents = res.chunks.filter((c) => {
+        if (c.startsWith("data: [DONE]")) return false
         try {
           const d = JSON.parse(c.slice(6))
           return d.choices[0].delta.content
-        } catch { return false }
+        } catch {
+          return false
+        }
       })
 
       assert.equal(contentEvents.length, 2)
     })
 
-    it('should emit data: [DONE] at end', async () => {
+    it("should emit data: [DONE] at end", async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'test' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
+      await writeOpenAIStream([{ content: "test" }], res, {
+        delayMultiplier: 0,
+        model: "gpt-4o",
+        separator,
+      })
 
-      const doneLine = res.chunks.find(c => c.includes('[DONE]'))
-      assert.ok(doneLine, 'Should have [DONE]')
+      const doneLine = res.chunks.find((c) => c.includes("[DONE]"))
+      assert.ok(doneLine, "Should have [DONE]")
     })
 
-    it('should handle @done chunk by sending immediate [DONE]', async () => {
+    it("should handle @done chunk by sending immediate [DONE]", async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'before' }, { content: '', done: true }, { content: 'after' }], res, { delayMultiplier: 0, model: 'gpt-4o' })
+      await writeOpenAIStream(
+        [
+          { content: "before" },
+          { content: "", done: true },
+          { content: "after" },
+        ],
+        res,
+        { delayMultiplier: 0, model: "gpt-4o", separator },
+      )
 
       // should not include "after"
-      const allContent = res.chunks.join('')
-      assert.ok(allContent.includes('before'))
-      assert.ok(allContent.includes('[DONE]'))
-      assert.ok(!allContent.includes('after'))
+      const allContent = res.chunks.join("")
+      assert.ok(allContent.includes("before"))
+      assert.ok(allContent.includes("[DONE]"))
+      assert.ok(!allContent.includes("after"))
     })
 
-    it('should honor delay multiplier', async () => {
+    it("should honor delay multiplier", async () => {
       const res = mockResponse()
       const start = Date.now()
-      await writeOpenAIStream([{ content: 'first', delay: 100 }, { content: 'second', delay: 100 }], res, { delayMultiplier: 0.5, model: 'gpt-4o' })
+      await writeOpenAIStream(
+        [
+          { content: "first", delay: 100 },
+          { content: "second", delay: 100 },
+        ],
+        res,
+        { delayMultiplier: 0.5, model: "gpt-4o", separator },
+      )
       const elapsed = Date.now() - start
 
       // 2 * (100 * 0.5) ≈ 100ms, plus role chunk overhead
       assert.ok(elapsed < 300, `Took ${elapsed}ms, expected ~100ms`)
     })
 
-    it('should use custom model name', async () => {
+    it("should use custom model name", async () => {
       const res = mockResponse()
-      await writeOpenAIStream([{ content: 'hi' }], res, { delayMultiplier: 0, model: 'deepseek-chat' })
+      await writeOpenAIStream([{ content: "hi" }], res, {
+        delayMultiplier: 0,
+        model: "deepseek-chat",
+        separator,
+      })
 
       const roleEvent = JSON.parse(res.chunks[0].slice(6))
-      assert.equal(roleEvent.model, 'deepseek-chat')
+      assert.equal(roleEvent.model, "deepseek-chat")
     })
   })
 
-  describe('writeErrorResponse()', () => {
-    it('should return 429 for rate-limit', () => {
+  describe("writeErrorResponse()", () => {
+    it("should return 429 for rate-limit", () => {
       const res = mockResponse()
-      writeErrorResponse({ type: 'rate-limit' }, res)
+      writeErrorResponse({ type: "rate-limit" }, res)
 
       const writeHeadCall = res.writeHead.mock.calls[0]
       assert.equal(writeHeadCall.arguments[0], 429)
 
       const body = JSON.parse(res.chunks[0])
       assert.equal(body.error.code, 429)
-      assert.equal(body.error.type, 'rate_limit_error')
+      assert.equal(body.error.type, "rate_limit_error")
     })
 
-    it('should return 400 for content-filter', () => {
+    it("should return 400 for content-filter", () => {
       const res = mockResponse()
-      writeErrorResponse({ type: 'content-filter' }, res)
+      writeErrorResponse({ type: "content-filter" }, res)
 
       const writeHeadCall = res.writeHead.mock.calls[0]
       assert.equal(writeHeadCall.arguments[0], 400)
     })
 
-    it('should return 500 for server-error', () => {
+    it("should return 500 for server-error", () => {
       const res = mockResponse()
-      writeErrorResponse({ type: 'server-error' }, res)
+      writeErrorResponse({ type: "server-error" }, res)
 
       const writeHeadCall = res.writeHead.mock.calls[0]
       assert.equal(writeHeadCall.arguments[0], 500)
     })
 
-    it('should return SSE with partial data for timeout', async () => {
+    it("should return SSE with partial data for timeout", async () => {
       const res = mockResponse()
-      writeErrorResponse({ type: 'timeout' }, res)
+      writeErrorResponse({ type: "timeout" }, res)
 
       // timeout writes some content then destroys after 200ms setTimeout
       assert.ok(res.chunks.length > 0)
 
       // wait for the setTimeout to fire
-      await new Promise(r => setTimeout(r, 300))
+      await new Promise((r) => setTimeout(r, 300))
       assert.ok(res.destroy.mock.calls.length > 0 || res.ended)
     })
 
-    it('should return immediate [DONE] for empty', () => {
+    it("should return immediate [DONE] for empty", () => {
       const res = mockResponse()
-      writeErrorResponse({ type: 'empty' }, res)
+      writeErrorResponse({ type: "empty" }, res)
 
-      const sentData = res.chunks.join('')
-      assert.ok(sentData.includes('[DONE]'))
+      const sentData = res.chunks.join("")
+      assert.ok(sentData.includes("[DONE]"))
     })
   })
 })

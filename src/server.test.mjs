@@ -4,7 +4,7 @@
  * 使用 Node.js http 模块直接发送请求测试服务器。
  * 每个测试用例启动/停止独立服务器实例。
  */
-
+// @xts-check
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import http from "node:http"
