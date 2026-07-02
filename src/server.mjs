@@ -518,15 +518,17 @@ function preloadScenarios(dirs, options) {
   if (options.list) {
     // 从高优先级到低优先级去重展示
     const seen = new Set()
+    const sourceLabelUnderlineLength = 12
+
     console.log("\n  Available scenarios:\n")
     console.log(
-      "  " + "Name".padEnd(25) + " " + "Source".padEnd(22) + " Description",
+      "  " + "Name".padEnd(25) + " " + "Source".padEnd(12) + " Description",
     )
     console.log(
       "  " +
         "".padEnd(25, "─") +
         " " +
-        "".padEnd(22, "─") +
+        "".padEnd(sourceLabelUnderlineLength, "─") +
         " " +
         "".padEnd(30, "─"),
     )
@@ -547,14 +549,14 @@ function preloadScenarios(dirs, options) {
           )
           const source = s.isBuiltin
             ? "builtin"
-            : `${green("custom")}${SPACE.repeat(16)}`
+            : `${green("custom")}${SPACE.repeat(6)}`
 
           if (cached?.error) {
             console.log(
               "  " +
                 s.name.padEnd(25) +
                 " " +
-                source.padEnd(22) +
+                source.padEnd(sourceLabelUnderlineLength) +
                 " " +
                 (cached.description ||
                   "Simulates HTTP " + cached.error.type + " error"),
@@ -564,7 +566,7 @@ function preloadScenarios(dirs, options) {
               "  " +
                 s.name.padEnd(25) +
                 " " +
-                source.padEnd(22) +
+                source.padEnd(sourceLabelUnderlineLength) +
                 " " +
                 (cached?.description || ""),
             )

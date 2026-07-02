@@ -34,6 +34,7 @@ describe("scenario-parser", () => {
           { content: "Second paragraph.", delay: 100 },
         ],
         description: "",
+        isBuiltin: false,
       })
     })
 
@@ -48,6 +49,7 @@ describe("scenario-parser", () => {
         name: "test",
         chunks: [],
         description: "",
+        isBuiltin: false,
         error: { type: "rate-limit" },
       })
     })
@@ -172,6 +174,7 @@ console.log("Hello from temp");
           { content: ".", delay: 120 },
         ],
         description: "",
+        isBuiltin: false,
       })
     })
 
