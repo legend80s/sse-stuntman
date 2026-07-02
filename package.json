@@ -11,6 +11,7 @@
     "postversion": "npm publish && git push && git push --tags",
     "typecheck": "tsgo --noEmit",
     "start": "node bin/index.mjs",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-exclude=\"src/**/*.test.mjs\" --test-reporter=tap",
     "test": "node --test"
   },
   "bin": {
