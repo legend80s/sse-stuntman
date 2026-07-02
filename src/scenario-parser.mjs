@@ -190,7 +190,10 @@ export function parseScenarioFile(filePath, options = {}) {
 
   /** 将 textBuffer 按指定策略切分成 chunks */
   function flushBuffer() {
-    const trimmed = textBuffer.replace(/\n{2,}/g, "\n")
+    let trimmed = textBuffer
+    if (chunkStrategy !== "line") {
+      trimmed = trimmed.replace(/\n{2,}/g, "\n")
+    }
     // 跳过纯空白 buffer —— 它们来自指令间的换行符，没有语义意义
     // e.g. echo.md 中 `<!-- @delay: 30 -->` 与 `<!-- @input -->` 之间的 \n
     if (trimmed.trim() === "") {
@@ -242,7 +245,16 @@ export function splitContent(text, strategy) {
       return [...text]
     }
     case "line": {
-      return text.split("\n").filter((l) => l.trim().length > 0)
+      const lines = text.split("\n")
+      const result = []
+      for (let i = 0; i < lines.length; i++) {
+        if (i < lines.length - 1) {
+          result.push(lines[i] + "\n")
+        } else if (lines[i].length > 0) {
+          result.push(lines[i])
+        }
+      }
+      return result
     }
     case "paragraph": {
       return text.split(/\n\s*\n/).filter((p) => p.trim().length > 0)

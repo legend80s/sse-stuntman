@@ -247,6 +247,18 @@ console.log("Hello from temp");
       const result = parseScenarioFile(file)
       assert.equal(result.name, "my-custom-name")
     })
+
+    it("should preserve newlines with line chunk strategy", () => {
+      const dir = mkdtempSync(join(tmpdir(), "test-"))
+      const file = join(dir, "line-test.md")
+      const input = "# Echo Mode\n\nThis is bold\n\n## Try it\n- Item"
+      writeFileSync(file, input, "utf-8")
+
+      const result = parseScenarioFile(file, { chunkStrategy: "line" })
+
+      const reconstructed = result.chunks.map((c) => c.content).join("")
+      assert.equal(reconstructed, input)
+    })
   })
 
   describe("@input directive", () => {
