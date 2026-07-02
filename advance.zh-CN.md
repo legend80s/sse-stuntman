@@ -98,6 +98,73 @@ export default {
 
 **优先级：** CLI 参数 > 配置文件 > 内置默认值
 
+## 自动化测试（编程式 API）
+
+无需 CLI，直接在测试套件中导入 `startServer` 使用：
+
+```js
+import { startServer } from 'sse-stuntman'
+import { describe, it, before, after } from 'node:test'
+import assert from 'node:assert/strict'
+
+describe('AI 聊天', () => {
+  let server
+
+  before(() => {
+    server = startServer({
+      port: 0,              // 0 = 系统分配空闲端口
+      delayMultiplier: 0,   // 即时输出（无延迟）
+      defaultDelay: 5,
+      scenario: 'echo',     // 回显用户消息
+      model: 'gpt-4o',
+    })
+  })
+
+  after(() => { server.close() })
+
+  it('应流式返回用户消息', async () => {
+    const port = server.address().port
+    const res = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: '# Hello\n\nWorld' }],
+        stream: true,
+      }),
+    })
+
+    const reader = res.body.getReader()
+    let text = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      text += new TextDecoder().decode(value)
+    }
+
+    assert.ok(text.includes('Hello'))
+    assert.ok(text.includes('World'))
+  })
+})
+```
+
+> **注意：** `port: 0` 让系统自动分配一个可用端口。通过 `server.address().port` 获取实际端口。`port: 0` 时启动界面显示的端口为 `0`，请使用 `server.address().port` 获取真实值。
+
+### 按请求切换场景
+
+通过查询参数在每个请求中覆盖场景、provider 或切分策略：
+
+```js
+const res = await fetch(
+  `http://127.0.0.1:${port}/v1/chat/completions?scenario=markdown-demo&chunk-strategy=line`,
+  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
+)
+```
+
+### 完整测试示例
+
+参见 [`src/server.test.mjs`](../src/server.test.mjs) 获取完整示例，包括 SSE 事件解析、错误场景、非流式响应等。
+
 ## 前端集成
 
 ### curl 测试

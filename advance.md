@@ -98,6 +98,73 @@ export default {
 
 **Priority:** CLI arguments > Config file > Built-in defaults
 
+## Automated Testing (Programmatic API)
+
+Use `sse-stuntman` in your test suite without the CLI — `startServer` is exported directly.
+
+```js
+import { startServer } from 'sse-stuntman'
+import { describe, it, before, after } from 'node:test'
+import assert from 'node:assert/strict'
+
+describe('AI chat', () => {
+  let server
+
+  before(() => {
+    server = startServer({
+      port: 0,              // 0 = OS assigns a free port
+      delayMultiplier: 0,   // instant (no real delay)
+      defaultDelay: 5,
+      scenario: 'echo',     // echoes back user message
+      model: 'gpt-4o',
+    })
+  })
+
+  after(() => { server.close() })
+
+  it('should stream back the user message', async () => {
+    const port = server.address().port
+    const res = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: '# Hello\n\nWorld' }],
+        stream: true,
+      }),
+    })
+
+    const reader = res.body.getReader()
+    let text = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      text += new TextDecoder().decode(value)
+    }
+
+    assert.ok(text.includes('Hello'))
+    assert.ok(text.includes('World'))
+  })
+})
+```
+
+> **Note:** `port: 0` tells the OS to assign a random available port. Read the actual port via `server.address().port` after the server starts. For `port: 0`, the launch screen will show port `0` — use `server.address().port` to get the real value.
+
+### Scenario switching per-request
+
+Override scenario, provider, or chunk strategy per request via query parameters:
+
+```js
+const res = await fetch(
+  `http://127.0.0.1:${port}/v1/chat/completions?scenario=markdown-demo&chunk-strategy=line`,
+  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
+)
+```
+
+### Full test patterns
+
+See [`src/server.test.mjs`](./src/server.test.mjs) for complete examples including SSE event parsing, error scenarios, and non-streaming responses.
+
 ## Frontend Integration
 
 ### curl Testing
