@@ -25,7 +25,15 @@
   .container { max-width: 80rem; margin: 0 auto; }
   h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
   p { line-height: 1.2rem; }
-  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 16px; position: relative; }
+  .card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding-inline: 1.5rem;
+    padding-block: 1.5rem 1.5rem;
+    margin-bottom: 16px;
+    /* position: relative; */
+  }
   label { display: block; font-weight: 600; margin-bottom: 6px; }
   select, input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; 
     font-size: max(0.8rem, 13px); margin-bottom: 16px; }
@@ -48,7 +56,16 @@
   /* .control-group label { font-size: 11px; font-weight: 600; color: #666; margin-bottom: 0; } */
   .control-group select,
   .control-group input { margin-bottom: 0; max-width: 100%; }
-  .btn-row { display: flex; gap: 0.5rem; align-items: center; position: absolute; right: 1.5rem; bottom: 1.5rem; }
+  .btn-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.25rem;
+
+    /* position: absolute;
+    right: 1.5rem;
+    bottom: 0.8rem; */
+  }
 
   .echo-textarea {
     max-height: 0;
@@ -67,8 +84,8 @@
   }
 
   .echo-textarea label {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.875rem;
+    /* font-weight: 600; */
     color: #666;
     display: block;
     margin-bottom: 4px;
