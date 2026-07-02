@@ -40,7 +40,7 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
   ║   ███████║   ██║   ╚██████╔╝██║ ╚████║   ██║   ██║ ╚═╝ ██║██║  ██║██║ ╚████║   ║
   ║   ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ║
   ║                                                                                ║
-  ║                   🏍️  SSE Stuntman  |  Your AI's Stunt Double                   ║
+  ║                    SSE Stuntman  |  Your AI's Stunt Double                     ║
   ╚════════════════════════════════════════════════════════════════════════════════╝
 
   ${green("✓")} ${normalizeProvider(provider)} provider ready
@@ -101,7 +101,7 @@ export function showLaunchScreen(options, scenarioCache, endpointPaths) {
       )
   }
 
-  console.log(green(`\n  ═══>  Waiting for requests...  ═══>`))
+  console.log(green(`\n  ═══>  🏍️  Waiting for requests...  ═══>`))
 
   console.log(`\n${indent}Press ${green("Ctrl+C")} to stop.\n`)
 }

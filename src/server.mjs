@@ -400,7 +400,7 @@ export function startServer(options) {
 
   const shutdown = () => {
     server.close(() => {
-      console.log("\nServer shut down.")
+      console.log("\n  Server shut down.")
       process.exit(0)
     })
   }
