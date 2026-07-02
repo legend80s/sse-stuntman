@@ -4,16 +4,16 @@
 - [x] add test
 - [x] 使用：npx sse-stuntman 或 CLI sse-stuntman
 - [ ] 结合 faker 库，增加种子
-- [ ] 支持外部 .aisemockrc.yaml / aisemock.config.ts
+- [ ] ~~支持外部 .aisemockrc.yaml / aisemock.config.ts~~
 - [ ] 录播模式：--record 转发真实 API 并保存响应，后续离线回放
-- [ ] --list 用 console.table 更美观
+- [x] ~~--list 用 console.table 更美观~~
 - [x] parseCliArgs 改成 Node.js builtin `import { parseArgs } from 'node:util';`
 - [x] 新建 commands 目录，`create-scenario.mjs` 放入其内
 - [ ] UI 界面测试
 - [x] 给”自定义场景功能”增加测试
 - [x] replace all the `ai-sse-mock` to `sse-stuntman`
 - [ ] 如果本库要能在自动化测试中使用，应该如何修改？
-- [ ] Add English README
+- [x] Add English README
 - [x] fix all the `pnpm typecheck` errors if `// @ts-ignore` or `// @ts-expect-error` are used your should pointed out and comment why.
 - [ ] 测试 word by word SSE mock
 - [ ] 当 server 已启动，用户新增的场景，如何让 server 知道？增加 `sse-stuntman --watch` 命令？

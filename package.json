@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "SSE Mock — stunt double for your AI API. Mock streaming responses, errors, and edge cases.",
   "type": "module",
+  "main": "index.mjs",
   "scripts": {
     "pub:patch": "npm version patch",
     "pub:minor": "npm version minor",
