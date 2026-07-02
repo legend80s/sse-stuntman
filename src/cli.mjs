@@ -14,9 +14,7 @@
 
 import { parseArgs } from "node:util"
 
-/**
- * @import { CliOptions } from './types.ts'
- */
+/** @import { CliOptions, ChunkStrategy, Provider } from './types.ts' */
 
 const HELP_TEXT = `
   SSE Stuntman — stunt double for your AI API
@@ -61,18 +59,21 @@ const HELP_TEXT = `
     $ sse-stuntman create-scenario my-code-review
 `
 
-/** 内置默认值 */
+/**
+ * 内置默认值
+ * @satisfies {CliOptions}
+ */
 export const DEFAULTS = /** @type {const} */ ({
   port: 16828,
   scenario: "default",
   delayMultiplier: 1,
   defaultDelay: 10, // ms
-  provider: /** @type {import('./types.ts').Provider} */ ("openai"),
+  provider: "openai",
   model: "gpt-4o",
   endpointPaths: ["/v1/chat/completions"],
   list: false,
   help: false,
-  chunkStrategy: /** @type {import('./types.ts').ChunkStrategy} */ ("word"),
+  chunkStrategy: "word",
 })
 
 /**
@@ -93,14 +94,12 @@ export const DEFAULTS = /** @type {const} */ ({
  * 仅在后续写入 SSE 流时消费。
  *
  * @param {string} name
- * @param {import('./types.ts').ChunkStrategy} [strategy]
+ * @param {ChunkStrategy} [strategy]
  * @param {number} [defaultDelay]
  */
 export function scenarioCacheKey(
   name,
-  strategy = /** @type {import('./types.ts').ChunkStrategy} */ (
-    DEFAULTS.chunkStrategy
-  ),
+  strategy = DEFAULTS.chunkStrategy,
   defaultDelay = DEFAULTS.defaultDelay,
 ) {
   return `${name}::${strategy}::${defaultDelay}`
@@ -112,7 +111,7 @@ export function scenarioCacheKey(
  * 需通过 mergeOptions() 合并默认值和配置文件。
  *
  * @param {string[]} argv
- * @returns {Partial<import('./types.ts').CliOptions>}
+ * @returns {Partial<CliOptions>}
  */
 export function parseCliArgs(argv) {
   const { values, positionals } = parseArgs({
@@ -240,7 +239,7 @@ export function parseCliArgs(argv) {
  * 规范化并校验 provider 值。
  *
  * @param {string} s
- * @returns {import('./types.ts').Provider}
+ * @returns {Provider}
  */
 function normalizeProvider(s) {
   const v = s.toLowerCase()
@@ -257,7 +256,7 @@ function normalizeProvider(s) {
  * 规范化并校验 chunk-strategy 值。
  *
  * @param {string} s
- * @returns {import('./types.ts').ChunkStrategy}
+ * @returns {ChunkStrategy}
  */
 function normalizeChunkStrategy(s) {
   const v = s.toLowerCase()
@@ -268,18 +267,18 @@ function normalizeChunkStrategy(s) {
     )
     process.exit(1)
   }
-  return /** @type {import('./types.ts').ChunkStrategy} */ (v)
+  return /** @type {ChunkStrategy} */ (v)
 }
 
 /**
  * 合并 CLI 参数与配置文件（CLI 优先）。
  *
- * @param {Partial<import('./types.ts').CliOptions>} cliValues
- * @param {Partial<import('./types.ts').CliOptions> | null} configValues
- * @returns {import('./types.ts').CliOptions}
+ * @param {Partial<CliOptions>} cliValues
+ * @param {Partial<CliOptions> | null} configValues
+ * @returns {CliOptions}
  */
 export function mergeOptions(cliValues, configValues) {
-  /** @type {import('./types.ts').CliOptions} */
+  /** @type {CliOptions} */
   const result = { ...DEFAULTS }
 
   if (configValues) {
