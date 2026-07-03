@@ -1,6 +1,6 @@
 {
   "name": "sse-stuntman",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "SSE Mock — stunt double for your AI API. Mock streaming responses, errors, and edge cases.",
   "type": "module",
   "main": "index.mjs",
