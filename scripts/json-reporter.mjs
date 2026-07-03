@@ -1,3 +1,4 @@
+// @ts-expect-error
 export default async function* customReporter(source) {
   for await (const event of source) {
     // console.log("event.type:", event.type)

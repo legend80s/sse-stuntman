@@ -248,10 +248,11 @@ export function splitContent(text, strategy) {
       const lines = text.split("\n")
       const result = []
       for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
         if (i < lines.length - 1) {
-          result.push(lines[i] + "\n")
-        } else if (lines[i].length > 0) {
-          result.push(lines[i])
+          result.push(line + "\n")
+        } else if (line && line.length > 0) {
+          result.push(line)
         }
       }
       return result
