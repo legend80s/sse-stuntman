@@ -1,0 +1,197 @@
+exports[`scenario-parser > @input directive > should handle @input in block quote 1`] = `
+{
+  "name": "inline-word-chunks",
+  "chunks": [
+    {
+      "content": "你",
+      "delay": 10
+    },
+    {
+      "content": "问",
+      "delay": 10
+    },
+    {
+      "content": "的",
+      "delay": 10
+    },
+    {
+      "content": "这个",
+      "delay": 10
+    },
+    {
+      "content": "问题",
+      "delay": 10
+    },
+    {
+      "content": "\\n",
+      "delay": 10
+    },
+    {
+      "content": ">",
+      "delay": 10
+    },
+    {
+      "content": " ",
+      "delay": 10
+    },
+    {
+      "content": "",
+      "input": true,
+      "delay": 10
+    },
+    {
+      "content": "\\n",
+      "delay": 10
+    },
+    {
+      "content": "违背",
+      "delay": 10
+    },
+    {
+      "content": " ",
+      "delay": 10
+    },
+    {
+      "content": "AI",
+      "delay": 10
+    },
+    {
+      "content": " ",
+      "delay": 10
+    },
+    {
+      "content": "道德",
+      "delay": 10
+    },
+    {
+      "content": "规范",
+      "delay": 10
+    },
+    {
+      "content": "，",
+      "delay": 10
+    },
+    {
+      "content": "我",
+      "delay": 10
+    },
+    {
+      "content": "无法",
+      "delay": 10
+    },
+    {
+      "content": "回答",
+      "delay": 10
+    },
+    {
+      "content": "。",
+      "delay": 10
+    }
+  ],
+  "description": "",
+  "isBuiltin": false
+}
+`;
+
+exports[`scenario-parser > @input directive > should handle inline @input with word chunk strategy 1`] = `
+{
+  "name": "inline-word-chunks",
+  "chunks": [
+    {
+      "content": "你",
+      "delay": 10
+    },
+    {
+      "content": "问",
+      "delay": 10
+    },
+    {
+      "content": "的",
+      "delay": 10
+    },
+    {
+      "content": "这个",
+      "delay": 10
+    },
+    {
+      "content": "问题",
+      "delay": 10
+    },
+    {
+      "content": "“",
+      "delay": 10
+    },
+    {
+      "content": "*",
+      "delay": 10
+    },
+    {
+      "content": "*",
+      "delay": 10
+    },
+    {
+      "content": "",
+      "input": true,
+      "delay": 10
+    },
+    {
+      "content": "*",
+      "delay": 10
+    },
+    {
+      "content": "*",
+      "delay": 10
+    },
+    {
+      "content": "”",
+      "delay": 10
+    },
+    {
+      "content": "违背",
+      "delay": 10
+    },
+    {
+      "content": " ",
+      "delay": 10
+    },
+    {
+      "content": "AI",
+      "delay": 10
+    },
+    {
+      "content": " ",
+      "delay": 10
+    },
+    {
+      "content": "道德",
+      "delay": 10
+    },
+    {
+      "content": "规范",
+      "delay": 10
+    },
+    {
+      "content": "，",
+      "delay": 10
+    },
+    {
+      "content": "我",
+      "delay": 10
+    },
+    {
+      "content": "无法",
+      "delay": 10
+    },
+    {
+      "content": "回答",
+      "delay": 10
+    },
+    {
+      "content": "。",
+      "delay": 10
+    }
+  ],
+  "description": "",
+  "isBuiltin": false
+}
+`;

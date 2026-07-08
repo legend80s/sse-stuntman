@@ -8,7 +8,11 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, it } from "node:test"
 import { DEFAULTS } from "./cli.mjs"
-import { listScenarios, parseScenarioFile } from "./scenario-parser.mjs"
+import {
+  listScenarios,
+  parseScenarioContent,
+  parseScenarioFile,
+} from "./scenario-parser.mjs"
 
 describe("scenario-parser", () => {
   describe("parseScenarioFile()", () => {
@@ -275,6 +279,59 @@ console.log("Hello from temp");
       assert.equal(inputChunks[0].delay, 30)
     })
 
+    it.only("should handle @input in block quote", (t) => {
+      const content =
+        "你问的这个问题\n> <!-- @input -->\n违背 AI 道德规范，我无法回答。"
+
+      const result = parseScenarioContent(content, {
+        name: "inline-word-chunks",
+      })
+
+      t.assert.snapshot(result)
+    })
+
+    it.only("should handle inline @input with word chunk strategy", (t) => {
+      const content =
+        "你问的这个问题“**<!-- @input -->**”违背 AI 道德规范，我无法回答。"
+
+      const result = parseScenarioContent(content, {
+        name: "inline-word-chunks",
+      })
+
+      t.assert.snapshot(result)
+    })
+
+    it.only("should handle inline @input", () => {
+      const content =
+        "你问的这个问题“**<!-- @input -->**”违背 AI 道德规范，我无法回答。"
+
+      const result = parseScenarioContent(content, {
+        chunkStrategy: "sentence",
+        name: "inline",
+      })
+
+      assert.deepStrictEqual(result, {
+        chunks: [
+          {
+            content: "你问的这个问题“**",
+            delay: 10,
+          },
+          {
+            content: "",
+            delay: 10,
+            input: true,
+          },
+          {
+            content: "**”违背 AI 道德规范，我无法回答。",
+            delay: 10,
+          },
+        ],
+        description: "",
+        isBuiltin: false,
+        name: "inline",
+      })
+    })
+
     it("should handle @input with static content", () => {
       const dir = mkdtempSync(join(tmpdir(), "test-"))
       const file = join(dir, "hybrid.md")
@@ -285,6 +342,8 @@ console.log("Hello from temp");
       )
 
       const result = parseScenarioFile(file, { chunkStrategy: "sentence" })
+
+      // assert.equal(result, {})
 
       // 静态文本 chunks + 1 个 input placeholder
       const inputChunks = result.chunks.filter((c) => c.input)

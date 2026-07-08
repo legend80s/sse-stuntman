@@ -81,13 +81,40 @@ export function parseScenarioFile(filePath, options = {}) {
   const content = fs.readFileSync(filePath, "utf-8")
   const basename = path.basename(filePath, ".md")
 
+  return parseScenarioContent(content, {
+    defaultDelay,
+    chunkStrategy,
+    isBuiltin,
+    name: basename,
+  })
+}
+
+/**
+ * 解析场景文本
+ *
+ * @param {string} content - .md 文件内容
+ * @param {object} options
+ * @param {number} [options.defaultDelay=5]
+ * @param {ChunkStrategy} [options.chunkStrategy]
+ * @param {boolean} [options.isBuiltin=false]
+ * @param {string} options.name
+ * @returns {Scenario}
+ */
+export function parseScenarioContent(content, options) {
+  const {
+    defaultDelay = DEFAULTS.defaultDelay,
+    chunkStrategy = DEFAULTS.chunkStrategy,
+    isBuiltin = false,
+    name,
+  } = options
+
   const errorMatch = content.match(/<!--\s*@error\s*:\s*(\S+?)\s*-->/)
   const descMatch = content.match(/<!--\s*@desc\s*:\s*(.*?)\s*-->/)
 
   if (errorMatch) {
     return {
       isBuiltin,
-      name: basename,
+      name,
       chunks: [],
       description: descMatch?.[1]?.trim() || "",
       error: {
@@ -186,7 +213,7 @@ export function parseScenarioFile(filePath, options = {}) {
   // console.log("firstChunk:", firstChunk)
   // console.log("rest:", rest.slice(0, 2))
 
-  return { name: basename, chunks: trimmedChunks, description, isBuiltin }
+  return { name, chunks: trimmedChunks, description, isBuiltin }
 
   /** 将 textBuffer 按指定策略切分成 chunks */
   function flushBuffer() {
