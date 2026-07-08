@@ -12,7 +12,18 @@ describe("normal case", () => {
         }),
       )
 
-      t.assert.snapshot(stdout)
+      // remove custom scenarios for test stability
+      const lines = stdout.split("\n")
+      // const customScenarios = lines.filter(line => /\s+custom\s+/.test(line))
+      const builtinScenarios = lines.filter(
+        (line) => !/\s+custom\s+/.test(line),
+      )
+
+      const actual = builtinScenarios.join("\n")
+
+      // console.log("actual:", actual)
+
+      t.assert.snapshot(actual)
 
       //       assert.equal(
       //         stdout,

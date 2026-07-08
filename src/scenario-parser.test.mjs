@@ -279,7 +279,7 @@ console.log("Hello from temp");
       assert.equal(inputChunks[0].delay, 30)
     })
 
-    it.only("should handle @input in block quote", (t) => {
+    it("should handle @input in block quote", (t) => {
       const content = `你问的这个问题
 
 > <!-- @input -->
@@ -294,7 +294,7 @@ console.log("Hello from temp");
       t.assert.snapshot(result)
     })
 
-    it.only("should handle inline @input with word chunk strategy", (t) => {
+    it("should handle inline @input with word chunk strategy", (t) => {
       const content =
         "你问的这个问题“**<!-- @input -->**”违背 AI 道德规范，我无法回答。"
 
@@ -305,7 +305,7 @@ console.log("Hello from temp");
       t.assert.snapshot(result)
     })
 
-    it.only("should handle inline @input", () => {
+    it("should handle inline @input", () => {
       const content =
         "你问的这个问题“**<!-- @input -->**”违背 AI 道德规范，我无法回答。"
 
