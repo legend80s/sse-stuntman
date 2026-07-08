@@ -280,8 +280,12 @@ console.log("Hello from temp");
     })
 
     it.only("should handle @input in block quote", (t) => {
-      const content =
-        "你问的这个问题\n> <!-- @input -->\n违背 AI 道德规范，我无法回答。"
+      const content = `你问的这个问题
+
+> <!-- @input -->
+
+违背 AI 道德规范，我无法回答。
+`
 
       const result = parseScenarioContent(content, {
         name: "inline-word-chunks",

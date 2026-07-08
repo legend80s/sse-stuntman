@@ -86,6 +86,10 @@ exports[`scenario-parser > @input directive > should handle @input in block quot
     {
       "content": "。",
       "delay": 10
+    },
+    {
+      "content": "\\n",
+      "delay": 10
     }
   ],
   "description": "",
