@@ -1,7 +1,7 @@
 {
   "name": "sse-stuntman",
   "version": "1.1.0",
-  "description": "SSE Mock — stunt double for your AI API. Mock streaming responses, errors, and edge cases.",
+  "description": "Mock SSE — stunt double for your AI API. Mock streaming responses, errors, and edge cases.",
   "type": "module",
   "main": "index.mjs",
   "scripts": {
@@ -26,15 +26,15 @@
     "src/"
   ],
   "keywords": [
-    "sse",
     "mock",
-    "ai",
+    "sse",
     "streaming",
+    "ai",
+    "test",
+    "testing",
     "anthropic",
     "simulate",
-    "openai",
-    "test",
-    "testing"
+    "openai"
   ],
   "author": "",
   "license": "MIT",
