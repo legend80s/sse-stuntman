@@ -2,19 +2,19 @@
 
 <p>
   <a href="https://www.npmjs.com/package/sse-stuntman" target="_blank">
-    <img src="https://img.shields.io/npm/v/sse-stuntman.svg" alt="npm version" />
+    <img src="https://img.shields.io/npm/v/sse-stuntman.svg?logo=npm&logoColor=cyan" alt="npm version" />
   </a>
 
   <a href="https://www.npmjs.com/package/sse-stuntman?activeTab=dependencies" target="_blank">
-    <img alt="coverage" src="https://img.shields.io/badge/0%20dependency-green" />
+    <img alt="0 dependencies" src="https://img.shields.io/badge/0-green?logo=npm&logoColor=212121&labelColor=ffc44e&label=dependencies&color=green&color=212121" />
   </a>
 
   <a href="https://www.npmjs.com/package/sse-stuntman">
-    <img src="https://img.shields.io/npm/dm/sse-stuntman.svg" alt="npm downloads" />
+    <img src="https://img.shields.io/npm/dm/sse-stuntman.svg?logo=npm&logoColor=cyan" alt="npm downloads" />
   </a>
 
   <a href="https://github.com/legend80s/sse-stuntman/blob/main/advance.md" target="_blank">
-    <img alt="coverage" src="https://img.shields.io/badge/coverage%2095.8%25-green" />
+    <img alt="coverage" src="https://img.shields.io/badge/95.8%25-green?logo=counterstrike&logoColor=cyan&label=coverage&color=green&color=212121" />
   </a>
 </p>
 
