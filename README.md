@@ -13,9 +13,7 @@
     <img src="https://img.shields.io/npm/dm/sse-stuntman.svg?logo=npm&logoColor=cyan" alt="npm downloads" />
   </a>
 
-  <a href="https://github.com/legend80s/sse-stuntman/blob/main/advance.md" target="_blank">
-    <img alt="coverage" src="https://img.shields.io/badge/95.8%25-green?logo=counterstrike&logoColor=cyan&label=coverage&color=green&color=212121" />
-  </a>
+  ![coverage](https://img.shields.io/badge/95.8%25-green?logo=counterstrike&logoColor=cyan&label=coverage&color=green&color=212121)
 </p>
 
 ```md
