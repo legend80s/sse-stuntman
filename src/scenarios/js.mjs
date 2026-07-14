@@ -1,3 +1,4 @@
+// @ts-expect-error
 export default async function sse(req, res) {
   // 设置 SSE 头部
   res.setHeader("Content-Type", "text/event-stream")
