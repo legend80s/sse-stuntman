@@ -1,20 +1,12 @@
 # SSE Stuntman 🏍️ AI SSE Stream 测试工具
 
-<p>
-  <a href="https://www.npmjs.com/package/sse-stuntman" target="_blank">
-    <img src="https://img.shields.io/npm/v/sse-stuntman.svg?logo=npm&logoColor=cyan" alt="npm version" />
-  </a>
+<div>
 
-  <a href="https://www.npmjs.com/package/sse-stuntman?activeTab=dependencies" target="_blank">
-    <img alt="0 dependencies" src="https://img.shields.io/badge/0-green?logo=npm&logoColor=212121&labelColor=ffc44e&label=dependencies&color=green&color=212121" />
-  </a>
-
-  <a href="https://www.npmjs.com/package/sse-stuntman">
-    <img src="https://img.shields.io/npm/dm/sse-stuntman.svg?logo=npm&logoColor=cyan" alt="npm downloads" />
-  </a>
-
+  [![NPM Version](https://img.shields.io/npm/v/sse-stuntman.svg?logo=npm&logoColor=cyan)](https://www.npmjs.com/package/sse-stuntman)
+  [![0 dependencies](https://img.shields.io/badge/0-green?logo=npm&logoColor=212121&labelColor=ffc44e&label=dependencies&color=green&color=212121)](https://www.npmjs.com/package/sse-stuntman?activeTab=dependencies)
+  [![NPM Downloads](https://img.shields.io/npm/dm/sse-stuntman.svg?logo=npm&logoColor=cyan)](https://www.npmjs.com/package/sse-stuntman)
   ![coverage](https://img.shields.io/badge/95.8%25-green?logo=counterstrike&logoColor=cyan&label=coverage&color=green&color=212121)
-</p>
+</div>
 
 ```md
 ╔═══════════════════════════════════════════════════╗
