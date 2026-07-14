@@ -1,12 +1,12 @@
 # SSE Stuntman 🏍️ Mock AI SSE Stream
 
 <p>
-  <a href="https://github.com/legend80s/sse-stuntman/blob/main/advance.md" target="_blank">
-    <img alt="coverage" src="https://img.shields.io/badge/0%20dependency-green" />
-  </a>
-
   <a href="https://www.npmjs.com/package/sse-stuntman" target="_blank">
     <img src="https://img.shields.io/npm/v/sse-stuntman.svg" alt="npm version" />
+  </a>
+
+  <a href="https://www.npmjs.com/package/sse-stuntman?activeTab=dependencies" target="_blank">
+    <img alt="coverage" src="https://img.shields.io/badge/0%20dependency-green" />
   </a>
 
   <a href="https://www.npmjs.com/package/sse-stuntman">
