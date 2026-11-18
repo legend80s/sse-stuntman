@@ -10,7 +10,7 @@
     "pub:major": "npm version major",
     "preversion": "npm test && npm run typecheck",
     "postversion": "npm publish && git push && git push --tags",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "start": "node bin/index.mjs",
     "coverage": "node --test --experimental-test-coverage --test-coverage-exclude=\"src/**/*.test.mjs\" --test-reporter=tap",
     "test": "node --test"
@@ -43,6 +43,7 @@
   },
   "homepage": "https://github.com/legend80s/sse-stuntman#readme",
   "devDependencies": {
-    "@types/node": "^26.0.1"
+    "@types/node": "^26.0.1",
+    "typescript": "^7.0.2"
   }
 }
