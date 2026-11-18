@@ -1,6 +1,11 @@
-# SSE Stuntman 🏍️ Mock AI SSE Stream
+<h1 align="center">SSE Stuntman 🏍️ Mock AI SSE Stream</h1>
 
-<div>
+<div align="center">
+  
+<img alt="sse-stuntman steps into the spotlight! icon from koboyo" title="sse-stuntman steps into the spotlight!" src="https://koboyo.com/icons/svg/blockprint-riding-motorbike.svg" width="40%"  />
+</div>
+
+<div align="center">
 
   [![NPM Version](https://img.shields.io/npm/v/sse-stuntman.svg?logo=npm&logoColor=cyan)](https://www.npmjs.com/package/sse-stuntman)
   [![0 dependencies](https://img.shields.io/badge/0-green?logo=npm&logoColor=212121&labelColor=ffc44e&label=dependencies&color=green&color=212121)](https://www.npmjs.com/package/sse-stuntman?activeTab=dependencies)
